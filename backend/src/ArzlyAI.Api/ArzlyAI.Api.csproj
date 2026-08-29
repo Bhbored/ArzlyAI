@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>9031e554-5df8-4e08-9516-357b17e17811</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" Version="10.0.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.24.1-preview.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
+    <PackageReference Include="SerilogTimings" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArzlyAI.Application\ArzlyAI.Application.csproj" />
+    <ProjectReference Include="..\ArzlyAI.Infrastructure\ArzlyAI.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

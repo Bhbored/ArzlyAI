@@ -1,0 +1,23 @@
+**/bin/
+**/obj/
+.vs/
+*.user
+*.db
+*.db-shm
+*.db-wal
+
+# Flutter and Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/build/
+**/coverage/
+mobile/arzlyai_mobile/android/local.properties
+mobile/arzlyai_mobile/ios/Flutter/ephemeral/
+
+# Node and Vite
+**/node_modules/
+**/dist/
+**/*.local
+**/npm-debug.log*

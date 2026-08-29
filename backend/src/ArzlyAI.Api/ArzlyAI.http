@@ -1,0 +1,19 @@
+@ArzlyAI_HostAddress = http://localhost:5090
+@WorkflowId = 01234567-89ab-cdef-0123-456789abcdef
+
+GET {{ArzlyAI_HostAddress}}/health
+Accept: application/json
+
+###
+
+PUT {{ArzlyAI_HostAddress}}/api/workflows/{{WorkflowId}}/schedule
+Content-Type: application/json
+
+{
+  "localTime": "20:00:00",
+  "timeZoneId": "Asia/Beirut"
+}
+
+###
+
+DELETE {{ArzlyAI_HostAddress}}/api/workflows/{{WorkflowId}}/schedule

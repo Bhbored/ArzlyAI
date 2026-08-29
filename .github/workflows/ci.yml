@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore backend/ArzlyAI.slnx
+      - run: dotnet build backend/ArzlyAI.slnx --no-restore -m:1 --configuration Release
+      - run: dotnet test backend/tests/ArzlyAI.Tests/ArzlyAI.Tests.csproj --no-restore --no-build -m:1 --configuration Release
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/arzlyai_mobile
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.8
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  admin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin/arzlyai_admin
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: admin/arzlyai_admin/package-lock.json
+      - run: npm ci
+      - run: npm run build

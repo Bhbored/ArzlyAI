@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/ArzlyAI.Application/ArzlyAI.Application.csproj" />
+  <Project Path="src/ArzlyAI.Domain/ArzlyAI.Domain.csproj" />
+  <Project Path="src/ArzlyAI.Infrastructure/ArzlyAI.Infrastructure.csproj" />
+  <Project Path="src/ArzlyAI.Api/ArzlyAI.Api.csproj" />
+  <Project Path="tests/ArzlyAI.Tests/ArzlyAI.Tests.csproj" />
+</Solution>
