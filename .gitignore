@@ -5,6 +5,7 @@
 *.db
 *.db-shm
 *.db-wal
+backend/src/ArzlyAI.Api/appsettings.Development.json
 
 # Flutter and Dart
 **/.dart_tool/
@@ -21,3 +22,4 @@ mobile/arzlyai_mobile/ios/Flutter/ephemeral/
 **/dist/
 **/*.local
 **/npm-debug.log*
+/backend/src/ArzlyAI.Api/appsettings.Development.json
