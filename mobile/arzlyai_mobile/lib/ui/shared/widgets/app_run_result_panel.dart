@@ -13,7 +13,8 @@ class AppRunResultPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final published = run.status == WorkflowRunStatus.completed &&
+    final published =
+        run.status == WorkflowRunStatus.completed &&
         run.finalResponse != null &&
         run.finalResponse!.isNotEmpty;
 
@@ -22,7 +23,9 @@ class AppRunResultPanel extends StatelessWidget {
       children: [
         Text(
           'Run result',
-          style: theme.textTheme.h4.copyWith(color: theme.colorScheme.foreground),
+          style: theme.textTheme.h4.copyWith(
+            color: theme.colorScheme.foreground,
+          ),
         ),
         SizedBox(height: context.spaceSmall),
         AppCard.standard(

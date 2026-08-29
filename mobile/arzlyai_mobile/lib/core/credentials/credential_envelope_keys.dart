@@ -1,6 +1,7 @@
 import 'package:arzlyai_mobile/core/credentials/credential_schema.dart';
 
-String providerCredentialEnvelopeKey(String providerKey) => '$providerKey.apiKey';
+String providerCredentialEnvelopeKey(String providerKey) =>
+    '$providerKey.apiKey';
 
 String integrationFieldEnvelopeKey(String integrationKey, String field) {
   final prefix = integrationKey.split('.').first;

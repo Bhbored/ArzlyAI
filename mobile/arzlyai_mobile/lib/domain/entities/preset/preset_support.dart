@@ -9,7 +9,8 @@ extension PresetDetailsSupport on PresetDetails {
   }
 
   Agent? primaryWorkflowAgent() {
-    final ordered = [...workflow.nodes]..sort((a, b) => a.position.compareTo(b.position));
+    final ordered = [...workflow.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
     for (final node in ordered) {
       if (node.type != 'Agent') continue;
       final agent = agentForNode(node);
@@ -19,7 +20,8 @@ extension PresetDetailsSupport on PresetDetails {
   }
 
   Agent? configurableWorkflowAgent() {
-    final ordered = [...workflow.nodes]..sort((a, b) => a.position.compareTo(b.position));
+    final ordered = [...workflow.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
     for (final node in ordered) {
       if (node.type != 'Agent') continue;
       final agent = agentForNode(node);
@@ -53,9 +55,13 @@ extension PresetDetailsSupport on PresetDetails {
     }
 
     for (final integration in integrations) {
-      final schemaFields =
-          envelopeKeysForIntegration(integration.key, integration.credentialSchemaJson);
-      for (final field in CredentialSchema.parse(integration.credentialSchemaJson).fields) {
+      final schemaFields = envelopeKeysForIntegration(
+        integration.key,
+        integration.credentialSchemaJson,
+      );
+      for (final field in CredentialSchema.parse(
+        integration.credentialSchemaJson,
+      ).fields) {
         final envelopeKey = integrationFieldEnvelopeKey(integration.key, field);
         if (!seen.add(envelopeKey)) continue;
         requirements.add(
@@ -89,7 +95,9 @@ extension PresetDetailsSupport on PresetDetails {
       case CredentialPhase.workflowStart:
         return agents
             .map(
-              (agent) => providerCredentialEnvelopeKey(agent.modelConfiguration.provider),
+              (agent) => providerCredentialEnvelopeKey(
+                agent.modelConfiguration.provider,
+              ),
             )
             .toSet()
             .toList(growable: false);
@@ -115,9 +123,14 @@ extension PresetDetailsSupport on PresetDetails {
 String humanizePresetToken(String value) {
   if (value.isEmpty) return value;
   final spaced = value
-      .replaceAllMapped(RegExp('([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
+      .replaceAllMapped(
+        RegExp('([a-z])([A-Z])'),
+        (match) => '${match[1]} ${match[2]}',
+      )
       .replaceAll('_', ' ')
       .replaceAll('.', ' ')
       .toLowerCase();
-  return spaced.isEmpty ? spaced : '${spaced[0].toUpperCase()}${spaced.substring(1)}';
+  return spaced.isEmpty
+      ? spaced
+      : '${spaced[0].toUpperCase()}${spaced.substring(1)}';
 }

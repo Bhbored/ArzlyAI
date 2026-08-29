@@ -8,7 +8,8 @@ class CredentialStore {
   Future<void> setValue(String envelopeKey, String value) =>
       _storage.setValue(envelopeKey, value);
 
-  Future<String?> getValue(String envelopeKey) => _storage.getValue(envelopeKey);
+  Future<String?> getValue(String envelopeKey) =>
+      _storage.getValue(envelopeKey);
 
   Future<void> deleteValue(String envelopeKey) =>
       _storage.deleteValue(envelopeKey);

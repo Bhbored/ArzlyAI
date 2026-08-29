@@ -11,7 +11,11 @@ class AppButton extends StatelessWidget {
     super.key,
   });
 
-  factory AppButton.primary({required String label, VoidCallback? onPressed, Key? key}) {
+  factory AppButton.primary({
+    required String label,
+    VoidCallback? onPressed,
+    Key? key,
+  }) {
     return AppButton._(
       variant: AppButtonVariant.primary,
       label: label,
@@ -20,7 +24,11 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  factory AppButton.destructive({required String label, VoidCallback? onPressed, Key? key}) {
+  factory AppButton.destructive({
+    required String label,
+    VoidCallback? onPressed,
+    Key? key,
+  }) {
     return AppButton._(
       variant: AppButtonVariant.destructive,
       label: label,
@@ -29,7 +37,11 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  factory AppButton.ghost({required String label, VoidCallback? onPressed, Key? key}) {
+  factory AppButton.ghost({
+    required String label,
+    VoidCallback? onPressed,
+    Key? key,
+  }) {
     return AppButton._(
       variant: AppButtonVariant.ghost,
       label: label,
@@ -46,10 +58,18 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final child = Text(label);
     return switch (variant) {
-      AppButtonVariant.primary => ShadButton(onPressed: onPressed, child: child),
-      AppButtonVariant.destructive =>
-        ShadButton.destructive(onPressed: onPressed, child: child),
-      AppButtonVariant.ghost => ShadButton.ghost(onPressed: onPressed, child: child),
+      AppButtonVariant.primary => ShadButton(
+        onPressed: onPressed,
+        child: child,
+      ),
+      AppButtonVariant.destructive => ShadButton.destructive(
+        onPressed: onPressed,
+        child: child,
+      ),
+      AppButtonVariant.ghost => ShadButton.ghost(
+        onPressed: onPressed,
+        child: child,
+      ),
     };
   }
 }

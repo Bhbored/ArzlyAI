@@ -30,12 +30,12 @@ class _Running extends ActiveRun {
 }
 
 void main() {
-  testWidgets('execution shows running progress without leaving the screen', (tester) async {
+  testWidgets('execution shows running progress without leaving the screen', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          activeRunProvider.overrideWith(_Running.new),
-        ],
+        overrides: [activeRunProvider.overrideWith(_Running.new)],
         child: testApp(home: const ExecutionScreen()),
       ),
     );

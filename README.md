@@ -31,7 +31,7 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 - Backend preset catalog in PostgreSQL with idempotent seeding.
 - `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
-- SignalR node-status events, Quartz scheduling boundary, rate limits, health probes, and structured logging.
+- SignalR node-status events, rate limits, health probes, and structured logging.
 - Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
 - Empty Flutter Android/iOS shell ready for the first vertical slice.
 - Empty React TypeScript admin shell reserved for later preset administration.
@@ -42,8 +42,11 @@ Flutter SQLite will be the source of truth for user workflow instances, history,
 
 - [LinkedIn preset](docs/presets/linkedin-preset.md)
 - [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
+- [Flutter client scheduling and notifications](docs/presets/flutter-client-scheduling-notifications.md)
 - [Flutter online OpenAI model-catalog prompt](docs/presets/flutter-openai-model-catalog-prompt.md)
 - [Flutter LinkedIn edit-regeneration prompt](docs/presets/flutter-linkedin-edit-regeneration-prompt.md)
+- [Nango LinkedIn connector](docs/connectors/nango-linkedin.md)
+- [Flutter Nango connector prompt](docs/connectors/flutter-nango-connector-prompt.md)
 - [Contributor instructions](AGENTS.md)
 
 ## Backend Development
@@ -68,6 +71,10 @@ Operational endpoints:
 | `GET` | `/api/v1/presets` | Published preset catalog |
 | `GET` | `/api/v1/presets/{key}` | Complete preset graph |
 | `POST` | `/api/v1/providers/openai/models` | List usable account models and UI capabilities using an encrypted API key |
+| `POST` | `/api/v1/connectors/{connectorKey}/session` | Start a device-scoped Nango connect session |
+| `GET` | `/api/v1/connectors/{connectorKey}/status` | Read device connector status |
+| `GET` | `/api/v1/connectors/{connectorKey}/credentials` | Fetch mapped connector credentials from Nango |
+| `DELETE` | `/api/v1/connectors/{connectorKey}` | Disconnect the device connector |
 | `POST` | `/api/v1/workflows/runs` | Start a preset run |
 | `GET` | `/api/v1/workflows/runs/{runId}` | Retrieve an ephemeral run |
 | `POST` | `/api/v1/workflows/runs/{runId}/approval` | Accept, edit, or reject output |
@@ -122,6 +129,6 @@ There is no registration or backend user database. Credentials are encrypted cli
 
 - Workflow graphs are validated and executed sequentially in topological order; parallel branches and conditional routing are not implemented yet.
 - Runs are memory-backed and expire after 30 minutes.
-- Notifications are logged; FCM/APNs delivery is not implemented.
-- Scheduling cannot yet reconstruct a local workflow snapshot or obtain fresh credentials.
+- Device-owned scheduling and local notifications still need the Flutter implementation described above.
+- Mobile operating systems do not guarantee exact background network execution.
 - LinkedIn OAuth acquisition and refresh are not implemented.

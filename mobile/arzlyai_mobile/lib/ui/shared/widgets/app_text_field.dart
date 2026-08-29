@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
-import 'package:arzlyai_mobile/data/providers/temp/settings_credentials_temp.dart';
 
-enum AppTextFieldKind { backendUrl, topic, reviewDraft }
+enum AppTextFieldKind { topic, reviewDraft }
 
 class AppTextField extends ConsumerWidget {
   const AppTextField._({
@@ -14,12 +13,6 @@ class AppTextField extends ConsumerWidget {
     this.maxLines = 1,
     super.key,
   });
-
-  factory AppTextField.backendUrl({Key? key}) => AppTextField._(
-    kind: AppTextFieldKind.backendUrl,
-    placeholder: 'API origin (e.g. https://10.0.2.2:7029 or https://192.168.x.x:7029)',
-    key: key,
-  );
 
   factory AppTextField.topic({Key? key}) => AppTextField._(
     kind: AppTextFieldKind.topic,
@@ -42,8 +35,6 @@ class AppTextField extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = switch (kind) {
-      AppTextFieldKind.backendUrl =>
-        ref.watch(settingsCredentialsTempProvider).backendUrl,
       AppTextFieldKind.topic => ref.watch(runConfigTempProvider).topic,
       AppTextFieldKind.reviewDraft => ref.watch(reviewDraftTempProvider),
     };
@@ -54,16 +45,11 @@ class AppTextField extends ConsumerWidget {
       maxLines: maxLines,
       onChanged: (next) {
         switch (kind) {
-          case AppTextFieldKind.backendUrl:
-            final current = ref.read(settingsCredentialsTempProvider);
-            ref.read(settingsCredentialsTempProvider.notifier).update(
-              current.copyWith(backendUrl: next),
-            );
           case AppTextFieldKind.topic:
             final current = ref.read(runConfigTempProvider);
-            ref.read(runConfigTempProvider.notifier).update(
-              current.copyWith(topic: next),
-            );
+            ref
+                .read(runConfigTempProvider.notifier)
+                .update(current.copyWith(topic: next));
           case AppTextFieldKind.reviewDraft:
             ref.read(reviewDraftTempProvider.notifier).update(next);
         }

@@ -2,7 +2,8 @@ import 'package:json_annotation/json_annotation.dart';
 
 enum ApprovalDecision { accept, edit, reject }
 
-class ApprovalDecisionConverter implements JsonConverter<ApprovalDecision, int> {
+class ApprovalDecisionConverter
+    implements JsonConverter<ApprovalDecision, int> {
   const ApprovalDecisionConverter();
 
   @override

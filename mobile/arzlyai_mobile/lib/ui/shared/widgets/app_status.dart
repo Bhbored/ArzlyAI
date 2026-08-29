@@ -9,11 +9,8 @@ class AppStatus extends StatelessWidget {
       message = null,
       correlationId = null;
 
-  const AppStatus.error({
-    required this.message,
-    this.correlationId,
-    super.key,
-  }) : loading = false;
+  const AppStatus.error({required this.message, this.correlationId, super.key})
+    : loading = false;
 
   final bool loading;
   final String? message;
@@ -34,7 +31,9 @@ class AppStatus extends StatelessWidget {
             label: message,
             child: Text(
               message ?? '',
-              style: theme.textTheme.p.copyWith(color: theme.colorScheme.foreground),
+              style: theme.textTheme.p.copyWith(
+                color: theme.colorScheme.foreground,
+              ),
               textAlign: TextAlign.center,
             ),
           ),

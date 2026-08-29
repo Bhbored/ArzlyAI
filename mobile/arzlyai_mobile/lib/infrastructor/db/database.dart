@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:arzlyai_mobile/infrastructor/tables/connector_credentials_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/preset_cache_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/schedule_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/workflow_instance_table.dart';
@@ -29,6 +30,7 @@ AppDatabase appDatabase(Ref ref) {
     WorkflowRuns,
     WorkflowNodeRuns,
     Schedules,
+    ConnectorCredentials,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -44,7 +46,6 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) async {
       await m.createAll();
     },
-    onUpgrade: (Migrator m, int from, int to) async {},
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON;');
     },

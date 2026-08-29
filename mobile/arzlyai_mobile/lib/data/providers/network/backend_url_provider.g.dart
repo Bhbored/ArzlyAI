@@ -33,7 +33,7 @@ final class BackendUrlProvider
   BackendUrl create() => BackendUrl();
 }
 
-String _$backendUrlHash() => r'8b62e00d44590fbcd12f2e64dbbc9b6dc88384c1';
+String _$backendUrlHash() => r'e0c9f1270b56bd7d8ef29a7f9865c11e72221c5d';
 
 abstract class _$BackendUrl extends $AsyncNotifier<String> {
   FutureOr<String> build();

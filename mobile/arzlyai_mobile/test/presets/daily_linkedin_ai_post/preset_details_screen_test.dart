@@ -12,7 +12,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
+          presetDetailsProvider.overrideWith(
+            () => SeededDetails(fixtureDetails()),
+          ),
         ],
         child: testApp(home: const PresetDetailsScreen()),
       ),
@@ -27,16 +29,18 @@ void main() {
     expect(find.text('Integration'), findsOneWidget);
     expect(find.text('Publish text posts to LinkedIn.'), findsOneWidget);
     expect(find.text('linkedin.posts'), findsOneWidget);
-    expect(find.text('Access token'), findsOneWidget);
-    expect(find.text('Author urn'), findsOneWidget);
+    expect(
+      find.text('Connect LinkedIn in Settings before you publish.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('catalog surfaces accessible errors with correlation', (tester) async {
+  testWidgets('catalog surfaces accessible errors with correlation', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          presetCatalogProvider.overrideWith(FailingCatalog.new),
-        ],
+        overrides: [presetCatalogProvider.overrideWith(FailingCatalog.new)],
         child: testApp(home: const PresetCatalogScreen()),
       ),
     );
@@ -50,8 +54,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          presetCatalogProvider.overrideWith(() => SeededCatalog([fixtureSummary()])),
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
+          presetCatalogProvider.overrideWith(
+            () => SeededCatalog([fixtureSummary()]),
+          ),
+          presetDetailsProvider.overrideWith(
+            () => SeededDetails(fixtureDetails()),
+          ),
         ],
         child: testApp(home: const PresetCatalogScreen()),
       ),
@@ -61,6 +69,9 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('Review Content'), findsOneWidget);
-    expect(find.text('Tap a step to configure or view details.'), findsOneWidget);
+    expect(
+      find.text('Tap a step to configure or view details.'),
+      findsOneWidget,
+    );
   });
 }

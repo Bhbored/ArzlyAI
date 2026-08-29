@@ -41,9 +41,9 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
               if (!mounted || _consumed == token) return;
               if (value.status == WorkflowRunStatus.waitingForApproval) {
                 _consumed = token;
-                ref.read(reviewDraftTempProvider.notifier).update(
-                  value.approval?.currentContent ?? '',
-                );
+                ref
+                    .read(reviewDraftTempProvider.notifier)
+                    .update(value.approval?.currentContent ?? '');
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_) => const ReviewScreen()),
                 );
@@ -73,7 +73,10 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
                         if (running)
                           const AppLoadingIndicator(small: true)
                         else
-                          Text(node.status.wireValue, style: theme.textTheme.muted),
+                          Text(
+                            node.status.wireValue,
+                            style: theme.textTheme.muted,
+                          ),
                       ],
                     ),
                   ),
@@ -89,7 +92,9 @@ class _ExecutionScreenState extends ConsumerState<ExecutionScreen> {
         loading: () => const AppStatus.loading(),
         error: (error, _) {
           final message = error is ApiException ? error.userMessage : '$error';
-          final correlation = error is ApiException ? error.correlationId : null;
+          final correlation = error is ApiException
+              ? error.correlationId
+              : null;
           return AppStatus.error(message: message, correlationId: correlation);
         },
       ),

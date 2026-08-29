@@ -17,16 +17,19 @@ class AppCredentialField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final value = ref.watch(settingsCredentialsTempProvider).credentialValues[envelopeKey] ?? '';
+    final value =
+        ref
+            .watch(settingsCredentialsTempProvider)
+            .credentialValues[envelopeKey] ??
+        '';
     return ShadInput(
       initialValue: value,
       placeholder: Text(label),
       obscureText: obscureText,
       onChanged: (next) {
-        ref.read(settingsCredentialsTempProvider.notifier).updateCredential(
-          envelopeKey,
-          next,
-        );
+        ref
+            .read(settingsCredentialsTempProvider.notifier)
+            .updateCredential(envelopeKey, next);
       },
     );
   }

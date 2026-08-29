@@ -1,5 +1,4 @@
 using ArzlyAI.Api.Configuration;
-using ArzlyAI.Application.Abstractions;
 using ArzlyAI.Application.DTOs.Workflows;
 using ArzlyAI.Application.Services.Workflows;
 using Asp.Versioning;
@@ -13,7 +12,6 @@ namespace ArzlyAI.Api.Controllers.v1;
 [Route("api/v{version:apiVersion}/workflows")]
 public sealed class WorkflowsController(
     IWorkflowExecutionService workflows,
-    IWorkflowScheduler scheduler,
     ILogger<WorkflowsController> logger) : ControllerBase
 {
     [HttpPost("runs")]
@@ -43,25 +41,5 @@ public sealed class WorkflowsController(
         using var operation = Operation.Time("WorkflowsController.SubmitApproval");
         logger.LogInformation("Received {Decision} decision for workflow run {RunId}", request.Decision, runId);
         return Ok(await workflows.SubmitApprovalAsync(runId, request, cancellationToken));
-    }
-
-    [HttpPut("{workflowId:guid}/schedule")]
-    [EnableRateLimiting(ApiRateLimitPolicies.Scheduling)]
-    public async Task<IActionResult> Schedule(Guid workflowId, ScheduleWorkflowRequest request, CancellationToken cancellationToken)
-    {
-        using var operation = Operation.Time("WorkflowsController.Schedule");
-        logger.LogInformation("Scheduling workflow {WorkflowId} in time zone {TimeZoneId}", workflowId, request.TimeZoneId);
-        await scheduler.ScheduleDailyAsync(workflowId.ToString(), request.LocalTime, request.TimeZoneId, cancellationToken);
-        return NoContent();
-    }
-
-    [HttpDelete("{workflowId:guid}/schedule")]
-    [EnableRateLimiting(ApiRateLimitPolicies.Scheduling)]
-    public async Task<IActionResult> Unschedule(Guid workflowId, CancellationToken cancellationToken)
-    {
-        using var operation = Operation.Time("WorkflowsController.Unschedule");
-        logger.LogInformation("Removing schedule for workflow {WorkflowId}", workflowId);
-        await scheduler.UnscheduleAsync(workflowId.ToString(), cancellationToken);
-        return NoContent();
     }
 }

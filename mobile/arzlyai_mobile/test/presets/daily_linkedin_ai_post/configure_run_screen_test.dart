@@ -12,35 +12,42 @@ import '../../helpers/fakes.dart';
 import '../../helpers/test_app.dart';
 
 void main() {
-  testWidgets('configure shows online models without temperature for default model', (
+  testWidgets(
+    'configure shows online models without temperature for default model',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            presetDetailsProvider.overrideWith(
+              () => SeededDetails(fixtureDetails()),
+            ),
+            openAiModelsProvider.overrideWith(
+              () => SeededOpenAiModels(fixtureOpenAiModels()),
+            ),
+            internetConnectionProvider.overrideWithValue(true),
+            offlineModeProvider.overrideWith(OnlineMode.new),
+          ],
+          child: testApp(home: const ConfigureRunScreen()),
+        ),
+      );
+      await tester.pump();
+      expect(find.byType(ShadSelect<String>), findsOneWidget);
+      expect(find.text('GPT-5 Mini'), findsOneWidget);
+      expect(find.byType(Slider), findsNothing);
+      final button = tester.widget<ShadButton>(find.byType(ShadButton).last);
+      expect(button.onPressed, isNull);
+    },
+  );
+
+  testWidgets('temperature slider appears for supporting model', (
     tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
-          openAiModelsProvider.overrideWith(
-            () => SeededOpenAiModels(fixtureOpenAiModels()),
+          presetDetailsProvider.overrideWith(
+            () => SeededDetails(fixtureDetails()),
           ),
-          internetConnectionProvider.overrideWithValue(true),
-          offlineModeProvider.overrideWith(OnlineMode.new),
-        ],
-        child: testApp(home: const ConfigureRunScreen()),
-      ),
-    );
-    await tester.pump();
-    expect(find.byType(ShadSelect<String>), findsOneWidget);
-    expect(find.text('GPT-5 Mini'), findsOneWidget);
-    expect(find.byType(Slider), findsNothing);
-    final button = tester.widget<ShadButton>(find.byType(ShadButton).last);
-    expect(button.onPressed, isNull);
-  });
-
-  testWidgets('temperature slider appears for supporting model', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
           openAiModelsProvider.overrideWith(
             () => SeededOpenAiModels(fixtureOpenAiModels()),
           ),
@@ -58,44 +65,57 @@ void main() {
     expect(find.byType(Slider), findsOneWidget);
   });
 
-  testWidgets('switching away from supporting model clears temperature override', (
+  testWidgets(
+    'switching away from supporting model clears temperature override',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            presetDetailsProvider.overrideWith(
+              () => SeededDetails(fixtureDetails()),
+            ),
+            openAiModelsProvider.overrideWith(
+              () => SeededOpenAiModels(fixtureOpenAiModels()),
+            ),
+            internetConnectionProvider.overrideWithValue(true),
+            offlineModeProvider.overrideWith(OnlineMode.new),
+          ],
+          child: testApp(home: const ConfigureRunScreen()),
+        ),
+      );
+      await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ConfigureRunScreen)),
+      );
+      container
+          .read(runConfigTempProvider.notifier)
+          .update(
+            const RunConfigState(
+              topic: 'AI agents',
+              model: 'gpt-4.1-mini',
+              temperature: 0.4,
+            ),
+          );
+      await tester.pump();
+      expect(find.byType(Slider), findsOneWidget);
+      await tester.tap(find.byType(ShadSelect<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GPT-5 Mini').last);
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsNothing);
+      expect(container.read(runConfigTempProvider).temperature, isNull);
+    },
+  );
+
+  testWidgets('offline mode disables generate even with a topic', (
     tester,
   ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
-          openAiModelsProvider.overrideWith(
-            () => SeededOpenAiModels(fixtureOpenAiModels()),
+          presetDetailsProvider.overrideWith(
+            () => SeededDetails(fixtureDetails()),
           ),
-          internetConnectionProvider.overrideWithValue(true),
-          offlineModeProvider.overrideWith(OnlineMode.new),
-        ],
-        child: testApp(home: const ConfigureRunScreen()),
-      ),
-    );
-    await tester.pump();
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(ConfigureRunScreen)),
-    );
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents', model: 'gpt-4.1-mini', temperature: 0.4),
-    );
-    await tester.pump();
-    expect(find.byType(Slider), findsOneWidget);
-    await tester.tap(find.byType(ShadSelect<String>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('GPT-5 Mini').last);
-    await tester.pumpAndSettle();
-    expect(find.byType(Slider), findsNothing);
-    expect(container.read(runConfigTempProvider).temperature, isNull);
-  });
-
-  testWidgets('offline mode disables generate even with a topic', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
           openAiModelsProvider.overrideWith(
             () => SeededOpenAiModels(fixtureOpenAiModels()),
           ),
@@ -109,9 +129,9 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(ConfigureRunScreen)),
     );
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await tester.pump();
     final button = tester.widget<ShadButton>(find.byType(ShadButton).last);
     expect(button.onPressed, isNull);

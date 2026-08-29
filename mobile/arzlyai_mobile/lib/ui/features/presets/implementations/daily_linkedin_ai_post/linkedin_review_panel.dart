@@ -22,7 +22,8 @@ class LinkedInReviewPanel extends ConsumerStatefulWidget {
   final WorkflowRun run;
 
   @override
-  ConsumerState<LinkedInReviewPanel> createState() => _LinkedInReviewPanelState();
+  ConsumerState<LinkedInReviewPanel> createState() =>
+      _LinkedInReviewPanelState();
 }
 
 class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
@@ -38,10 +39,9 @@ class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
     String? editedContent,
   }) async {
     setState(() => _submitting = true);
-    await ref.read(activeRunProvider.notifier).submitApproval(
-      decision,
-      editedContent: editedContent,
-    );
+    await ref
+        .read(activeRunProvider.notifier)
+        .submitApproval(decision, editedContent: editedContent);
     if (!mounted) return;
     setState(() => _submitting = false);
     final result = ref.read(activeRunProvider);
@@ -62,7 +62,8 @@ class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
     final active = ref.watch(activeRunProvider);
     final theme = ShadTheme.of(context);
     final snapshot = run.approval;
-    final draftText = snapshot?.currentContent ?? snapshot?.originalContent ?? '';
+    final draftText =
+        snapshot?.currentContent ?? snapshot?.originalContent ?? '';
     final online = ref.watch(internetConnectionProvider);
     final offlineMode = ref.watch(offlineModeProvider).value ?? false;
     final busy = _submitting || active.isLoading || !online || offlineMode;
@@ -74,7 +75,9 @@ class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
         children: [
           Text(
             'Review content',
-            style: theme.textTheme.h4.copyWith(color: theme.colorScheme.foreground),
+            style: theme.textTheme.h4.copyWith(
+              color: theme.colorScheme.foreground,
+            ),
           ),
           SizedBox(height: context.spaceSmall),
           AppCard.standard(
@@ -82,10 +85,7 @@ class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
             child: Text(draftText, style: theme.textTheme.p),
           ),
           SizedBox(height: context.spaceMedium),
-          Text(
-            'Edit feedback',
-            style: theme.textTheme.small,
-          ),
+          Text('Edit feedback', style: theme.textTheme.small),
           SizedBox(height: context.spaceSmall / 2),
           Text(
             'Describe how the AI should revise the post. A new draft will be generated.',
@@ -104,7 +104,8 @@ class _LinkedInReviewPanelState extends ConsumerState<LinkedInReviewPanel> {
                     final ok = await AppDialog.confirm(
                       context,
                       title: 'Publish',
-                      message: 'Publish the original generated post to LinkedIn?',
+                      message:
+                          'Publish the original generated post to LinkedIn?',
                     );
                     if (!ok || !mounted) return;
                     await _submit(ApprovalDecision.accept);

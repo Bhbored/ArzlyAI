@@ -52,7 +52,10 @@ class ActiveRun extends _$ActiveRun {
       final online = ref.read(internetConnectionProvider);
       final offlineMode = await ref.read(offlineModeProvider.future);
       if (!online || offlineMode) {
-        state = AsyncError(StateError('Generation requires a network connection'), StackTrace.current);
+        state = AsyncError(
+          StateError('Generation requires a network connection'),
+          StackTrace.current,
+        );
         return;
       }
       final details = await ref.read(presetDetailsProvider.future);
@@ -87,7 +90,9 @@ class ActiveRun extends _$ActiveRun {
       }
       state = const AsyncLoading<WorkflowRun?>();
       final credentialRepo = ref.read(credentialRepositoryProvider);
-      final startKeys = details.envelopeKeysForPhase(CredentialPhase.workflowStart);
+      final startKeys = details.envelopeKeysForPhase(
+        CredentialPhase.workflowStart,
+      );
       final startCredentials = await credentialRepo.readForPreset(
         details,
         CredentialPhase.workflowStart,
@@ -99,31 +104,37 @@ class ActiveRun extends _$ActiveRun {
       if (missingStart.isNotEmpty) {
         throw StateError('Missing credentials: ${missingStart.join(', ')}');
       }
-      final envelope = await ref.read(credentialEnvelopeServiceProvider).encrypt(
-        startCredentials,
-      );
-      final instance = await ref.read(workflowRepositoryProvider).createInstance(
-        presetKey: details.key,
-        presetVersion: details.version,
-        name: details.name,
-        topic: config.topic.trim(),
-        modelOverridesJson: jsonEncode(
-          overrides.map((e) => e.toJson()).toList(),
-        ),
-      );
-      final dto = await ref.read(workflowServiceProvider).start(
-        StartWorkflowRequest(
-          presetKey: details.key,
-          inputs: {'topic': config.topic.trim()},
-          agentOverrides: overrides,
-          credentials: envelope,
-        ),
-      );
-      final run = await ref.read(workflowRepositoryProvider).persistDto(
-        dto,
-        localWorkflowId: instance.id,
-        expiryUtc: DateTime.now().toUtc().add(const Duration(minutes: 30)),
-      );
+      final envelope = await ref
+          .read(credentialEnvelopeServiceProvider)
+          .encrypt(startCredentials);
+      final instance = await ref
+          .read(workflowRepositoryProvider)
+          .createInstance(
+            presetKey: details.key,
+            presetVersion: details.version,
+            name: details.name,
+            topic: config.topic.trim(),
+            modelOverridesJson: jsonEncode(
+              overrides.map((e) => e.toJson()).toList(),
+            ),
+          );
+      final dto = await ref
+          .read(workflowServiceProvider)
+          .start(
+            StartWorkflowRequest(
+              presetKey: details.key,
+              inputs: {'topic': config.topic.trim()},
+              agentOverrides: overrides,
+              credentials: envelope,
+            ),
+          );
+      final run = await ref
+          .read(workflowRepositoryProvider)
+          .persistDto(
+            dto,
+            localWorkflowId: instance.id,
+            expiryUtc: DateTime.now().toUtc().add(const Duration(minutes: 30)),
+          );
       ref.read(selectedRunIdProvider.notifier).update(run.runId);
       _lastEventAt = DateTime.now().toUtc();
       state = AsyncData(run);
@@ -150,22 +161,26 @@ class ActiveRun extends _$ActiveRun {
     try {
       await ref.read(workflowHubClientProvider).reconnect();
       final dto = await ref.read(workflowRepositoryProvider).fetchRemote(runId);
-      final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
-      final run = await ref.read(workflowRepositoryProvider).persistDto(
-        dto,
-        localWorkflowId: local?.localWorkflowId ?? '',
-        expiryUtc: local?.expiryUtc,
-      );
+      final local = await ref
+          .read(workflowRepositoryProvider)
+          .getLocalRun(runId);
+      final run = await ref
+          .read(workflowRepositoryProvider)
+          .persistDto(
+            dto,
+            localWorkflowId: local?.localWorkflowId ?? '',
+            expiryUtc: local?.expiryUtc,
+          );
       _lastEventAt = DateTime.now().toUtc();
       state = AsyncData(run);
     } on ApiException catch (e, s) {
       if (e.statusCode == 404) {
         await ref.read(workflowRepositoryProvider).markExpired(runId);
-        final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
+        final local = await ref
+            .read(workflowRepositoryProvider)
+            .getLocalRun(runId);
         if (local != null) {
-          state = AsyncData(
-            local.copyWith(status: WorkflowRunStatus.expired),
-          );
+          state = AsyncData(local.copyWith(status: WorkflowRunStatus.expired));
         }
         return;
       }
@@ -183,14 +198,20 @@ class ActiveRun extends _$ActiveRun {
       final online = ref.read(internetConnectionProvider);
       final offlineMode = await ref.read(offlineModeProvider.future);
       if (!online || offlineMode) {
-        state = AsyncError(StateError('Publishing requires a network connection'), StackTrace.current);
+        state = AsyncError(
+          StateError('Publishing requires a network connection'),
+          StackTrace.current,
+        );
         return;
       }
       final current = state.value;
       if (current == null) return;
       if (decision == ApprovalDecision.edit) {
         if (AppValidators.requiredNonEmpty(editedContent ?? '') != null) {
-          state = AsyncError(ArgumentError('Edited content is required'), StackTrace.current);
+          state = AsyncError(
+            ArgumentError('Edited content is required'),
+            StackTrace.current,
+          );
           return;
         }
       }
@@ -217,15 +238,16 @@ class ActiveRun extends _$ActiveRun {
             editedContent: editedContent,
           );
       }
-      final dto = await ref.read(workflowServiceProvider).submitApproval(
-        current.runId,
-        request,
-      );
-      final run = await ref.read(workflowRepositoryProvider).persistDto(
-        dto,
-        localWorkflowId: current.localWorkflowId ?? '',
-        expiryUtc: current.expiryUtc,
-      );
+      final dto = await ref
+          .read(workflowServiceProvider)
+          .submitApproval(current.runId, request);
+      final run = await ref
+          .read(workflowRepositoryProvider)
+          .persistDto(
+            dto,
+            localWorkflowId: current.localWorkflowId ?? '',
+            expiryUtc: current.expiryUtc,
+          );
       state = AsyncData(run);
     } catch (e, s) {
       state = AsyncError(e, s);
@@ -253,9 +275,9 @@ class ActiveRun extends _$ActiveRun {
           : 'LinkedIn credentials';
       throw StateError('Missing $label: ${missing.join(', ')}');
     }
-    final envelope = await ref.read(credentialEnvelopeServiceProvider).encrypt(
-      credentials,
-    );
+    final envelope = await ref
+        .read(credentialEnvelopeServiceProvider)
+        .encrypt(credentials);
     return SubmitApprovalRequest(
       decision: decision,
       editedContent: editedContent,
@@ -297,10 +319,7 @@ class ActiveRun extends _$ActiveRun {
         else
           run.nodes[i],
     ];
-    return run.copyWith(
-      nodes: nodes,
-      status: WorkflowRunStatus.running,
-    );
+    return run.copyWith(nodes: nodes, status: WorkflowRunStatus.running);
   }
 
   int? _writerIndexBeforeApproval(WorkflowRun run, int approvalIndex) {

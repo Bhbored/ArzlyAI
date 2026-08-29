@@ -3,7 +3,6 @@ using ArzlyAI.Application.Mappers.Workflows;
 using ArzlyAI.Application.Models;
 using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
-using ArzlyAI.Application.Services.Notifications;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows.Execution;
@@ -22,7 +21,6 @@ public sealed class WorkflowExecutionService(
     IWorkflowInputMapper inputMapper,
     IEnumerable<IWorkflowNodeHandler> nodeHandlers,
     IWorkflowRealtimeNotifier realtime,
-    INotificationService notifications,
     IWorkflowRunMapper mapper,
     ILogger<WorkflowExecutionService> logger) : IWorkflowExecutionService
 {
@@ -155,7 +153,6 @@ public sealed class WorkflowExecutionService(
                 {
                     run.Status = WorkflowRunStatus.WaitingForApproval;
                     await SetStatusAsync(run, node, result.Status, result.Message, cancellationToken);
-                    await notifications.WorkflowNeedsApprovalAsync(run.Id, preset.Name, cancellationToken);
                     logger.LogInformation("Workflow run {RunId} is waiting for approval", run.Id);
                     return;
                 }
@@ -180,7 +177,6 @@ public sealed class WorkflowExecutionService(
         run.Status = WorkflowRunStatus.Completed;
         run.FinalResponse = ResolveFinalResponse(plan, run);
         await runs.UpdateAsync(run, cancellationToken);
-        await notifications.WorkflowCompletedAsync(run.Id, preset.Name, cancellationToken);
         logger.LogInformation("Workflow run {RunId} completed", run.Id);
     }
 

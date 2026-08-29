@@ -29,7 +29,8 @@ class AppWorkflowGraph extends StatelessWidget {
     final nodeHeight = context.workflowNodeHeight;
     final verticalGap = context.workflowVerticalGap;
     final portRadius = context.workflowPortRadius;
-    final ordered = [...nodes]..sort((a, b) => a.position.compareTo(b.position));
+    final ordered = [...nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
     final horizontalPadding = context.paddingMedium;
     final nodeWidth = context.screenWidth - horizontalPadding * 4;
     final canvasWidth = nodeWidth + horizontalPadding * 2;
@@ -101,11 +102,7 @@ class AppWorkflowGraph extends StatelessWidget {
 }
 
 class _WorkflowNodeTile extends StatelessWidget {
-  const _WorkflowNodeTile({
-    required this.node,
-    this.status,
-    this.onTap,
-  });
+  const _WorkflowNodeTile({required this.node, this.status, this.onTap});
 
   final WorkflowNode node;
   final WorkflowNodeStatus? status;
@@ -116,7 +113,8 @@ class _WorkflowNodeTile extends StatelessWidget {
     final theme = ShadTheme.of(context);
     final accent = _nodeAccent(theme, node.type, status);
     final icon = _nodeIcon(node.type);
-    final isActive = status == WorkflowNodeStatus.running ||
+    final isActive =
+        status == WorkflowNodeStatus.running ||
         status == WorkflowNodeStatus.waitingForApproval;
     final isCompleted = status == WorkflowNodeStatus.completed;
 
@@ -134,7 +132,13 @@ class _WorkflowNodeTile extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: isActive ? 0.7 : isCompleted ? 0.45 : 0.15),
+            color: accent.withValues(
+              alpha: isActive
+                  ? 0.7
+                  : isCompleted
+                  ? 0.45
+                  : 0.15,
+            ),
             blurRadius: isActive
                 ? context.glowBlurLarge
                 : isCompleted

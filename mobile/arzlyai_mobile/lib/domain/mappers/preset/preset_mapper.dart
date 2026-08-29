@@ -79,7 +79,8 @@ class PresetMapper {
   }
 
   WorkflowGraph _graph(WorkflowGraphResponse dto) {
-    final nodes = [...dto.nodes]..sort((a, b) => a.position.compareTo(b.position));
+    final nodes = [...dto.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
     return WorkflowGraph(
       key: dto.key,
       nodes: nodes.map(_node).toList(),

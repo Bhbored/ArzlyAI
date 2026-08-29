@@ -35,9 +35,7 @@ class ReviewScreen extends ConsumerWidget {
           }
           return ListView(
             padding: EdgeInsets.all(context.paddingMedium),
-            children: [
-              LinkedInReviewPanel(run: value),
-            ],
+            children: [LinkedInReviewPanel(run: value)],
           );
         },
         loading: () => const AppScreenLoader(),
@@ -54,9 +52,7 @@ class ReviewScreen extends ConsumerWidget {
               if (local != null) {
                 return ListView(
                   padding: EdgeInsets.all(context.paddingMedium),
-                  children: [
-                    LinkedInReviewPanel(run: local),
-                  ],
+                  children: [LinkedInReviewPanel(run: local)],
                 );
               }
               return Center(

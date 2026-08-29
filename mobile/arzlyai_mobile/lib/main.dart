@@ -1,4 +1,4 @@
-﻿import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +8,7 @@ import 'package:arzlyai_mobile/core/network/dev_ssl.dart';
 import 'package:arzlyai_mobile/core/themes/theme_mode_provider.dart';
 import 'package:arzlyai_mobile/core/themes/theme_selector.dart';
 import 'package:arzlyai_mobile/ui/features/presets/catalog/preset_catalog_screen.dart';
+import 'package:arzlyai_mobile/ui/scheduling/notification_navigation.dart';
 
 const _languageKey = 'language';
 
@@ -63,6 +64,7 @@ class ArzlyAiApp extends ConsumerWidget {
       appBuilder: (context) {
         final baseTheme = Theme.of(context);
         return MaterialApp(
+          navigatorKey: rootNavigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'ArzlyAI',
           theme: baseTheme.copyWith(
@@ -73,9 +75,10 @@ class ArzlyAiApp extends ConsumerWidget {
               backgroundColor: baseTheme.colorScheme.surface,
               foregroundColor: baseTheme.colorScheme.onSurface,
               iconTheme: IconThemeData(color: baseTheme.colorScheme.onSurface),
-              titleTextStyle: (baseTheme.appBarTheme.titleTextStyle ??
-                      baseTheme.textTheme.titleLarge)
-                  ?.copyWith(color: baseTheme.colorScheme.onSurface),
+              titleTextStyle:
+                  (baseTheme.appBarTheme.titleTextStyle ??
+                          baseTheme.textTheme.titleLarge)
+                      ?.copyWith(color: baseTheme.colorScheme.onSurface),
             ),
           ),
           localizationsDelegates: [
@@ -85,9 +88,12 @@ class ArzlyAiApp extends ConsumerWidget {
           supportedLocales: context.supportedLocales,
           locale: context.locale,
           builder: (context, child) => ShadAppBuilder(
-            child: SafeArea(top: false, child: child ?? const SizedBox.shrink()),
+            child: SafeArea(
+              top: false,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
-          home: const PresetCatalogScreen(),
+          home: const AppSchedulingShell(child: PresetCatalogScreen()),
         );
       },
     );

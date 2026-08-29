@@ -2084,24 +2084,85 @@ class $SchedulesTable extends Schedules
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _backendScheduleStatusMeta =
-      const VerificationMeta('backendScheduleStatus');
+  static const VerificationMeta _platformTaskIdMeta = const VerificationMeta(
+    'platformTaskId',
+  );
   @override
-  late final GeneratedColumn<String> backendScheduleStatus =
-      GeneratedColumn<String>(
-        'backend_schedule_status',
+  late final GeneratedColumn<String> platformTaskId = GeneratedColumn<String>(
+    'platform_task_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nextRunAtUtcMeta = const VerificationMeta(
+    'nextRunAtUtc',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextRunAtUtc = GeneratedColumn<DateTime>(
+    'next_run_at_utc',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastAttemptAtUtcMeta = const VerificationMeta(
+    'lastAttemptAtUtc',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastAttemptAtUtc =
+      GeneratedColumn<DateTime>(
+        'last_attempt_at_utc',
         aliasedName,
         true,
-        type: DriftSqlType.string,
+        type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _lastSucceededAtUtcMeta =
+      const VerificationMeta('lastSucceededAtUtc');
+  @override
+  late final GeneratedColumn<DateTime> lastSucceededAtUtc =
+      GeneratedColumn<DateTime>(
+        'last_succeeded_at_utc',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastOutcomeMeta = const VerificationMeta(
+    'lastOutcome',
+  );
+  @override
+  late final GeneratedColumn<String> lastOutcome = GeneratedColumn<String>(
+    'last_outcome',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _failureMessageMeta = const VerificationMeta(
+    'failureMessage',
+  );
+  @override
+  late final GeneratedColumn<String> failureMessage = GeneratedColumn<String>(
+    'failure_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     localWorkflowId,
     localTime,
     timeZoneId,
     enabled,
-    backendScheduleStatus,
+    platformTaskId,
+    nextRunAtUtc,
+    lastAttemptAtUtc,
+    lastSucceededAtUtc,
+    lastOutcome,
+    failureMessage,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2151,12 +2212,59 @@ class $SchedulesTable extends Schedules
         enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
       );
     }
-    if (data.containsKey('backend_schedule_status')) {
+    if (data.containsKey('platform_task_id')) {
       context.handle(
-        _backendScheduleStatusMeta,
-        backendScheduleStatus.isAcceptableOrUnknown(
-          data['backend_schedule_status']!,
-          _backendScheduleStatusMeta,
+        _platformTaskIdMeta,
+        platformTaskId.isAcceptableOrUnknown(
+          data['platform_task_id']!,
+          _platformTaskIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_run_at_utc')) {
+      context.handle(
+        _nextRunAtUtcMeta,
+        nextRunAtUtc.isAcceptableOrUnknown(
+          data['next_run_at_utc']!,
+          _nextRunAtUtcMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nextRunAtUtcMeta);
+    }
+    if (data.containsKey('last_attempt_at_utc')) {
+      context.handle(
+        _lastAttemptAtUtcMeta,
+        lastAttemptAtUtc.isAcceptableOrUnknown(
+          data['last_attempt_at_utc']!,
+          _lastAttemptAtUtcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_succeeded_at_utc')) {
+      context.handle(
+        _lastSucceededAtUtcMeta,
+        lastSucceededAtUtc.isAcceptableOrUnknown(
+          data['last_succeeded_at_utc']!,
+          _lastSucceededAtUtcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_outcome')) {
+      context.handle(
+        _lastOutcomeMeta,
+        lastOutcome.isAcceptableOrUnknown(
+          data['last_outcome']!,
+          _lastOutcomeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('failure_message')) {
+      context.handle(
+        _failureMessageMeta,
+        failureMessage.isAcceptableOrUnknown(
+          data['failure_message']!,
+          _failureMessageMeta,
         ),
       );
     }
@@ -2185,9 +2293,29 @@ class $SchedulesTable extends Schedules
         DriftSqlType.bool,
         data['${effectivePrefix}enabled'],
       )!,
-      backendScheduleStatus: attachedDatabase.typeMapping.read(
+      platformTaskId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}backend_schedule_status'],
+        data['${effectivePrefix}platform_task_id'],
+      ),
+      nextRunAtUtc: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_run_at_utc'],
+      )!,
+      lastAttemptAtUtc: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_attempt_at_utc'],
+      ),
+      lastSucceededAtUtc: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_succeeded_at_utc'],
+      ),
+      lastOutcome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_outcome'],
+      ),
+      failureMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failure_message'],
       ),
     );
   }
@@ -2203,13 +2331,23 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   final String localTime;
   final String timeZoneId;
   final bool enabled;
-  final String? backendScheduleStatus;
+  final String? platformTaskId;
+  final DateTime nextRunAtUtc;
+  final DateTime? lastAttemptAtUtc;
+  final DateTime? lastSucceededAtUtc;
+  final String? lastOutcome;
+  final String? failureMessage;
   const Schedule({
     required this.localWorkflowId,
     required this.localTime,
     required this.timeZoneId,
     required this.enabled,
-    this.backendScheduleStatus,
+    this.platformTaskId,
+    required this.nextRunAtUtc,
+    this.lastAttemptAtUtc,
+    this.lastSucceededAtUtc,
+    this.lastOutcome,
+    this.failureMessage,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2218,8 +2356,21 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     map['local_time'] = Variable<String>(localTime);
     map['time_zone_id'] = Variable<String>(timeZoneId);
     map['enabled'] = Variable<bool>(enabled);
-    if (!nullToAbsent || backendScheduleStatus != null) {
-      map['backend_schedule_status'] = Variable<String>(backendScheduleStatus);
+    if (!nullToAbsent || platformTaskId != null) {
+      map['platform_task_id'] = Variable<String>(platformTaskId);
+    }
+    map['next_run_at_utc'] = Variable<DateTime>(nextRunAtUtc);
+    if (!nullToAbsent || lastAttemptAtUtc != null) {
+      map['last_attempt_at_utc'] = Variable<DateTime>(lastAttemptAtUtc);
+    }
+    if (!nullToAbsent || lastSucceededAtUtc != null) {
+      map['last_succeeded_at_utc'] = Variable<DateTime>(lastSucceededAtUtc);
+    }
+    if (!nullToAbsent || lastOutcome != null) {
+      map['last_outcome'] = Variable<String>(lastOutcome);
+    }
+    if (!nullToAbsent || failureMessage != null) {
+      map['failure_message'] = Variable<String>(failureMessage);
     }
     return map;
   }
@@ -2230,9 +2381,22 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       localTime: Value(localTime),
       timeZoneId: Value(timeZoneId),
       enabled: Value(enabled),
-      backendScheduleStatus: backendScheduleStatus == null && nullToAbsent
+      platformTaskId: platformTaskId == null && nullToAbsent
           ? const Value.absent()
-          : Value(backendScheduleStatus),
+          : Value(platformTaskId),
+      nextRunAtUtc: Value(nextRunAtUtc),
+      lastAttemptAtUtc: lastAttemptAtUtc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastAttemptAtUtc),
+      lastSucceededAtUtc: lastSucceededAtUtc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSucceededAtUtc),
+      lastOutcome: lastOutcome == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastOutcome),
+      failureMessage: failureMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureMessage),
     );
   }
 
@@ -2246,9 +2410,16 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       localTime: serializer.fromJson<String>(json['localTime']),
       timeZoneId: serializer.fromJson<String>(json['timeZoneId']),
       enabled: serializer.fromJson<bool>(json['enabled']),
-      backendScheduleStatus: serializer.fromJson<String?>(
-        json['backendScheduleStatus'],
+      platformTaskId: serializer.fromJson<String?>(json['platformTaskId']),
+      nextRunAtUtc: serializer.fromJson<DateTime>(json['nextRunAtUtc']),
+      lastAttemptAtUtc: serializer.fromJson<DateTime?>(
+        json['lastAttemptAtUtc'],
       ),
+      lastSucceededAtUtc: serializer.fromJson<DateTime?>(
+        json['lastSucceededAtUtc'],
+      ),
+      lastOutcome: serializer.fromJson<String?>(json['lastOutcome']),
+      failureMessage: serializer.fromJson<String?>(json['failureMessage']),
     );
   }
   @override
@@ -2259,9 +2430,12 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       'localTime': serializer.toJson<String>(localTime),
       'timeZoneId': serializer.toJson<String>(timeZoneId),
       'enabled': serializer.toJson<bool>(enabled),
-      'backendScheduleStatus': serializer.toJson<String?>(
-        backendScheduleStatus,
-      ),
+      'platformTaskId': serializer.toJson<String?>(platformTaskId),
+      'nextRunAtUtc': serializer.toJson<DateTime>(nextRunAtUtc),
+      'lastAttemptAtUtc': serializer.toJson<DateTime?>(lastAttemptAtUtc),
+      'lastSucceededAtUtc': serializer.toJson<DateTime?>(lastSucceededAtUtc),
+      'lastOutcome': serializer.toJson<String?>(lastOutcome),
+      'failureMessage': serializer.toJson<String?>(failureMessage),
     };
   }
 
@@ -2270,15 +2444,31 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     String? localTime,
     String? timeZoneId,
     bool? enabled,
-    Value<String?> backendScheduleStatus = const Value.absent(),
+    Value<String?> platformTaskId = const Value.absent(),
+    DateTime? nextRunAtUtc,
+    Value<DateTime?> lastAttemptAtUtc = const Value.absent(),
+    Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
+    Value<String?> lastOutcome = const Value.absent(),
+    Value<String?> failureMessage = const Value.absent(),
   }) => Schedule(
     localWorkflowId: localWorkflowId ?? this.localWorkflowId,
     localTime: localTime ?? this.localTime,
     timeZoneId: timeZoneId ?? this.timeZoneId,
     enabled: enabled ?? this.enabled,
-    backendScheduleStatus: backendScheduleStatus.present
-        ? backendScheduleStatus.value
-        : this.backendScheduleStatus,
+    platformTaskId: platformTaskId.present
+        ? platformTaskId.value
+        : this.platformTaskId,
+    nextRunAtUtc: nextRunAtUtc ?? this.nextRunAtUtc,
+    lastAttemptAtUtc: lastAttemptAtUtc.present
+        ? lastAttemptAtUtc.value
+        : this.lastAttemptAtUtc,
+    lastSucceededAtUtc: lastSucceededAtUtc.present
+        ? lastSucceededAtUtc.value
+        : this.lastSucceededAtUtc,
+    lastOutcome: lastOutcome.present ? lastOutcome.value : this.lastOutcome,
+    failureMessage: failureMessage.present
+        ? failureMessage.value
+        : this.failureMessage,
   );
   Schedule copyWithCompanion(SchedulesCompanion data) {
     return Schedule(
@@ -2290,9 +2480,24 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           ? data.timeZoneId.value
           : this.timeZoneId,
       enabled: data.enabled.present ? data.enabled.value : this.enabled,
-      backendScheduleStatus: data.backendScheduleStatus.present
-          ? data.backendScheduleStatus.value
-          : this.backendScheduleStatus,
+      platformTaskId: data.platformTaskId.present
+          ? data.platformTaskId.value
+          : this.platformTaskId,
+      nextRunAtUtc: data.nextRunAtUtc.present
+          ? data.nextRunAtUtc.value
+          : this.nextRunAtUtc,
+      lastAttemptAtUtc: data.lastAttemptAtUtc.present
+          ? data.lastAttemptAtUtc.value
+          : this.lastAttemptAtUtc,
+      lastSucceededAtUtc: data.lastSucceededAtUtc.present
+          ? data.lastSucceededAtUtc.value
+          : this.lastSucceededAtUtc,
+      lastOutcome: data.lastOutcome.present
+          ? data.lastOutcome.value
+          : this.lastOutcome,
+      failureMessage: data.failureMessage.present
+          ? data.failureMessage.value
+          : this.failureMessage,
     );
   }
 
@@ -2303,7 +2508,12 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           ..write('localTime: $localTime, ')
           ..write('timeZoneId: $timeZoneId, ')
           ..write('enabled: $enabled, ')
-          ..write('backendScheduleStatus: $backendScheduleStatus')
+          ..write('platformTaskId: $platformTaskId, ')
+          ..write('nextRunAtUtc: $nextRunAtUtc, ')
+          ..write('lastAttemptAtUtc: $lastAttemptAtUtc, ')
+          ..write('lastSucceededAtUtc: $lastSucceededAtUtc, ')
+          ..write('lastOutcome: $lastOutcome, ')
+          ..write('failureMessage: $failureMessage')
           ..write(')'))
         .toString();
   }
@@ -2314,7 +2524,12 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     localTime,
     timeZoneId,
     enabled,
-    backendScheduleStatus,
+    platformTaskId,
+    nextRunAtUtc,
+    lastAttemptAtUtc,
+    lastSucceededAtUtc,
+    lastOutcome,
+    failureMessage,
   );
   @override
   bool operator ==(Object other) =>
@@ -2324,7 +2539,12 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           other.localTime == this.localTime &&
           other.timeZoneId == this.timeZoneId &&
           other.enabled == this.enabled &&
-          other.backendScheduleStatus == this.backendScheduleStatus);
+          other.platformTaskId == this.platformTaskId &&
+          other.nextRunAtUtc == this.nextRunAtUtc &&
+          other.lastAttemptAtUtc == this.lastAttemptAtUtc &&
+          other.lastSucceededAtUtc == this.lastSucceededAtUtc &&
+          other.lastOutcome == this.lastOutcome &&
+          other.failureMessage == this.failureMessage);
 }
 
 class SchedulesCompanion extends UpdateCompanion<Schedule> {
@@ -2332,14 +2552,24 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
   final Value<String> localTime;
   final Value<String> timeZoneId;
   final Value<bool> enabled;
-  final Value<String?> backendScheduleStatus;
+  final Value<String?> platformTaskId;
+  final Value<DateTime> nextRunAtUtc;
+  final Value<DateTime?> lastAttemptAtUtc;
+  final Value<DateTime?> lastSucceededAtUtc;
+  final Value<String?> lastOutcome;
+  final Value<String?> failureMessage;
   final Value<int> rowid;
   const SchedulesCompanion({
     this.localWorkflowId = const Value.absent(),
     this.localTime = const Value.absent(),
     this.timeZoneId = const Value.absent(),
     this.enabled = const Value.absent(),
-    this.backendScheduleStatus = const Value.absent(),
+    this.platformTaskId = const Value.absent(),
+    this.nextRunAtUtc = const Value.absent(),
+    this.lastAttemptAtUtc = const Value.absent(),
+    this.lastSucceededAtUtc = const Value.absent(),
+    this.lastOutcome = const Value.absent(),
+    this.failureMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SchedulesCompanion.insert({
@@ -2347,17 +2577,28 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     required String localTime,
     required String timeZoneId,
     this.enabled = const Value.absent(),
-    this.backendScheduleStatus = const Value.absent(),
+    this.platformTaskId = const Value.absent(),
+    required DateTime nextRunAtUtc,
+    this.lastAttemptAtUtc = const Value.absent(),
+    this.lastSucceededAtUtc = const Value.absent(),
+    this.lastOutcome = const Value.absent(),
+    this.failureMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : localWorkflowId = Value(localWorkflowId),
        localTime = Value(localTime),
-       timeZoneId = Value(timeZoneId);
+       timeZoneId = Value(timeZoneId),
+       nextRunAtUtc = Value(nextRunAtUtc);
   static Insertable<Schedule> custom({
     Expression<String>? localWorkflowId,
     Expression<String>? localTime,
     Expression<String>? timeZoneId,
     Expression<bool>? enabled,
-    Expression<String>? backendScheduleStatus,
+    Expression<String>? platformTaskId,
+    Expression<DateTime>? nextRunAtUtc,
+    Expression<DateTime>? lastAttemptAtUtc,
+    Expression<DateTime>? lastSucceededAtUtc,
+    Expression<String>? lastOutcome,
+    Expression<String>? failureMessage,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2365,8 +2606,13 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       if (localTime != null) 'local_time': localTime,
       if (timeZoneId != null) 'time_zone_id': timeZoneId,
       if (enabled != null) 'enabled': enabled,
-      if (backendScheduleStatus != null)
-        'backend_schedule_status': backendScheduleStatus,
+      if (platformTaskId != null) 'platform_task_id': platformTaskId,
+      if (nextRunAtUtc != null) 'next_run_at_utc': nextRunAtUtc,
+      if (lastAttemptAtUtc != null) 'last_attempt_at_utc': lastAttemptAtUtc,
+      if (lastSucceededAtUtc != null)
+        'last_succeeded_at_utc': lastSucceededAtUtc,
+      if (lastOutcome != null) 'last_outcome': lastOutcome,
+      if (failureMessage != null) 'failure_message': failureMessage,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2376,7 +2622,12 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Value<String>? localTime,
     Value<String>? timeZoneId,
     Value<bool>? enabled,
-    Value<String?>? backendScheduleStatus,
+    Value<String?>? platformTaskId,
+    Value<DateTime>? nextRunAtUtc,
+    Value<DateTime?>? lastAttemptAtUtc,
+    Value<DateTime?>? lastSucceededAtUtc,
+    Value<String?>? lastOutcome,
+    Value<String?>? failureMessage,
     Value<int>? rowid,
   }) {
     return SchedulesCompanion(
@@ -2384,8 +2635,12 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       localTime: localTime ?? this.localTime,
       timeZoneId: timeZoneId ?? this.timeZoneId,
       enabled: enabled ?? this.enabled,
-      backendScheduleStatus:
-          backendScheduleStatus ?? this.backendScheduleStatus,
+      platformTaskId: platformTaskId ?? this.platformTaskId,
+      nextRunAtUtc: nextRunAtUtc ?? this.nextRunAtUtc,
+      lastAttemptAtUtc: lastAttemptAtUtc ?? this.lastAttemptAtUtc,
+      lastSucceededAtUtc: lastSucceededAtUtc ?? this.lastSucceededAtUtc,
+      lastOutcome: lastOutcome ?? this.lastOutcome,
+      failureMessage: failureMessage ?? this.failureMessage,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2405,10 +2660,25 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     if (enabled.present) {
       map['enabled'] = Variable<bool>(enabled.value);
     }
-    if (backendScheduleStatus.present) {
-      map['backend_schedule_status'] = Variable<String>(
-        backendScheduleStatus.value,
+    if (platformTaskId.present) {
+      map['platform_task_id'] = Variable<String>(platformTaskId.value);
+    }
+    if (nextRunAtUtc.present) {
+      map['next_run_at_utc'] = Variable<DateTime>(nextRunAtUtc.value);
+    }
+    if (lastAttemptAtUtc.present) {
+      map['last_attempt_at_utc'] = Variable<DateTime>(lastAttemptAtUtc.value);
+    }
+    if (lastSucceededAtUtc.present) {
+      map['last_succeeded_at_utc'] = Variable<DateTime>(
+        lastSucceededAtUtc.value,
       );
+    }
+    if (lastOutcome.present) {
+      map['last_outcome'] = Variable<String>(lastOutcome.value);
+    }
+    if (failureMessage.present) {
+      map['failure_message'] = Variable<String>(failureMessage.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -2423,7 +2693,342 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
           ..write('localTime: $localTime, ')
           ..write('timeZoneId: $timeZoneId, ')
           ..write('enabled: $enabled, ')
-          ..write('backendScheduleStatus: $backendScheduleStatus, ')
+          ..write('platformTaskId: $platformTaskId, ')
+          ..write('nextRunAtUtc: $nextRunAtUtc, ')
+          ..write('lastAttemptAtUtc: $lastAttemptAtUtc, ')
+          ..write('lastSucceededAtUtc: $lastSucceededAtUtc, ')
+          ..write('lastOutcome: $lastOutcome, ')
+          ..write('failureMessage: $failureMessage, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ConnectorCredentialsTable extends ConnectorCredentials
+    with TableInfo<$ConnectorCredentialsTable, ConnectorCredential> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConnectorCredentialsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _connectorKeyMeta = const VerificationMeta(
+    'connectorKey',
+  );
+  @override
+  late final GeneratedColumn<String> connectorKey = GeneratedColumn<String>(
+    'connector_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fieldKeyMeta = const VerificationMeta(
+    'fieldKey',
+  );
+  @override
+  late final GeneratedColumn<String> fieldKey = GeneratedColumn<String>(
+    'field_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtUtcMeta = const VerificationMeta(
+    'updatedAtUtc',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAtUtc = GeneratedColumn<DateTime>(
+    'updated_at_utc',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    connectorKey,
+    fieldKey,
+    value,
+    updatedAtUtc,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'connector_credentials';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ConnectorCredential> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('connector_key')) {
+      context.handle(
+        _connectorKeyMeta,
+        connectorKey.isAcceptableOrUnknown(
+          data['connector_key']!,
+          _connectorKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_connectorKeyMeta);
+    }
+    if (data.containsKey('field_key')) {
+      context.handle(
+        _fieldKeyMeta,
+        fieldKey.isAcceptableOrUnknown(data['field_key']!, _fieldKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldKeyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('updated_at_utc')) {
+      context.handle(
+        _updatedAtUtcMeta,
+        updatedAtUtc.isAcceptableOrUnknown(
+          data['updated_at_utc']!,
+          _updatedAtUtcMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtUtcMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {connectorKey, fieldKey};
+  @override
+  ConnectorCredential map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ConnectorCredential(
+      connectorKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}connector_key'],
+      )!,
+      fieldKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+      updatedAtUtc: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at_utc'],
+      )!,
+    );
+  }
+
+  @override
+  $ConnectorCredentialsTable createAlias(String alias) {
+    return $ConnectorCredentialsTable(attachedDatabase, alias);
+  }
+}
+
+class ConnectorCredential extends DataClass
+    implements Insertable<ConnectorCredential> {
+  final String connectorKey;
+  final String fieldKey;
+  final String value;
+  final DateTime updatedAtUtc;
+  const ConnectorCredential({
+    required this.connectorKey,
+    required this.fieldKey,
+    required this.value,
+    required this.updatedAtUtc,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['connector_key'] = Variable<String>(connectorKey);
+    map['field_key'] = Variable<String>(fieldKey);
+    map['value'] = Variable<String>(value);
+    map['updated_at_utc'] = Variable<DateTime>(updatedAtUtc);
+    return map;
+  }
+
+  ConnectorCredentialsCompanion toCompanion(bool nullToAbsent) {
+    return ConnectorCredentialsCompanion(
+      connectorKey: Value(connectorKey),
+      fieldKey: Value(fieldKey),
+      value: Value(value),
+      updatedAtUtc: Value(updatedAtUtc),
+    );
+  }
+
+  factory ConnectorCredential.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ConnectorCredential(
+      connectorKey: serializer.fromJson<String>(json['connectorKey']),
+      fieldKey: serializer.fromJson<String>(json['fieldKey']),
+      value: serializer.fromJson<String>(json['value']),
+      updatedAtUtc: serializer.fromJson<DateTime>(json['updatedAtUtc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'connectorKey': serializer.toJson<String>(connectorKey),
+      'fieldKey': serializer.toJson<String>(fieldKey),
+      'value': serializer.toJson<String>(value),
+      'updatedAtUtc': serializer.toJson<DateTime>(updatedAtUtc),
+    };
+  }
+
+  ConnectorCredential copyWith({
+    String? connectorKey,
+    String? fieldKey,
+    String? value,
+    DateTime? updatedAtUtc,
+  }) => ConnectorCredential(
+    connectorKey: connectorKey ?? this.connectorKey,
+    fieldKey: fieldKey ?? this.fieldKey,
+    value: value ?? this.value,
+    updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
+  );
+  ConnectorCredential copyWithCompanion(ConnectorCredentialsCompanion data) {
+    return ConnectorCredential(
+      connectorKey: data.connectorKey.present
+          ? data.connectorKey.value
+          : this.connectorKey,
+      fieldKey: data.fieldKey.present ? data.fieldKey.value : this.fieldKey,
+      value: data.value.present ? data.value.value : this.value,
+      updatedAtUtc: data.updatedAtUtc.present
+          ? data.updatedAtUtc.value
+          : this.updatedAtUtc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConnectorCredential(')
+          ..write('connectorKey: $connectorKey, ')
+          ..write('fieldKey: $fieldKey, ')
+          ..write('value: $value, ')
+          ..write('updatedAtUtc: $updatedAtUtc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(connectorKey, fieldKey, value, updatedAtUtc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ConnectorCredential &&
+          other.connectorKey == this.connectorKey &&
+          other.fieldKey == this.fieldKey &&
+          other.value == this.value &&
+          other.updatedAtUtc == this.updatedAtUtc);
+}
+
+class ConnectorCredentialsCompanion
+    extends UpdateCompanion<ConnectorCredential> {
+  final Value<String> connectorKey;
+  final Value<String> fieldKey;
+  final Value<String> value;
+  final Value<DateTime> updatedAtUtc;
+  final Value<int> rowid;
+  const ConnectorCredentialsCompanion({
+    this.connectorKey = const Value.absent(),
+    this.fieldKey = const Value.absent(),
+    this.value = const Value.absent(),
+    this.updatedAtUtc = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ConnectorCredentialsCompanion.insert({
+    required String connectorKey,
+    required String fieldKey,
+    required String value,
+    required DateTime updatedAtUtc,
+    this.rowid = const Value.absent(),
+  }) : connectorKey = Value(connectorKey),
+       fieldKey = Value(fieldKey),
+       value = Value(value),
+       updatedAtUtc = Value(updatedAtUtc);
+  static Insertable<ConnectorCredential> custom({
+    Expression<String>? connectorKey,
+    Expression<String>? fieldKey,
+    Expression<String>? value,
+    Expression<DateTime>? updatedAtUtc,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (connectorKey != null) 'connector_key': connectorKey,
+      if (fieldKey != null) 'field_key': fieldKey,
+      if (value != null) 'value': value,
+      if (updatedAtUtc != null) 'updated_at_utc': updatedAtUtc,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ConnectorCredentialsCompanion copyWith({
+    Value<String>? connectorKey,
+    Value<String>? fieldKey,
+    Value<String>? value,
+    Value<DateTime>? updatedAtUtc,
+    Value<int>? rowid,
+  }) {
+    return ConnectorCredentialsCompanion(
+      connectorKey: connectorKey ?? this.connectorKey,
+      fieldKey: fieldKey ?? this.fieldKey,
+      value: value ?? this.value,
+      updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (connectorKey.present) {
+      map['connector_key'] = Variable<String>(connectorKey.value);
+    }
+    if (fieldKey.present) {
+      map['field_key'] = Variable<String>(fieldKey.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (updatedAtUtc.present) {
+      map['updated_at_utc'] = Variable<DateTime>(updatedAtUtc.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConnectorCredentialsCompanion(')
+          ..write('connectorKey: $connectorKey, ')
+          ..write('fieldKey: $fieldKey, ')
+          ..write('value: $value, ')
+          ..write('updatedAtUtc: $updatedAtUtc, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2441,6 +3046,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $SchedulesTable schedules = $SchedulesTable(this);
+  late final $ConnectorCredentialsTable connectorCredentials =
+      $ConnectorCredentialsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2451,6 +3058,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workflowRuns,
     workflowNodeRuns,
     schedules,
+    connectorCredentials,
   ];
 }
 
@@ -3499,7 +4107,12 @@ typedef $$SchedulesTableCreateCompanionBuilder =
       required String localTime,
       required String timeZoneId,
       Value<bool> enabled,
-      Value<String?> backendScheduleStatus,
+      Value<String?> platformTaskId,
+      required DateTime nextRunAtUtc,
+      Value<DateTime?> lastAttemptAtUtc,
+      Value<DateTime?> lastSucceededAtUtc,
+      Value<String?> lastOutcome,
+      Value<String?> failureMessage,
       Value<int> rowid,
     });
 typedef $$SchedulesTableUpdateCompanionBuilder =
@@ -3508,7 +4121,12 @@ typedef $$SchedulesTableUpdateCompanionBuilder =
       Value<String> localTime,
       Value<String> timeZoneId,
       Value<bool> enabled,
-      Value<String?> backendScheduleStatus,
+      Value<String?> platformTaskId,
+      Value<DateTime> nextRunAtUtc,
+      Value<DateTime?> lastAttemptAtUtc,
+      Value<DateTime?> lastSucceededAtUtc,
+      Value<String?> lastOutcome,
+      Value<String?> failureMessage,
       Value<int> rowid,
     });
 
@@ -3541,8 +4159,33 @@ class $$SchedulesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get backendScheduleStatus => $composableBuilder(
-    column: $table.backendScheduleStatus,
+  ColumnFilters<String> get platformTaskId => $composableBuilder(
+    column: $table.platformTaskId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextRunAtUtc => $composableBuilder(
+    column: $table.nextRunAtUtc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastAttemptAtUtc => $composableBuilder(
+    column: $table.lastAttemptAtUtc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSucceededAtUtc => $composableBuilder(
+    column: $table.lastSucceededAtUtc,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastOutcome => $composableBuilder(
+    column: $table.lastOutcome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3576,8 +4219,33 @@ class $$SchedulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get backendScheduleStatus => $composableBuilder(
-    column: $table.backendScheduleStatus,
+  ColumnOrderings<String> get platformTaskId => $composableBuilder(
+    column: $table.platformTaskId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextRunAtUtc => $composableBuilder(
+    column: $table.nextRunAtUtc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastAttemptAtUtc => $composableBuilder(
+    column: $table.lastAttemptAtUtc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSucceededAtUtc => $composableBuilder(
+    column: $table.lastSucceededAtUtc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastOutcome => $composableBuilder(
+    column: $table.lastOutcome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -3607,8 +4275,33 @@ class $$SchedulesTableAnnotationComposer
   GeneratedColumn<bool> get enabled =>
       $composableBuilder(column: $table.enabled, builder: (column) => column);
 
-  GeneratedColumn<String> get backendScheduleStatus => $composableBuilder(
-    column: $table.backendScheduleStatus,
+  GeneratedColumn<String> get platformTaskId => $composableBuilder(
+    column: $table.platformTaskId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get nextRunAtUtc => $composableBuilder(
+    column: $table.nextRunAtUtc,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastAttemptAtUtc => $composableBuilder(
+    column: $table.lastAttemptAtUtc,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastSucceededAtUtc => $composableBuilder(
+    column: $table.lastSucceededAtUtc,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastOutcome => $composableBuilder(
+    column: $table.lastOutcome,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
     builder: (column) => column,
   );
 }
@@ -3645,14 +4338,24 @@ class $$SchedulesTableTableManager
                 Value<String> localTime = const Value.absent(),
                 Value<String> timeZoneId = const Value.absent(),
                 Value<bool> enabled = const Value.absent(),
-                Value<String?> backendScheduleStatus = const Value.absent(),
+                Value<String?> platformTaskId = const Value.absent(),
+                Value<DateTime> nextRunAtUtc = const Value.absent(),
+                Value<DateTime?> lastAttemptAtUtc = const Value.absent(),
+                Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
+                Value<String?> lastOutcome = const Value.absent(),
+                Value<String?> failureMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SchedulesCompanion(
                 localWorkflowId: localWorkflowId,
                 localTime: localTime,
                 timeZoneId: timeZoneId,
                 enabled: enabled,
-                backendScheduleStatus: backendScheduleStatus,
+                platformTaskId: platformTaskId,
+                nextRunAtUtc: nextRunAtUtc,
+                lastAttemptAtUtc: lastAttemptAtUtc,
+                lastSucceededAtUtc: lastSucceededAtUtc,
+                lastOutcome: lastOutcome,
+                failureMessage: failureMessage,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3661,14 +4364,24 @@ class $$SchedulesTableTableManager
                 required String localTime,
                 required String timeZoneId,
                 Value<bool> enabled = const Value.absent(),
-                Value<String?> backendScheduleStatus = const Value.absent(),
+                Value<String?> platformTaskId = const Value.absent(),
+                required DateTime nextRunAtUtc,
+                Value<DateTime?> lastAttemptAtUtc = const Value.absent(),
+                Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
+                Value<String?> lastOutcome = const Value.absent(),
+                Value<String?> failureMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SchedulesCompanion.insert(
                 localWorkflowId: localWorkflowId,
                 localTime: localTime,
                 timeZoneId: timeZoneId,
                 enabled: enabled,
-                backendScheduleStatus: backendScheduleStatus,
+                platformTaskId: platformTaskId,
+                nextRunAtUtc: nextRunAtUtc,
+                lastAttemptAtUtc: lastAttemptAtUtc,
+                lastSucceededAtUtc: lastSucceededAtUtc,
+                lastOutcome: lastOutcome,
+                failureMessage: failureMessage,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -3693,6 +4406,207 @@ typedef $$SchedulesTableProcessedTableManager =
       Schedule,
       PrefetchHooks Function()
     >;
+typedef $$ConnectorCredentialsTableCreateCompanionBuilder =
+    ConnectorCredentialsCompanion Function({
+      required String connectorKey,
+      required String fieldKey,
+      required String value,
+      required DateTime updatedAtUtc,
+      Value<int> rowid,
+    });
+typedef $$ConnectorCredentialsTableUpdateCompanionBuilder =
+    ConnectorCredentialsCompanion Function({
+      Value<String> connectorKey,
+      Value<String> fieldKey,
+      Value<String> value,
+      Value<DateTime> updatedAtUtc,
+      Value<int> rowid,
+    });
+
+class $$ConnectorCredentialsTableFilterComposer
+    extends Composer<_$AppDatabase, $ConnectorCredentialsTable> {
+  $$ConnectorCredentialsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get connectorKey => $composableBuilder(
+    column: $table.connectorKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fieldKey => $composableBuilder(
+    column: $table.fieldKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAtUtc => $composableBuilder(
+    column: $table.updatedAtUtc,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ConnectorCredentialsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConnectorCredentialsTable> {
+  $$ConnectorCredentialsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get connectorKey => $composableBuilder(
+    column: $table.connectorKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fieldKey => $composableBuilder(
+    column: $table.fieldKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAtUtc => $composableBuilder(
+    column: $table.updatedAtUtc,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ConnectorCredentialsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConnectorCredentialsTable> {
+  $$ConnectorCredentialsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get connectorKey => $composableBuilder(
+    column: $table.connectorKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fieldKey =>
+      $composableBuilder(column: $table.fieldKey, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAtUtc => $composableBuilder(
+    column: $table.updatedAtUtc,
+    builder: (column) => column,
+  );
+}
+
+class $$ConnectorCredentialsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ConnectorCredentialsTable,
+          ConnectorCredential,
+          $$ConnectorCredentialsTableFilterComposer,
+          $$ConnectorCredentialsTableOrderingComposer,
+          $$ConnectorCredentialsTableAnnotationComposer,
+          $$ConnectorCredentialsTableCreateCompanionBuilder,
+          $$ConnectorCredentialsTableUpdateCompanionBuilder,
+          (
+            ConnectorCredential,
+            BaseReferences<
+              _$AppDatabase,
+              $ConnectorCredentialsTable,
+              ConnectorCredential
+            >,
+          ),
+          ConnectorCredential,
+          PrefetchHooks Function()
+        > {
+  $$ConnectorCredentialsTableTableManager(
+    _$AppDatabase db,
+    $ConnectorCredentialsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConnectorCredentialsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConnectorCredentialsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ConnectorCredentialsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> connectorKey = const Value.absent(),
+                Value<String> fieldKey = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<DateTime> updatedAtUtc = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ConnectorCredentialsCompanion(
+                connectorKey: connectorKey,
+                fieldKey: fieldKey,
+                value: value,
+                updatedAtUtc: updatedAtUtc,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String connectorKey,
+                required String fieldKey,
+                required String value,
+                required DateTime updatedAtUtc,
+                Value<int> rowid = const Value.absent(),
+              }) => ConnectorCredentialsCompanion.insert(
+                connectorKey: connectorKey,
+                fieldKey: fieldKey,
+                value: value,
+                updatedAtUtc: updatedAtUtc,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ConnectorCredentialsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ConnectorCredentialsTable,
+      ConnectorCredential,
+      $$ConnectorCredentialsTableFilterComposer,
+      $$ConnectorCredentialsTableOrderingComposer,
+      $$ConnectorCredentialsTableAnnotationComposer,
+      $$ConnectorCredentialsTableCreateCompanionBuilder,
+      $$ConnectorCredentialsTableUpdateCompanionBuilder,
+      (
+        ConnectorCredential,
+        BaseReferences<
+          _$AppDatabase,
+          $ConnectorCredentialsTable,
+          ConnectorCredential
+        >,
+      ),
+      ConnectorCredential,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3707,6 +4621,8 @@ class $AppDatabaseManager {
       $$WorkflowNodeRunsTableTableManager(_db, _db.workflowNodeRuns);
   $$SchedulesTableTableManager get schedules =>
       $$SchedulesTableTableManager(_db, _db.schedules);
+  $$ConnectorCredentialsTableTableManager get connectorCredentials =>
+      $$ConnectorCredentialsTableTableManager(_db, _db.connectorCredentials);
 }
 
 // **************************************************************************

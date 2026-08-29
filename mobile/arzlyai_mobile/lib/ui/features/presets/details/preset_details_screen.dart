@@ -26,7 +26,8 @@ class PresetDetailsScreen extends ConsumerStatefulWidget {
   const PresetDetailsScreen({super.key});
 
   @override
-  ConsumerState<PresetDetailsScreen> createState() => _PresetDetailsScreenState();
+  ConsumerState<PresetDetailsScreen> createState() =>
+      _PresetDetailsScreenState();
 }
 
 class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
@@ -68,20 +69,22 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
   void _openConfigure(PresetDetails preset, Agent writer) {
     final runScreen = configureRunScreenForPreset(preset.key);
     if (runScreen == null) return;
-    ref.read(runConfigTempProvider.notifier).update(
-      RunConfigState(
-        topic: '',
-        model: writer.modelConfiguration.selectedModel,
-        temperature: writer.modelConfiguration.temperature,
-      ),
-    );
+    ref
+        .read(runConfigTempProvider.notifier)
+        .update(
+          RunConfigState(
+            topic: '',
+            model: writer.modelConfiguration.selectedModel,
+            temperature: writer.modelConfiguration.temperature,
+          ),
+        );
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => runScreen));
   }
 
   void _openReview() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ReviewScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ReviewScreen()));
   }
 
   void _openNodeDetails(WorkflowNode node) {
@@ -91,9 +94,9 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
   }
 
   void _openResult() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ResultScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ResultScreen()));
   }
 
   void _onWorkflowNodeTap(
@@ -152,7 +155,9 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
             data: (preset) => preset?.name ?? 'Preset',
             orElse: () => 'Preset',
           ),
-          style: theme.textTheme.h4.copyWith(color: theme.colorScheme.foreground),
+          style: theme.textTheme.h4.copyWith(
+            color: theme.colorScheme.foreground,
+          ),
         ),
         actions: activeRunId == null
             ? null
@@ -183,7 +188,9 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
             return Center(
               child: Text(
                 'Select a preset',
-                style: theme.textTheme.p.copyWith(color: theme.colorScheme.foreground),
+                style: theme.textTheme.p.copyWith(
+                  color: theme.colorScheme.foreground,
+                ),
               ),
             );
           }

@@ -16,8 +16,7 @@ Duration? retry(int _, Object _) => null;
 @Riverpod(keepAlive: true, retry: retry)
 WorkflowHubClient workflowHubClient(Ref ref) {
   final client = WorkflowHubClient(
-    () async =>
-        ref.read(backendUrlProvider).value ?? ApiConfig.defaultBaseUrl,
+    () async => ref.read(backendUrlProvider).value ?? ApiConfig.defaultBaseUrl,
   );
   ref.onDispose(client.dispose);
   return client;
@@ -58,8 +57,7 @@ class WorkflowHubClient {
 
   Future<void> _ensureConnected() async {
     if (_hub?.state == HubConnectionState.Connected) return;
-    final hubUrl =
-        ApiConfig.resolveWorkflowHub(await _baseUrl()).toString();
+    final hubUrl = ApiConfig.resolveWorkflowHub(await _baseUrl()).toString();
     final hub = HubConnectionBuilder().withUrl(hubUrl).build();
     hub.on('NodeChanged', _onNodeChanged);
     hub.onclose(({error}) {

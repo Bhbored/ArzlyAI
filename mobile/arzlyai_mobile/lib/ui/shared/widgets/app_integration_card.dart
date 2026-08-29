@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
@@ -18,7 +19,8 @@ class AppIntegrationCard extends StatelessWidget {
     final credentialType = humanizePresetToken(
       _credentialTypeRaw(integration.credentialSchemaJson),
     );
-    final fields = _credentialFields(integration.credentialSchemaJson);
+    final isLinkedInConnector =
+        integration.key.split('.').first == ConnectorKeys.linkedin;
 
     return AppCard.standard(
       title: integration.name,
@@ -32,52 +34,14 @@ class AppIntegrationCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: context.spaceSmall),
-          _DetailRow(
-            label: 'Integration key',
-            value: integration.key,
-          ),
+          _DetailRow(label: 'Integration key', value: integration.key),
           SizedBox(height: context.spaceSmall),
-          _DetailRow(
-            label: 'Credential type',
-            value: credentialType,
-          ),
-          if (fields.isNotEmpty) ...[
-            SizedBox(height: context.spaceSmall),
-            Text(
-              'Required fields',
-              style: theme.textTheme.small.copyWith(
-                color: theme.colorScheme.mutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: context.spaceSmall / 2),
-            ...fields.map(
-              (field) => Padding(
-                padding: EdgeInsets.only(bottom: context.spaceSmall / 2),
-                child: Row(
-                  children: [
-                    Icon(
-                      LucideIcons.keyRound,
-                      size: context.iconSmall,
-                      color: theme.colorScheme.primary,
-                    ),
-                    SizedBox(width: context.spaceSmall / 2),
-                    Expanded(
-                      child: Text(
-                        humanizePresetToken(field),
-                        style: theme.textTheme.small.copyWith(
-                          color: theme.colorScheme.cardForeground,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          _DetailRow(label: 'Credential type', value: credentialType),
           SizedBox(height: context.spaceSmall),
           Text(
-            'Add these credentials in Settings before you run this preset.',
+            isLinkedInConnector
+                ? 'Connect LinkedIn in Settings before you publish.'
+                : 'Add required credentials in Settings before you run this preset.',
             style: theme.textTheme.muted.copyWith(
               color: theme.colorScheme.mutedForeground,
             ),
@@ -94,17 +58,6 @@ class AppIntegrationCard extends StatelessWidget {
       if (type is String && type.isNotEmpty) return type;
     } catch (_) {}
     return 'credentials';
-  }
-
-  static List<String> _credentialFields(String schemaJson) {
-    try {
-      final map = jsonDecode(schemaJson) as Map<String, dynamic>;
-      final fields = map['fields'];
-      if (fields is List) {
-        return fields.map((field) => field.toString()).toList();
-      }
-    } catch (_) {}
-    return [];
   }
 }
 

@@ -7,7 +7,6 @@ abstract final class ApiConfig {
   );
 
   static const String defaultBaseUrl = '$defaultOrigin/api/v1/';
-  static const String backendUrlKey = 'backend_url';
   static const String signalRHubPath = '/api/v1/hubs/workflows';
   static const String correlationHeader = 'X-Correlation-ID';
 

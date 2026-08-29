@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 extension AppSizes on BuildContext {
   double get screenWidth => MediaQuery.of(this).size.width;
@@ -17,7 +17,8 @@ extension AppSizes on BuildContext {
       viewPadding.bottom > 0 ? viewPadding.bottom : paddingMedium;
 
   double get keyboardBottomInset => viewInsets.bottom;
-  double get topPadding => viewPadding.top > 0 ? viewPadding.top : paddingMedium;
+  double get topPadding =>
+      viewPadding.top > 0 ? viewPadding.top : paddingMedium;
 
   double get paddingSmall => screenWidth * 0.02;
   double get paddingMedium => screenWidth * 0.04;
@@ -42,8 +43,10 @@ extension AppSizes on BuildContext {
   double get loadingStrokeWidth => referenceSize * 0.005;
   double get loadingStrokeWidthBold => referenceSize * 0.006;
 
-  EdgeInsets get tilePadding =>
-      EdgeInsets.symmetric(horizontal: paddingSmall * 1.5, vertical: paddingSmall * 1.25);
+  EdgeInsets get tilePadding => EdgeInsets.symmetric(
+    horizontal: paddingSmall * 1.5,
+    vertical: paddingSmall * 1.25,
+  );
 
   double get workflowNodeHeight => referenceSize * 0.19;
   double get workflowVerticalGap => referenceSize * 0.1;

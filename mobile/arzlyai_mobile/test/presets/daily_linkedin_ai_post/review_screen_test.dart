@@ -19,7 +19,9 @@ class _Waiting extends ActiveRun {
 }
 
 void main() {
-  testWidgets('review shows original and current snapshots separately', (tester) async {
+  testWidgets('review shows original and current snapshots separately', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -35,7 +37,9 @@ void main() {
     expect(find.text('Generated draft'), findsOneWidget);
     expect(find.text('Edit feedback'), findsOneWidget);
     expect(
-      find.text('Describe how the AI should revise the post. A new draft will be generated.'),
+      find.text(
+        'Describe how the AI should revise the post. A new draft will be generated.',
+      ),
       findsOneWidget,
     );
     expect(

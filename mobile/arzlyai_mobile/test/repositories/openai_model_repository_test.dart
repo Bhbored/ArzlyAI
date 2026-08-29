@@ -1,28 +1,37 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
+import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import '../helpers/fakes.dart';
 
 void main() {
+  late AppDatabase db;
   late MemoryCredentialStore store;
   late FakeEnvelopeService envelopes;
   late FakeOpenAiModelService service;
   late OpenAiModelRepository repository;
 
   setUp(() {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
     store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
     envelopes = FakeEnvelopeService();
     service = FakeOpenAiModelService();
     repository = OpenAiModelRepository(
       service,
-      CredentialRepository(store),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const OpenAiModelMapper(),
     );
+  });
+
+  tearDown(() async {
+    await db.close();
   });
 
   test('listModels encrypts key and maps online catalog', () async {
@@ -31,7 +40,10 @@ void main() {
     expect(models.length, 2);
     expect(models.first.id, 'gpt-5-mini');
     expect(service.lastRequest?.credentials, dummyEnvelope);
-    expect(envelopes.lastCredentials, contains(providerCredentialEnvelopeKey('openai')));
+    expect(
+      envelopes.lastCredentials,
+      contains(providerCredentialEnvelopeKey('openai')),
+    );
     expect(envelopes.lastCredentials?['openai.apiKey'], 'sk-test');
   });
 

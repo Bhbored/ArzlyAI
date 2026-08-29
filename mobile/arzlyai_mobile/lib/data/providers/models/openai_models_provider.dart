@@ -32,7 +32,9 @@ class OpenAiModels extends _$OpenAiModels {
     }
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(openAiModelRepositoryProvider).listModels(forceRefresh: true),
+      () => ref
+          .read(openAiModelRepositoryProvider)
+          .listModels(forceRefresh: true),
     );
   }
 }

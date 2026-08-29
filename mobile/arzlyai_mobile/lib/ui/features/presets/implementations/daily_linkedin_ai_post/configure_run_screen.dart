@@ -15,6 +15,7 @@ import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart'
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_model_select.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_schedule_section.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_text_field.dart';
 import 'package:arzlyai_mobile/ui/validators/app_validators.dart';
 
@@ -49,12 +50,14 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
     final supports = models
         .firstWhere((model) => model.id == chosen)
         .supportsTemperature;
-    ref.read(runConfigTempProvider.notifier).update(
-      current.copyWith(
-        model: chosen,
-        temperature: supports ? current.temperature : null,
-      ),
-    );
+    ref
+        .read(runConfigTempProvider.notifier)
+        .update(
+          current.copyWith(
+            model: chosen,
+            temperature: supports ? current.temperature : null,
+          ),
+        );
   }
 
   @override
@@ -92,13 +95,15 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
             padding: EdgeInsets.all(context.paddingMedium),
             children: [
               AppTextField.topic(),
-              if (writer != null && writer.modelConfiguration.isModelEditable) ...[
+              if (writer != null &&
+                  writer.modelConfiguration.isModelEditable) ...[
                 SizedBox(height: context.spaceMedium),
                 Text('Model', style: theme.textTheme.small),
                 SizedBox(height: context.spaceSmall / 2),
                 AppModelSelect(
                   enabled: !busy,
-                  onRetry: () => ref.read(openAiModelsProvider.notifier).refresh(),
+                  onRetry: () =>
+                      ref.read(openAiModelsProvider.notifier).refresh(),
                 ),
               ],
               if (writer != null &&
@@ -120,21 +125,23 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
                       ? null
                       : (value) {
                           final current = ref.read(runConfigTempProvider);
-                          ref.read(runConfigTempProvider.notifier).update(
-                            current.copyWith(temperature: value),
-                          );
+                          ref
+                              .read(runConfigTempProvider.notifier)
+                              .update(current.copyWith(temperature: value));
                         },
                 ),
               ],
+              SizedBox(height: context.spaceMedium),
+              const AppScheduleSection(),
               SizedBox(height: context.spaceLarge),
-            AppButton.primary(
-              label: 'Generate',
-              onPressed: blocked
+              AppButton.primary(
+                label: 'Generate',
+                onPressed: blocked
                     ? null
                     : () async {
-                        await ref.read(activeRunProvider.notifier).start(
-                          ref.read(runConfigTempProvider),
-                        );
+                        await ref
+                            .read(activeRunProvider.notifier)
+                            .start(ref.read(runConfigTempProvider));
                         if (!context.mounted) return;
                         if (ref.read(selectedRunIdProvider) != null) {
                           Navigator.of(context).pop();

@@ -32,9 +32,9 @@ class PresetRepository {
   final PresetMapper _mapper;
 
   Future<List<PresetSummary>> cachedSummaries() async {
-    final row = await (_db.select(_db.presetCache)
-          ..where((t) => t.key.equals(_catalogCacheKey)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.presetCache,
+    )..where((t) => t.key.equals(_catalogCacheKey))).getSingleOrNull();
     if (row == null) return const [];
     final list = jsonDecode(row.responseJson) as List<dynamic>;
     return list
@@ -62,10 +62,10 @@ class PresetRepository {
   }
 
   Future<PresetDetails?> cachedDetails(String key, int version) async {
-    final row = await (_db.select(_db.presetCache)..where(
-          (t) => t.key.equals(key) & t.version.equals(version),
-        ))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.presetCache)
+              ..where((t) => t.key.equals(key) & t.version.equals(version)))
+            .getSingleOrNull();
     if (row == null) return null;
     return _mapper.detailsFromDto(
       PresetDetailsResponse.fromJson(

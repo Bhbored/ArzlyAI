@@ -15,7 +15,7 @@ Future<List<CredentialRequirement>> credentialRequirements(Ref ref) async {
   final seen = <String>{};
 
   for (final summary in summaries) {
-  final cached = await repo.cachedDetails(summary.key, summary.version);
+    final cached = await repo.cachedDetails(summary.key, summary.version);
     if (cached != null) {
       _mergeRequirements(requirements, seen, cached.credentialRequirements());
       continue;

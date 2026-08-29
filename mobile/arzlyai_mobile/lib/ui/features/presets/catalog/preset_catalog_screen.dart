@@ -26,9 +26,9 @@ class PresetCatalogScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(LucideIcons.settings),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
           ),
         ],
@@ -62,7 +62,9 @@ class PresetCatalogScreen extends ConsumerWidget {
         loading: () => const AppStatus.loading(),
         error: (error, _) {
           final message = error is ApiException ? error.userMessage : '$error';
-          final correlation = error is ApiException ? error.correlationId : null;
+          final correlation = error is ApiException
+              ? error.correlationId
+              : null;
           return Column(
             children: [
               Expanded(

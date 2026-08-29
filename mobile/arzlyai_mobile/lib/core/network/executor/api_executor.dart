@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -164,9 +164,7 @@ class ApiExecutor {
       DioExceptionType.unknown => ApiException(
         error: serverMessage ?? e.message ?? 'An unexpected error occurred.',
         userMessage:
-            _connectionUserMessage(e) ??
-            serverMessage ??
-            ApiErrors.unknown,
+            _connectionUserMessage(e) ?? serverMessage ?? ApiErrors.unknown,
         statusCode: status,
         correlationId: correlationId,
         originalError: e,

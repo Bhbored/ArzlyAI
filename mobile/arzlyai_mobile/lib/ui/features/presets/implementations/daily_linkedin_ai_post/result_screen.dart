@@ -22,7 +22,8 @@ class ResultScreen extends ConsumerWidget {
           if (value == null) {
             return Center(child: Text('No result', style: theme.textTheme.p));
           }
-          final published = value.status == WorkflowRunStatus.completed &&
+          final published =
+              value.status == WorkflowRunStatus.completed &&
               value.finalResponse != null &&
               value.finalResponse!.isNotEmpty;
           return ListView(
@@ -44,7 +45,9 @@ class ResultScreen extends ConsumerWidget {
         loading: () => const AppStatus.loading(),
         error: (error, _) {
           final message = error is ApiException ? error.userMessage : '$error';
-          final correlation = error is ApiException ? error.correlationId : null;
+          final correlation = error is ApiException
+              ? error.correlationId
+              : null;
           return AppStatus.error(message: message, correlationId: correlation);
         },
       ),

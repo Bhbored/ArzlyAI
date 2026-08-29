@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SettingsCredentialsState {
 
- String get backendUrl; Map<String, String> get credentialValues;
+ Map<String, String> get credentialValues;
 /// Create a copy of SettingsCredentialsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SettingsCredentialsStateCopyWith<SettingsCredentialsState> get copyWith => _$Se
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsCredentialsState&&(identical(other.backendUrl, backendUrl) || other.backendUrl == backendUrl)&&const DeepCollectionEquality().equals(other.credentialValues, credentialValues));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SettingsCredentialsState&&const DeepCollectionEquality().equals(other.credentialValues, credentialValues));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,backendUrl,const DeepCollectionEquality().hash(credentialValues));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(credentialValues));
 
 @override
 String toString() {
-  return 'SettingsCredentialsState(backendUrl: $backendUrl, credentialValues: $credentialValues)';
+  return 'SettingsCredentialsState(credentialValues: $credentialValues)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SettingsCredentialsStateCopyWith<$Res>  {
   factory $SettingsCredentialsStateCopyWith(SettingsCredentialsState value, $Res Function(SettingsCredentialsState) _then) = _$SettingsCredentialsStateCopyWithImpl;
 @useResult
 $Res call({
- String backendUrl, Map<String, String> credentialValues
+ Map<String, String> credentialValues
 });
 
 
@@ -62,10 +62,9 @@ class _$SettingsCredentialsStateCopyWithImpl<$Res>
 
 /// Create a copy of SettingsCredentialsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? backendUrl = null,Object? credentialValues = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? credentialValues = null,}) {
   return _then(_self.copyWith(
-backendUrl: null == backendUrl ? _self.backendUrl : backendUrl // ignore: cast_nullable_to_non_nullable
-as String,credentialValues: null == credentialValues ? _self.credentialValues : credentialValues // ignore: cast_nullable_to_non_nullable
+credentialValues: null == credentialValues ? _self.credentialValues : credentialValues // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,
   ));
 }
@@ -148,10 +147,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String backendUrl,  Map<String, String> credentialValues)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, String> credentialValues)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SettingsCredentialsState() when $default != null:
-return $default(_that.backendUrl,_that.credentialValues);case _:
+return $default(_that.credentialValues);case _:
   return orElse();
 
 }
@@ -169,10 +168,10 @@ return $default(_that.backendUrl,_that.credentialValues);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String backendUrl,  Map<String, String> credentialValues)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, String> credentialValues)  $default,) {final _that = this;
 switch (_that) {
 case _SettingsCredentialsState():
-return $default(_that.backendUrl,_that.credentialValues);}
+return $default(_that.credentialValues);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -186,10 +185,10 @@ return $default(_that.backendUrl,_that.credentialValues);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String backendUrl,  Map<String, String> credentialValues)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, String> credentialValues)?  $default,) {final _that = this;
 switch (_that) {
 case _SettingsCredentialsState() when $default != null:
-return $default(_that.backendUrl,_that.credentialValues);case _:
+return $default(_that.credentialValues);case _:
   return null;
 
 }
@@ -201,10 +200,9 @@ return $default(_that.backendUrl,_that.credentialValues);case _:
 
 
 class _SettingsCredentialsState implements SettingsCredentialsState {
-  const _SettingsCredentialsState({this.backendUrl = ApiConfig.defaultOrigin, final  Map<String, String> credentialValues = const {}}): _credentialValues = credentialValues;
+  const _SettingsCredentialsState({final  Map<String, String> credentialValues = const {}}): _credentialValues = credentialValues;
   
 
-@override@JsonKey() final  String backendUrl;
  final  Map<String, String> _credentialValues;
 @override@JsonKey() Map<String, String> get credentialValues {
   if (_credentialValues is EqualUnmodifiableMapView) return _credentialValues;
@@ -223,16 +221,16 @@ _$SettingsCredentialsStateCopyWith<_SettingsCredentialsState> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SettingsCredentialsState&&(identical(other.backendUrl, backendUrl) || other.backendUrl == backendUrl)&&const DeepCollectionEquality().equals(other._credentialValues, _credentialValues));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SettingsCredentialsState&&const DeepCollectionEquality().equals(other._credentialValues, _credentialValues));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,backendUrl,const DeepCollectionEquality().hash(_credentialValues));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_credentialValues));
 
 @override
 String toString() {
-  return 'SettingsCredentialsState(backendUrl: $backendUrl, credentialValues: $credentialValues)';
+  return 'SettingsCredentialsState(credentialValues: $credentialValues)';
 }
 
 
@@ -243,7 +241,7 @@ abstract mixin class _$SettingsCredentialsStateCopyWith<$Res> implements $Settin
   factory _$SettingsCredentialsStateCopyWith(_SettingsCredentialsState value, $Res Function(_SettingsCredentialsState) _then) = __$SettingsCredentialsStateCopyWithImpl;
 @override @useResult
 $Res call({
- String backendUrl, Map<String, String> credentialValues
+ Map<String, String> credentialValues
 });
 
 
@@ -260,10 +258,9 @@ class __$SettingsCredentialsStateCopyWithImpl<$Res>
 
 /// Create a copy of SettingsCredentialsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? backendUrl = null,Object? credentialValues = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? credentialValues = null,}) {
   return _then(_SettingsCredentialsState(
-backendUrl: null == backendUrl ? _self.backendUrl : backendUrl // ignore: cast_nullable_to_non_nullable
-as String,credentialValues: null == credentialValues ? _self._credentialValues : credentialValues // ignore: cast_nullable_to_non_nullable
+credentialValues: null == credentialValues ? _self._credentialValues : credentialValues // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,
   ));
 }

@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_android.dart';
 import 'package:arzlyai_mobile/data/repositories/credential_store.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
@@ -16,13 +18,17 @@ CredentialStore credentialStore(Ref ref) {
 
 @Riverpod(keepAlive: true, retry: retry)
 CredentialRepository credentialRepository(Ref ref) {
-  return CredentialRepository(ref.read(credentialStoreProvider));
+  return CredentialRepository(
+    ref.read(credentialStoreProvider),
+    ref.read(connectorCredentialRepositoryProvider),
+  );
 }
 
 class CredentialRepository {
-  CredentialRepository(this._store);
+  CredentialRepository(this._store, this._connectors);
 
   final CredentialStore _store;
+  final ConnectorCredentialRepository _connectors;
 
   Future<Map<String, String>> readForEnvelopeKeys(List<String> envelopeKeys) {
     return _store.readValues(envelopeKeys);
@@ -31,8 +37,20 @@ class CredentialRepository {
   Future<Map<String, String>> readForPreset(
     PresetDetails preset,
     CredentialPhase phase,
-  ) {
-    return readForEnvelopeKeys(preset.envelopeKeysForPhase(phase));
+  ) async {
+    final envelopeKeys = preset.envelopeKeysForPhase(phase);
+    final values = await readForEnvelopeKeys(envelopeKeys);
+    if (phase == CredentialPhase.approval) {
+      final linkedIn = await _connectors.readEnvelopeValues(
+        ConnectorKeys.linkedin,
+      );
+      for (final entry in linkedIn.entries) {
+        if (entry.value.trim().isNotEmpty) {
+          values[entry.key] = entry.value;
+        }
+      }
+    }
+    return values;
   }
 
   Future<void> saveDraftValues(Map<String, String> values) {

@@ -15,6 +15,7 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
@@ -61,14 +62,12 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    store.values[integrationFieldEnvelopeKey('linkedin.posts', 'accessToken')] = 'li-token';
-    store.values[integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn')] =
-        'urn:li:person:1';
+    await seedLinkedInConnector(db);
     envelopes = FakeEnvelopeService();
     hub = FakeHub();
     openAiRepo = OpenAiModelRepository(
       FakeOpenAiModelService()..result = fixtureOpenAiModelResponses(),
-      CredentialRepository(store),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const OpenAiModelMapper(),
     );
@@ -91,7 +90,9 @@ void main() {
     );
     addTearDown(container.dispose);
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(const RunConfigState());
+    await container
+        .read(activeRunProvider.notifier)
+        .start(const RunConfigState());
     expect(workflows.startCount, 0);
   });
 
@@ -107,13 +108,13 @@ void main() {
       online: false,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     expect(container.read(activeRunProvider).error, isA<StateError>());
     expect(workflows.startCount, 0);
   });
@@ -130,21 +131,24 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
     await Future.wait([
-      container.read(activeRunProvider.notifier).start(
-        container.read(runConfigTempProvider),
-      ),
-      container.read(activeRunProvider.notifier).start(
-        container.read(runConfigTempProvider),
-      ),
+      container
+          .read(activeRunProvider.notifier)
+          .start(container.read(runConfigTempProvider)),
+      container
+          .read(activeRunProvider.notifier)
+          .start(container.read(runConfigTempProvider)),
     ]);
     expect(workflows.startCount, 1);
     expect(hub.subscribeCount, 1);
-    expect(envelopes.lastCredentials, contains(providerCredentialEnvelopeKey('openai')));
+    expect(
+      envelopes.lastCredentials,
+      contains(providerCredentialEnvelopeKey('openai')),
+    );
   });
 
   test('429 from start is surfaced with retry after', () async {
@@ -158,46 +162,49 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     final error = container.read(activeRunProvider).error;
     expect(error, isA<ApiException>());
     expect((error! as ApiException).statusCode, 429);
     expect((error as ApiException).retryAfter, const Duration(seconds: 2));
   });
 
-  test('recover reconnects then marks 404 expired while keeping history', () async {
-    final workflows = FakeWorkflowService(getError: notFound());
-    final container = _container(
-      workflows: workflows,
-      hub: hub,
-      store: store,
-      envelopes: envelopes,
-      db: db,
-      openAiRepo: openAiRepo,
-    );
-    addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
-    await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
-    final runId = container.read(activeRunProvider).value!.runId;
-    workflows.getError = notFound();
-    await container.read(activeRunProvider.notifier).recover();
-    expect(hub.reconnectCount, 1);
-    final recovered = container.read(activeRunProvider).value;
-    expect(recovered?.status, WorkflowRunStatus.expired);
-    expect(recovered?.runId, runId);
-    expect(recovered?.nodes, isNotEmpty);
-  });
+  test(
+    'recover reconnects then marks 404 expired while keeping history',
+    () async {
+      final workflows = FakeWorkflowService(getError: notFound());
+      final container = _container(
+        workflows: workflows,
+        hub: hub,
+        store: store,
+        envelopes: envelopes,
+        db: db,
+        openAiRepo: openAiRepo,
+      );
+      addTearDown(container.dispose);
+      container
+          .read(runConfigTempProvider.notifier)
+          .update(const RunConfigState(topic: 'AI agents'));
+      await container.read(activeRunProvider.future);
+      await container
+          .read(activeRunProvider.notifier)
+          .start(container.read(runConfigTempProvider));
+      final runId = container.read(activeRunProvider).value!.runId;
+      workflows.getError = notFound();
+      await container.read(activeRunProvider.notifier).recover();
+      expect(hub.reconnectCount, 1);
+      final recovered = container.read(activeRunProvider).value;
+      expect(recovered?.status, WorkflowRunStatus.expired);
+      expect(recovered?.runId, runId);
+      expect(recovered?.nodes, isNotEmpty);
+    },
+  );
 
   test('edit approval sends openai envelope and returns waiting', () async {
     final workflows = FakeWorkflowService();
@@ -210,20 +217,22 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
-    container.read(reviewDraftTempProvider.notifier).update(
-      'Use a stronger opening',
-    );
-    await container.read(activeRunProvider.notifier).submitApproval(
-      ApprovalDecision.edit,
-      editedContent: 'Use a stronger opening',
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    container
+        .read(reviewDraftTempProvider.notifier)
+        .update('Use a stronger opening');
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(
+          ApprovalDecision.edit,
+          editedContent: 'Use a stronger opening',
+        );
     expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
     expect(workflows.lastApproval?.editedContent, 'Use a stronger opening');
     expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
@@ -233,15 +242,14 @@ void main() {
     );
     expect(
       envelopes.lastCredentials,
-      isNot(contains(integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'))),
+      isNot(
+        contains(integrationFieldEnvelopeKey('linkedin.posts', 'accessToken')),
+      ),
     );
     final run = container.read(activeRunProvider).value;
     expect(run?.status, WorkflowRunStatus.waitingForApproval);
     expect(run?.finalResponse, isNull);
-    expect(
-      run?.approval?.originalContent,
-      contains('stronger opening'),
-    );
+    expect(run?.approval?.originalContent, contains('stronger opening'));
   });
 
   test('accept approval sends linkedin envelope and completes', () async {
@@ -255,23 +263,26 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
-    await container.read(activeRunProvider.notifier).submitApproval(
-      ApprovalDecision.accept,
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.accept);
     expect(workflows.lastApproval?.decision, ApprovalDecision.accept);
     expect(workflows.lastApproval?.editedContent, isNull);
     expect(
       envelopes.lastCredentials,
       contains(integrationFieldEnvelopeKey('linkedin.posts', 'accessToken')),
     );
-    expect(container.read(activeRunProvider).value?.finalResponse, 'urn:li:share:123');
+    expect(
+      container.read(activeRunProvider).value?.finalResponse,
+      'urn:li:share:123',
+    );
   });
 
   test('repeated edit approval cycles stay waiting', () async {
@@ -285,27 +296,31 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     for (final feedback in ['Shorter', 'Even shorter']) {
-      await container.read(activeRunProvider.notifier).submitApproval(
-        ApprovalDecision.edit,
-        editedContent: feedback,
+      await container
+          .read(activeRunProvider.notifier)
+          .submitApproval(ApprovalDecision.edit, editedContent: feedback);
+      expect(
+        container.read(activeRunProvider).value?.status,
+        WorkflowRunStatus.waitingForApproval,
       );
-      expect(container.read(activeRunProvider).value?.status,
-          WorkflowRunStatus.waitingForApproval);
     }
     expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
   });
 
   test('reject approval omits credentials', () async {
     final workflows = FakeWorkflowService(
-      approvalResult: waitingRunDto().copyWith(status: 'Cancelled', approval: waitingRunDto().approval),
+      approvalResult: waitingRunDto().copyWith(
+        status: 'Cancelled',
+        approval: waitingRunDto().approval,
+      ),
     );
     final container = _container(
       workflows: workflows,
@@ -316,16 +331,16 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
-    await container.read(activeRunProvider.notifier).submitApproval(
-      ApprovalDecision.reject,
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.reject);
     expect(workflows.lastApproval?.decision, ApprovalDecision.reject);
     expect(workflows.lastApproval?.credentials, isNull);
   });
@@ -341,17 +356,19 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(
-        topic: 'AI agents',
-        model: 'gpt-5-mini',
-        temperature: 0.7,
-      ),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(
+          const RunConfigState(
+            topic: 'AI agents',
+            model: 'gpt-5-mini',
+            temperature: 0.7,
+          ),
+        );
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     final override = workflows.lastStart!.agentOverrides.single;
     expect(override.model, 'gpt-5-mini');
     expect(override.temperature, isNull);
@@ -370,17 +387,19 @@ void main() {
       openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(
-        topic: 'AI agents',
-        model: 'gpt-4.1-mini',
-        temperature: 0.4,
-      ),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(
+          const RunConfigState(
+            topic: 'AI agents',
+            model: 'gpt-4.1-mini',
+            temperature: 0.4,
+          ),
+        );
     await container.read(activeRunProvider.future);
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     final override = workflows.lastStart!.agentOverrides.single;
     expect(override.model, 'gpt-4.1-mini');
     expect(override.temperature, 0.4);

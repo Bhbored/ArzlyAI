@@ -58,7 +58,9 @@ class OpenAiModelRepository {
       throw StateError('Missing credentials: ${missing.join(', ')}');
     }
 
-    final envelope = await _envelopes.encrypt({envelopeKey: values[envelopeKey]!});
+    final envelope = await _envelopes.encrypt({
+      envelopeKey: values[envelopeKey]!,
+    });
     final dtos = await _service.listModels(
       ListOpenAiModelsRequest(credentials: envelope),
     );

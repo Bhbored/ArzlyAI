@@ -21,12 +21,14 @@ class PresetDetailsNotifier extends _$PresetDetailsNotifier {
     if (version != null) {
       final cached = await repo.cachedDetails(key, version);
       if (cached != null) {
-        unawaited(Future<void>.microtask(() async {
-          try {
-            final fresh = await repo.refreshDetails(key);
-            if (ref.mounted) state = AsyncData(fresh);
-          } catch (_) {}
-        }));
+        unawaited(
+          Future<void>.microtask(() async {
+            try {
+              final fresh = await repo.refreshDetails(key);
+              if (ref.mounted) state = AsyncData(fresh);
+            } catch (_) {}
+          }),
+        );
         return cached;
       }
     }

@@ -12,22 +12,23 @@ using ArzlyAI.Application.Repositories.Presets;
 using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
 using ArzlyAI.Application.Services.Agents;
-using ArzlyAI.Application.Services.Notifications;
+using ArzlyAI.Application.Services.Connectors;
 using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows;
 using ArzlyAI.Application.Services.Workflows.Execution;
 using ArzlyAI.Infrastructure.Agents;
+using ArzlyAI.Infrastructure.Configuration;
+using ArzlyAI.Infrastructure.Connectors.LinkedIn;
+using ArzlyAI.Infrastructure.Connectors.Nango;
 using ArzlyAI.Infrastructure.Health;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
-using ArzlyAI.Infrastructure.Notifications;
 using ArzlyAI.Infrastructure.Persistence;
 using ArzlyAI.Infrastructure.Persistence.Interceptors;
 using ArzlyAI.Infrastructure.Persistence.Repositories;
 using ArzlyAI.Infrastructure.Persistence.Repositories.Presets;
 using ArzlyAI.Infrastructure.Persistence.Repositories.Workflows;
-using ArzlyAI.Infrastructure.Scheduling;
 using ArzlyAI.Infrastructure.Security;
 using ArzlyAI.Infrastructure.Services.Models;
 using Asp.Versioning;
@@ -35,7 +36,6 @@ using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
 
 namespace ArzlyAI.Api.Helpers;
 
@@ -58,8 +58,7 @@ public static class DIContainer
             .RegisterRepositories()
             .RegisterApplicationServices()
             .RegisterInfrastructureServices()
-            .RegisterIntegrations()
-            .RegisterScheduling();
+            .RegisterIntegrations();
     }
 
     public static async Task InitializeDatabaseAsync(
@@ -146,10 +145,10 @@ public static class DIContainer
                 "Security", 120, 60);
             AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.WorkflowExecution,
                 "WorkflowExecution", 120, 60);
-            AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.Scheduling,
-                "Scheduling", 240, 60);
             AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.SignalR,
                 "SignalR", 600, 60);
+            AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.Connectors,
+                "Connectors", 120, 60);
         });
         return services;
     }
@@ -216,12 +215,25 @@ public static class DIContainer
 
     private static IServiceCollection RegisterInfrastructureServices(this IServiceCollection services)
     {
+        services.AddOptions<NangoOptions>()
+            .BindConfiguration(NangoOptions.SectionName);
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICredentialEnvelopeProtector, EphemeralCredentialEnvelopeProtector>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
-        services.AddSingleton<INotificationService, LoggingNotificationService>();
         services.AddHttpClient<IOpenAiModelClient, OpenAiModelClient>(client =>
             client.BaseAddress = new Uri("https://api.openai.com/"));
+        services.AddHttpClient<INangoConnectorClient, NangoConnectorClient>((serviceProvider, client) =>
+        {
+            var settings = serviceProvider.GetRequiredService<
+                Microsoft.Extensions.Options.IOptions<NangoOptions>>().Value;
+            client.BaseAddress = new Uri(
+                string.IsNullOrWhiteSpace(settings.BaseUrl)
+                    ? "https://api.nango.dev/"
+                    : $"{settings.BaseUrl.TrimEnd('/')}/");
+        });
+        services.AddHttpClient<ILinkedInIdentityClient, LinkedInIdentityClient>(client =>
+            client.BaseAddress = new Uri("https://api.linkedin.com/"));
+        services.AddScoped<IConnectorBroker, NangoConnectorBroker>();
         return services;
     }
 
@@ -230,14 +242,6 @@ public static class DIContainer
         services.AddHttpClient<ILinkedInPublisher, LinkedInPublisher>(client =>
             client.BaseAddress = new Uri("https://api.linkedin.com/"));
         services.AddScoped<IIntegrationHandler, LinkedInPostsIntegrationHandler>();
-        return services;
-    }
-
-    private static IServiceCollection RegisterScheduling(this IServiceCollection services)
-    {
-        services.AddQuartz();
-        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
-        services.AddSingleton<IWorkflowScheduler, DailyWorkflowScheduler>();
         return services;
     }
 

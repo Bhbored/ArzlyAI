@@ -80,13 +80,18 @@ class AppModelSelect extends ConsumerWidget {
     final current = ref.read(runConfigTempProvider);
     if (modelId == current.model) return;
     final supports =
-        models.where((model) => model.id == modelId).firstOrNull?.supportsTemperature ??
+        models
+            .where((model) => model.id == modelId)
+            .firstOrNull
+            ?.supportsTemperature ??
         false;
-    ref.read(runConfigTempProvider.notifier).update(
-      current.copyWith(
-        model: modelId,
-        temperature: supports ? current.temperature : null,
-      ),
-    );
+    ref
+        .read(runConfigTempProvider.notifier)
+        .update(
+          current.copyWith(
+            model: modelId,
+            temperature: supports ? current.temperature : null,
+          ),
+        );
   }
 }

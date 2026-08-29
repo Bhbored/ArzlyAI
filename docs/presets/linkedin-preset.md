@@ -6,6 +6,8 @@ For the online model selector implementation, use the copy-ready
 [`flutter-openai-model-catalog-prompt.md`](flutter-openai-model-catalog-prompt.md).
 For the request-an-edit regeneration behavior, use
 [`flutter-linkedin-edit-regeneration-prompt.md`](flutter-linkedin-edit-regeneration-prompt.md).
+LinkedIn OAuth brokerage is documented in
+[`../connectors/nango-linkedin.md`](../connectors/nango-linkedin.md).
 
 `daily-linkedin-ai-post` is the first complete ArzlyAI preset. It accepts a topic, generates a LinkedIn draft, pauses for the user to accept, edit, or reject it, and publishes only approved content.
 
@@ -86,7 +88,7 @@ Available decisions:
 - `Edit` treats `EditedContent` as feedback, reruns the nearest unique upstream agent, and pauses at this approval node again.
 - `Reject` cancels the run without calling LinkedIn.
 
-The node enters `WaitingForApproval`, SignalR emits `NodeChanged`, and the notification abstraction is invoked. Credentials are not retained across the pause: Accept needs fresh LinkedIn credentials, while Edit needs a fresh OpenAI credential envelope for regeneration. Reject needs none.
+The node enters `WaitingForApproval` and SignalR emits `NodeChanged`. Credentials are not retained across the pause: Accept needs fresh LinkedIn credentials, while Edit needs a fresh OpenAI credential envelope for regeneration. Reject needs none.
 
 ## Node 3: LinkedIn Publisher
 
@@ -243,18 +245,11 @@ SignalR is transient. `WorkflowRunResponse` is the authoritative snapshot for re
 
 ## Scheduling
 
-```http
-PUT /api/v1/workflows/{workflowId}/schedule
-```
+Scheduling and user notifications are client-owned. Flutter persists the activated preset, topic, and schedule in SQLite, registers the appropriate OS background task or local notification, and sends a new short-lived credential envelope when execution begins. The backend exposes no scheduling endpoint and runs workflows only in response to client requests.
 
-Quartz creates a daily trigger using the supplied local time and host-supported time-zone ID. When due, `WorkflowDueJob` emits an `ExecutionRequested` SignalR event. It does not generate or publish independently because inputs and credentials intentionally remain on the device.
+The implementation plan for the Flutter agent is in [`flutter-client-scheduling-notifications.md`](flutter-client-scheduling-notifications.md).
 
-Therefore:
-
-- Flutter must persist the activated preset, topic, and schedule in device SQLite.
-- It must send a new short-lived credential envelope when execution is requested.
-- In-memory Quartz schedules must be rehydrated after backend restart.
-- SignalR cannot wake a closed app; that requires an FCM/APNs adapter and background handoff design.
+Mobile operating systems do not guarantee exact background network execution. The client should attempt execution when permitted and otherwise notify the user to open the workflow. SignalR reports progress while the application is connected; it is not a push-notification transport.
 
 ## Security boundary
 
@@ -343,7 +338,7 @@ flowchart LR
 
 | File | Purpose |
 | --- | --- |
-| `backend/src/ArzlyAI.Api/Controllers/v1/WorkflowsController.cs` | Version 1 run, approval, and schedule endpoints. |
+| `backend/src/ArzlyAI.Api/Controllers/v1/WorkflowsController.cs` | Version 1 workflow run and approval endpoints. |
 | `backend/src/ArzlyAI.Application/Services/Workflows/IWorkflowExecutionService.cs` | Execution use-case contract. |
 | `backend/src/ArzlyAI.Application/Services/Workflows/WorkflowExecutionService.cs` | Generic run lifecycle, approval continuation, status persistence, and realtime events. |
 | `backend/src/ArzlyAI.Application/Services/Workflows/Execution/IWorkflowGraphPlanner.cs` | Graph-planning contract. |
@@ -365,7 +360,6 @@ flowchart LR
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/AgentOverrideRequest.cs` | Allowed model and temperature overrides. |
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/StartWorkflowRequest.cs` | Start command containing preset key, inputs, overrides, and envelope. |
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/SubmitApprovalRequest.cs` | Accept/edit/reject command and fresh envelope. |
-| `backend/src/ArzlyAI.Application/DTOs/Workflows/ScheduleWorkflowRequest.cs` | Daily local time and time-zone command. |
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/WorkflowRunResponse.cs` | Full run snapshot returned to Flutter. |
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/WorkflowNodeRunResponse.cs` | One node's status, output, and error. |
 | `backend/src/ArzlyAI.Application/DTOs/Workflows/ApprovalSnapshotResponse.cs` | Original/current content and edit flag. |
@@ -382,7 +376,7 @@ flowchart LR
 | `backend/src/ArzlyAI.Infrastructure/Integrations/LinkedIn/LinkedInPostsIntegrationHandler.cs` | Maps workflow data to LinkedIn inputs. |
 | `backend/src/ArzlyAI.Infrastructure/Integrations/LinkedIn/LinkedInPublisher.cs` | Calls LinkedIn REST Posts API. |
 
-### Security, realtime, scheduling, and notifications
+### Security and realtime
 
 | File | Purpose |
 | --- | --- |
@@ -395,11 +389,6 @@ flowchart LR
 | `backend/src/ArzlyAI.Api/Hubs/IWorkflowClient.cs` | Typed SignalR client contract. |
 | `backend/src/ArzlyAI.Application/Services/Realtime/IWorkflowRealtimeNotifier.cs` | Realtime abstraction. |
 | `backend/src/ArzlyAI.Api/Realtime/SignalRWorkflowRealtimeNotifier.cs` | SignalR notifier. |
-| `backend/src/ArzlyAI.Application/Abstractions/IWorkflowScheduler.cs` | Scheduler contract. |
-| `backend/src/ArzlyAI.Infrastructure/Scheduling/DailyWorkflowScheduler.cs` | Quartz daily scheduler. |
-| `backend/src/ArzlyAI.Infrastructure/Scheduling/WorkflowDueJob.cs` | Due-event job. |
-| `backend/src/ArzlyAI.Application/Services/Notifications/INotificationService.cs` | Notification contract. |
-| `backend/src/ArzlyAI.Infrastructure/Notifications/LoggingNotificationService.cs` | Logging-only Stage 1 adapter. |
 | `backend/src/ArzlyAI.Api/Program.cs` | Application startup and HTTP pipeline. |
 | `backend/src/ArzlyAI.Api/Helpers/DIContainer.cs` | API and Infrastructure registrations. |
 | `backend/tests/ArzlyAI.Tests/PresetServiceTests.cs` | Preset mapping/constraint test. |
@@ -410,7 +399,7 @@ flowchart LR
 ## Stage 1 limitations
 
 - Execution supports generic acyclic preset graphs in deterministic sequential order; parallel execution and conditional routing are not implemented yet.
-- Runs and schedules are memory-backed.
-- Notifications are logged instead of sent through FCM/APNs.
+- Workflow runs are memory-backed and expire after 30 minutes.
+- Scheduling and local notifications must be implemented by the Flutter client.
 - LinkedIn OAuth and refresh are outside the backend.
 - The seed prevents duplicate preset keys, but production preset upgrades still need an explicit version/update strategy.

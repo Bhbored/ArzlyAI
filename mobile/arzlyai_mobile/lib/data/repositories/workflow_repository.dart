@@ -67,6 +67,58 @@ class WorkflowRepository {
     );
   }
 
+  Future<WorkflowInstance?> getInstance(String id) async {
+    final row = await (_db.select(_db.workflowInstances)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (row == null) return null;
+    return WorkflowInstance(
+      id: row.id,
+      presetKey: row.presetKey,
+      presetVersion: row.presetVersion,
+      name: row.name,
+      topic: row.topic,
+      modelOverridesJson: row.modelOverridesJson,
+      createdAtUtc: row.createdAtUtc,
+      updatedAtUtc: row.updatedAtUtc,
+    );
+  }
+
+  Future<void> updateInstance({
+    required String id,
+    required String topic,
+    String? modelOverridesJson,
+  }) async {
+    final now = DateTime.now().toUtc();
+    await (_db.update(_db.workflowInstances)..where((t) => t.id.equals(id))).write(
+      WorkflowInstancesCompanion(
+        topic: Value(topic),
+        modelOverridesJson: Value(modelOverridesJson),
+        updatedAtUtc: Value(now),
+      ),
+    );
+  }
+
+  Future<bool> hasPendingApproval(String localWorkflowId) async {
+    final rows = await (_db.select(_db.workflowRuns)
+          ..where(
+            (t) =>
+                t.localWorkflowId.equals(localWorkflowId) &
+                t.status.equals(WorkflowRunStatus.waitingForApproval.wireValue),
+          ))
+        .get();
+    return rows.isNotEmpty;
+  }
+
+  Future<WorkflowRun?> latestRunForWorkflow(String localWorkflowId) async {
+    final rows = await (_db.select(_db.workflowRuns)
+          ..where((t) => t.localWorkflowId.equals(localWorkflowId))
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAtUtc)]))
+        .get();
+    if (rows.isEmpty) return null;
+    return getLocalRun(rows.first.runId);
+  }
+
   Future<WorkflowRunResponse> fetchRemote(String runId) =>
       _service.getRun(runId);
 
@@ -95,13 +147,14 @@ class WorkflowRepository {
 
   Future<void> markExpired(String runId) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.workflowRuns)..where((t) => t.runId.equals(runId)))
-        .write(
-          WorkflowRunsCompanion(
-            status: Value(WorkflowRunStatus.expired.wireValue),
-            updatedAtUtc: Value(now),
-          ),
-        );
+    await (_db.update(
+      _db.workflowRuns,
+    )..where((t) => t.runId.equals(runId))).write(
+      WorkflowRunsCompanion(
+        status: Value(WorkflowRunStatus.expired.wireValue),
+        updatedAtUtc: Value(now),
+      ),
+    );
   }
 
   Future<WorkflowRun?> getLocalRun(String runId) async {
@@ -171,13 +224,11 @@ class WorkflowRepository {
     }
   }
 
-  WorkflowRun _fromRows(
-    WorkflowRunRow row,
-    List<WorkflowNodeRunRow> nodeRows,
-  ) {
+  WorkflowRun _fromRows(WorkflowRunRow row, List<WorkflowNodeRunRow> nodeRows) {
     ApprovalSnapshot? approval;
     if (row.approvalSnapshotJson != null) {
-      final json = jsonDecode(row.approvalSnapshotJson!) as Map<String, dynamic>;
+      final json =
+          jsonDecode(row.approvalSnapshotJson!) as Map<String, dynamic>;
       approval = ApprovalSnapshot(
         originalContent: json['originalContent'] as String,
         currentContent: json['currentContent'] as String,

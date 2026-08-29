@@ -17,30 +17,33 @@ class AppWorkflowNodeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final runAsync = ref.watch(activeRunProvider);
     final theme = ShadTheme.of(context);
-    final nodeRun = runAsync.value?.nodes.where((n) => n.nodeId == node.id).firstOrNull;
+    final nodeRun = runAsync.value?.nodes
+        .where((n) => n.nodeId == node.id)
+        .firstOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(node.displayName, style: theme.textTheme.h4),
-      ),
+      appBar: AppBar(title: Text(node.displayName, style: theme.textTheme.h4)),
       body: AppLoadingOverlay(
         visible: runAsync.isLoading,
         child: ListView(
-        padding: EdgeInsets.all(context.paddingMedium),
-        children: [
-          if (nodeRun != null)
-            AppCard.standard(
-              title: nodeRun.status.wireValue,
-              child: Text(
-                nodeRun.output ?? nodeRun.error ?? 'No output yet.',
-                style: theme.textTheme.p,
+          padding: EdgeInsets.all(context.paddingMedium),
+          children: [
+            if (nodeRun != null)
+              AppCard.standard(
+                title: nodeRun.status.wireValue,
+                child: Text(
+                  nodeRun.output ?? nodeRun.error ?? 'No output yet.',
+                  style: theme.textTheme.p,
+                ),
+              )
+            else
+              AppCard.standard(
+                child: Text(
+                  'No run data for this step.',
+                  style: theme.textTheme.p,
+                ),
               ),
-            )
-          else
-            AppCard.standard(
-              child: Text('No run data for this step.', style: theme.textTheme.p),
-            ),
-        ],
+          ],
         ),
       ),
     );

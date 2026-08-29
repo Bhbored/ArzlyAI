@@ -30,11 +30,16 @@ import 'package:arzlyai_mobile/core/network/services/models/openai_model_service
 import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 Map<String, dynamic> fixtureJson(String name) {
   return jsonDecode(
-    File('test/presets/daily_linkedin_ai_post/fixtures/$name').readAsStringSync(),
-  )
+        File(
+          'test/presets/daily_linkedin_ai_post/fixtures/$name',
+        ).readAsStringSync(),
+      )
       as Map<String, dynamic>;
 }
 
@@ -55,7 +60,9 @@ WorkflowRunResponse waitingRunDto() {
 }
 
 WorkflowRunResponse completedRunDto() {
-  return WorkflowRunResponse.fromJson(fixtureJson('workflow_run_completed.json'));
+  return WorkflowRunResponse.fromJson(
+    fixtureJson('workflow_run_completed.json'),
+  );
 }
 
 WorkflowRunResponse regeneratedWaitingRunDto() {
@@ -65,9 +72,11 @@ WorkflowRunResponse regeneratedWaitingRunDto() {
 }
 
 List<OpenAiModelResponse> fixtureOpenAiModelResponses() {
-  final list = jsonDecode(
-    File('test/fixtures/network/openai_models.json').readAsStringSync(),
-  ) as List<dynamic>;
+  final list =
+      jsonDecode(
+            File('test/fixtures/network/openai_models.json').readAsStringSync(),
+          )
+          as List<dynamic>;
   return list
       .map(
         (item) => OpenAiModelResponse.fromJson(
@@ -138,9 +147,11 @@ class FakeEnvelopeService extends CredentialEnvelopeService {
     : super(SecurityService(ApiExecutor(Dio())), CredentialEnvelopeBuilder());
 
   Map<String, String>? lastCredentials;
+  var encryptCount = 0;
 
   @override
   Future<CredentialEnvelope> encrypt(Map<String, String> credentials) async {
+    encryptCount++;
     lastCredentials = Map<String, String>.from(credentials);
     return dummyEnvelope;
   }
@@ -179,7 +190,8 @@ class FakeWorkflowService extends WorkflowService {
        getResult = getResult ?? waitingRunDto(),
        approvalResult = approvalResult ?? completedRunDto(),
        editApprovalResult = editApprovalResult ?? regeneratedWaitingRunDto(),
-       rejectApprovalResult = rejectApprovalResult ??
+       rejectApprovalResult =
+           rejectApprovalResult ??
            waitingRunDto().copyWith(status: 'Cancelled'),
        super(ApiExecutor(Dio()));
 
@@ -278,6 +290,13 @@ class OnlineMode extends OfflineMode {
 class ForcedOfflineMode extends OfflineMode {
   @override
   Future<bool> build() async => true;
+}
+
+Future<void> seedLinkedInConnector(AppDatabase db) {
+  return ConnectorCredentialRepository(db).saveFields(ConnectorKeys.linkedin, {
+    LinkedInConnectorFields.accessToken: 'li-token',
+    LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
+  });
 }
 
 ApiException notFound() {

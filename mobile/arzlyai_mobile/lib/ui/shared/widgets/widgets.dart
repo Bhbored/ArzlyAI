@@ -1,5 +1,6 @@
 export 'app_button.dart';
 export 'app_card.dart';
+export 'app_connector_card.dart';
 export 'app_credential_field.dart';
 export 'app_dialog.dart';
 export 'app_integration_card.dart';

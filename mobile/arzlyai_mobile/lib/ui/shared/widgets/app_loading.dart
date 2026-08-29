@@ -11,8 +11,12 @@ class AppLoadingIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final primary = theme.colorScheme.primary;
-    final size = small ? context.loadingIndicatorSmall : context.loadingIndicatorMedium;
-    final strokeWidth = small ? context.loadingStrokeWidth : context.loadingStrokeWidthBold;
+    final size = small
+        ? context.loadingIndicatorSmall
+        : context.loadingIndicatorMedium;
+    final strokeWidth = small
+        ? context.loadingStrokeWidth
+        : context.loadingStrokeWidthBold;
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,

@@ -15,6 +15,7 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
@@ -26,20 +27,20 @@ import '../../helpers/test_app.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('catalog to details to generate to edit approval', (tester) async {
+  testWidgets('catalog to details to generate to edit approval', (
+    tester,
+  ) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
     final store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    store.values[integrationFieldEnvelopeKey('linkedin.posts', 'accessToken')] = 'li-token';
-    store.values[integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn')] =
-        'urn:li:person:1';
+    await seedLinkedInConnector(db);
     final workflows = FakeWorkflowService();
     final hub = FakeHub();
     final envelopes = FakeEnvelopeService();
     final openAiRepo = OpenAiModelRepository(
       FakeOpenAiModelService()..result = fixtureOpenAiModelResponses(),
-      CredentialRepository(store),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const OpenAiModelMapper(),
     );
@@ -52,7 +53,9 @@ void main() {
           presetCatalogProvider.overrideWith(
             () => SeededCatalog([fixtureSummary()]),
           ),
-          presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
+          presetDetailsProvider.overrideWith(
+            () => SeededDetails(fixtureDetails()),
+          ),
           openAiModelsProvider.overrideWith(
             () => SeededOpenAiModels(fixtureOpenAiModels()),
           ),
@@ -78,19 +81,18 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.text('Generate')),
     );
-    container.read(runConfigTempProvider.notifier).update(
-      const RunConfigState(topic: 'AI agents'),
-    );
-    await container.read(activeRunProvider.notifier).start(
-      container.read(runConfigTempProvider),
-    );
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
     expect(workflows.startCount, 1);
     expect(workflows.lastStart?.inputs['topic'], 'AI agents');
     container.read(reviewDraftTempProvider.notifier).update('edited post');
-    await container.read(activeRunProvider.notifier).submitApproval(
-      ApprovalDecision.edit,
-      editedContent: 'edited post',
-    );
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.edit, editedContent: 'edited post');
     expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
     expect(
       container.read(activeRunProvider).value?.status,

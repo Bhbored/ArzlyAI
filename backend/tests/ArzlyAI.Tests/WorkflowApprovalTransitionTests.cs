@@ -4,7 +4,6 @@ using ArzlyAI.Application.Mappers.Workflows;
 using ArzlyAI.Application.Models;
 using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
-using ArzlyAI.Application.Services.Notifications;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows;
@@ -94,7 +93,6 @@ public sealed class WorkflowApprovalTransitionTests
             new WorkflowInputMapper(),
             handlers,
             realtime,
-            new NotificationStub(),
             new WorkflowRunMapper(),
             NullLogger<WorkflowExecutionService>.Instance);
         return new Fixture(service, integration, realtime);
@@ -253,13 +251,5 @@ public sealed class WorkflowApprovalTransitionTests
             Events.Add(message);
             return Task.CompletedTask;
         }
-    }
-
-    private sealed class NotificationStub : INotificationService
-    {
-        public Task WorkflowNeedsApprovalAsync(Guid runId, string presetName, CancellationToken cancellationToken) =>
-            Task.CompletedTask;
-        public Task WorkflowCompletedAsync(Guid runId, string presetName, CancellationToken cancellationToken) =>
-            Task.CompletedTask;
     }
 }
