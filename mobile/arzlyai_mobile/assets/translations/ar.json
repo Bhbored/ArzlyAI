@@ -1,0 +1,16 @@
+﻿{
+  "api_errors": {
+    "no_internet": "لا يوجد اتصال بالإنترنت.",
+    "request_timeout": "انتهت مهلة الاتصال.",
+    "send_timeout": "انتهت مهلة الإرسال.",
+    "receive_timeout": "انتهت مهلة استجابة الخادم.",
+    "bad_response": "استجابة غير صالحة من الخادم.",
+    "cancelled": "تم إلغاء الطلب.",
+    "unknown": "حدث خطأ ما.",
+    "certificate_failed": "فشل الاتصال الآمن.",
+    "connection_failed": "تعذر الوصول إلى الخادم.",
+    "unauthorized": "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "not_found": "غير موجود.",
+    "server_error": "خطأ في الخادم."
+  }
+}

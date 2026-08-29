@@ -1,0 +1,9 @@
+{
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.import.gradle.enabled": false,
+  "gradle.autoDetect": "off",
+  "java.import.exclusions": [
+    "**/packages/**/android/**"
+  ],
+  "dart.flutterSdkPath": ".fvm/versions/3.41.7"
+}

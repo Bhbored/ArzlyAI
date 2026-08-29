@@ -28,7 +28,7 @@ app.UseSerilogRequestLogging(options =>
 });
 app.UseHttpLogging();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
-if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseCors(DIContainer.CorsPolicyName);
 app.UseRateLimiter();
 app.MapControllers();

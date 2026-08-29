@@ -1,0 +1,7 @@
+{
+  "id": "00000000-0000-0000-0000-000000000010",
+  "key": "daily-linkedin-ai-post",
+  "name": "Daily LinkedIn AI Post",
+  "description": "Generate a concise post for a topic and publish it to LinkedIn.",
+  "version": 1
+}

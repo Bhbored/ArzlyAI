@@ -1,0 +1,251 @@
+---
+description: ArzlyAI mobile conventions — architecture, shadcn UI, state, theming
+alwaysApply: true
+---
+
+# ArzlyAI Mobile
+
+Flutter client for ArzlyAI. Clean Architecture. Dart ^3.11.5, Riverpod (`riverpod_generator`), Dio, Freezed, Json Serializable, Drift, [shadcn_ui](https://mariuti.com/flutter-shadcn-ui/).
+
+No comments in source files. No `print()` — use `logger` or `debugPrint()`. Generated `*.g.dart` / `*.freezed.dart` are excluded from analysis.
+
+## Architecture
+
+| Layer | Path | Responsibility |
+|---|---|---|
+| Domain | `lib/domain/` | Entities, repository contracts. No implementation deps. |
+| Data | `lib/data/` | Repositories, providers, remote/local sources. |
+| Core | `lib/core/` | Network, enums, theme assembly, utilities. |
+| UI | `lib/ui/` | Presentation. Riverpod for state. |
+| Infrastructor | `lib/infrastructor/` | DB, migrations, seed data. |
+
+| UI subpath | Responsibility |
+|---|---|
+| `lib/ui/features/` | Feature screens and feature-local private widgets. Never barrel-exported from `ui.dart`. |
+| `lib/ui/shared/widgets/` | App-wide reusable shadcn-based components. |
+| `lib/ui/validators/` | Shared validation helpers. |
+
+| Data subpath | Responsibility |
+|---|---|
+| `lib/data/providers/temp/` | Short-lived UI field / form state notifiers. Reuse across screens when the same shape appears again. |
+
+`lib/ui/ui.dart` exports only `shared/widgets` and `validators` — not features.
+
+No user authentication. No login/register flows, no session tokens, no auth interceptors, no auth providers. Provider credentials use secure storage and encrypted envelopes per backend contract — not app-level user auth.
+
+Work step by step (DTO → entity → mapper → UI) only when told. Smallest correct diff. Do not run codegen unless asked.
+
+## Commands
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+flutter run
+flutter test
+```
+
+## Documentation sources
+
+| Topic | Source |
+|---|---|
+| shadcn_ui components, theme, setup | [Flutter Shadcn UI docs](https://mariuti.com/flutter-shadcn-ui/) and [llms.txt](https://mariuti.com/flutter-shadcn-ui/llms.txt) — use web fetch/search before implementing a shadcn component |
+| Dart / Flutter APIs, analyzer, packages in this project | Dart MCP (`user-dart`) — `analyze_files`, `pub`, `read_package_uris`, `lsp`, etc. |
+| Everything else (Riverpod, Dio, Drift, etc.) | Context7 CLI |
+
+```bash
+npx ctx7@latest library riverpod "<specific question>"
+npx ctx7@latest docs <libraryId> "<specific question>"
+```
+
+Do not use Context7 for shadcn_ui when the mariuti docs answer the question. Do not use web search for Dart/Flutter API questions when Dart MCP can answer from the project.
+
+## Simple logic — no overengineering
+
+### Providers
+
+State holders only. No screen-specific or field-specific methods on notifiers.
+
+- `build()` → empty/default instance
+- One generic `update` that merges state (`copyWith` or assign)
+- One `clear` / reset method
+- UI reads current state, runs its own logic, passes the result to `update`
+
+```dart
+void update(StateModel next) {
+  state = state.copyWith(
+    search: next.search,
+    areaId: next.areaId,
+  );
+}
+
+void clear() => state = const StateModel();
+```
+
+```dart
+final current = ref.read(filterProvider);
+ref.read(filterProvider.notifier).update(
+  current.copyWith(search: query),
+);
+```
+
+### Temp providers (`lib/data/providers/temp/`)
+
+Use when widgets need shared field state instead of constructor props.
+
+- One notifier per reusable field group (search query, dialog draft text, form fields, etc.)
+- `Notifier` for sync UI state; `AsyncNotifier` only when the temp holder itself loads async data
+- Freezed state model when multiple fields; single `String`/`bool` when one field
+- Export from `temp.dart`
+- If another screen needs the same fields, reuse the same temp provider — do not duplicate
+
+```dart
+@riverpod
+class SearchFilterTemp extends _$SearchFilterTemp {
+  @override
+  SearchFilterState build() => const SearchFilterState();
+
+  void update(SearchFilterState next) => state = next;
+
+  void clear() => state = const SearchFilterState();
+}
+```
+
+Screen watches the temp provider; shared widgets read/write through the provider. No props drilling.
+
+### Props between widgets
+
+Do not pass data or callbacks through widget constructors unless there is no practical alternative (e.g. `ListView` item index, router `extra`, platform callback).
+
+Prefer:
+
+1. Temp provider in `lib/data/providers/temp/`
+2. Feature-scoped Riverpod provider in `lib/data/providers/`
+3. `ShadTheme.of(context)` / `Theme.of(context)` for visuals
+
+Never pass styling, labels, or draft values down a widget tree when a provider can hold them.
+
+### Screens
+
+One file, one screen widget. Private helpers stay in that file.
+
+- Watch providers for data and loading
+- Local draft vs server original — submit disabled until they differ
+- Loading: dim content + centered spinner from provider `isLoading`
+- Submit: `try/catch` → user feedback → `pop()` on success
+- Change only what was asked; do not touch unrelated files
+
+## Shared widgets (`lib/ui/shared/widgets/`)
+
+All reusable UI primitives live here. One component type = one file. Multiple named constructors or factory constructors for variants — not separate files per variant.
+
+| File (example) | Wraps shadcn | Constructors (examples) |
+|---|---|---|
+| `app_button.dart` | `ShadButton` | `AppButton.primary`, `AppButton.destructive`, `AppButton.ghost` |
+| `app_text_field.dart` | `ShadInput` / `ShadInputFormField` | `AppTextField.standard`, `AppTextField.search`, `AppTextField.password` |
+| `app_dialog.dart` | `ShadDialog` | `AppDialog.confirm`, `AppDialog.alert`, `AppDialog.sheet` |
+| `app_card.dart` | `ShadCard` | `AppCard.standard`, `AppCard.interactive`, `AppCard.stat` |
+
+Rules for shared widgets:
+
+- Use shadcn_ui components inside — not raw `TextField`, `ElevatedButton`, `AlertDialog`
+- Read field state from temp providers; do not accept `value` / `onChanged` props unless the widget is a pure layout shell with zero state
+- Use `ShadTheme.of(context)` for colors and `ShadTheme.of(context).textTheme` for typography
+- Export each file from `shared/widgets/widgets.dart`
+- Before using a shadcn component API, read its page on [mariuti.com/flutter-shadcn-ui](https://mariuti.com/flutter-shadcn-ui/)
+
+```dart
+class AppTextField extends ConsumerWidget {
+  const AppTextField._({
+    required this.tempProvider,
+    required this.field,
+    this.placeholder,
+    super.key,
+  });
+
+  factory AppTextField.search() => AppTextField._(
+    tempProvider: searchFilterTempProvider,
+    field: SearchField.query,
+  );
+}
+```
+
+## UI library — shadcn_ui
+
+Install: `flutter pub add shadcn_ui`
+
+App shell: `ShadApp.custom` + `MaterialApp` + `ShadAppBuilder` so Material, Riverpod, and EasyLocalization coexist. See [Getting started](https://mariuti.com/flutter-shadcn-ui/).
+
+```dart
+return ShadApp.custom(
+  themeMode: themeMode,
+  darkTheme: ThemeSelector.shadDark,
+  lightTheme: ThemeSelector.shadLight,
+  appBuilder: (context) {
+    return MaterialApp(
+      theme: Theme.of(context),
+      localizationsDelegates: const [
+        GlobalShadLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      builder: (context, child) => ShadAppBuilder(child: child!),
+      home: home,
+    );
+  },
+);
+```
+
+Prefer shadcn components everywhere in UI code: `ShadButton`, `ShadInput`, `ShadCard`, `ShadDialog`, `ShadSelect`, `ShadToast` / Sonner, `ShadTabs`, etc. Lucide icons via exported `LucideIcons` from shadcn_ui.
+
+Do not use Shabakat `AppColors`, gold palette, or `ControlsThemes` styling. Those files are legacy placeholders until migrated.
+
+## Theming — Matrix hacker
+
+Visual direction: dark terminal aesthetic — near-black background, matrix neon green primary, muted green-gray surfaces, monospace typography, subtle green glow on focus/active primary elements.
+
+Single assembly point: `lib/core/themes/theme_selector.dart` builds `ShadThemeData` for light and dark. Supporting tokens only in:
+
+- `lib/core/themes/app_colors.dart` — matrix palette constants (not Shabakat gold)
+- `lib/core/themes/app_gradients.dart` — gradients from `AppColors` only
+- `lib/core/themes/theme_mode_provider.dart` — persisted theme mode
+
+Base shadcn scheme: start from `ShadGreenColorScheme.dark()` / `.light()` or extend `ShadColorScheme` with matrix values. Override via `ShadThemeData(colorScheme: …)` per [Theme Data](https://mariuti.com/flutter-shadcn-ui/theme-data/).
+
+Matrix palette targets:
+
+| Role | Dark | Light |
+|---|---|---|
+| background | `#020804` | `#0A0F0A` |
+| foreground | `#E8FFE8` | `#0D1F0D` |
+| primary | `#00FF41` | `#00C832` |
+| primary foreground | `#001A08` | `#F0FFF0` |
+| surface / card | `#041208` | `#F4FFF4` |
+| muted foreground | `#5C8A5C` | `#4A6B4A` |
+| border | `#0F3D1F` | `#C8E6C8` |
+| destructive | `#FF4444` | `#DC2626` |
+
+Typography: monospace family (e.g. JetBrains Mono via `google_fonts` or bundled font) on `ShadThemeData.textTheme`.
+
+In widgets:
+
+- `ShadTheme.of(context).colorScheme` for colors — never `Colors.xxx`, never hardcoded `Color(0x…)` in UI files
+- `ShadTheme.of(context).textTheme` for text — never raw `TextStyle` in widgets
+- `Theme.of(context)` only for Material bridges shadcn already maps
+- No `isDarkMode` booleans — use `Theme.of(context).brightness` or shadcn scheme
+
+Component-level overrides: `ShadThemeData` properties (`primaryButtonTheme`, etc.) in `ThemeSelector`, not per-widget color props.
+
+## Layout
+
+- Spacing, padding, breakpoints → `AppSizes` on `BuildContext` (`context.paddingMedium`, `context.borderRadiusLarge`, etc.). No magic numbers in widgets.
+- Split large widgets into private classes (`_Header`, `_ActionButton`) instead of deep nesting.
+- `const` constructors where possible.
+
+## New UI checklist
+
+1. shadcn component exists? → use it or wrap it in `lib/ui/shared/widgets/`
+2. Same fields in multiple places? → temp provider in `lib/data/providers/temp/`
+3. New shared variant? → add constructor to existing shared widget file
+4. Theme tweak? → `ThemeSelector` / `ShadThemeData`, not inline styles
+5. shadcn API unclear? → read [mariuti.com/flutter-shadcn-ui](https://mariuti.com/flutter-shadcn-ui/) first

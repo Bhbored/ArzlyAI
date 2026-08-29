@@ -1,0 +1,16 @@
+﻿{
+  "api_errors": {
+    "no_internet": "No internet connection.",
+    "request_timeout": "Connection timed out.",
+    "send_timeout": "Send timed out.",
+    "receive_timeout": "Server response timed out.",
+    "bad_response": "Invalid server response.",
+    "cancelled": "Request cancelled.",
+    "unknown": "Something went wrong.",
+    "certificate_failed": "Secure connection failed.",
+    "connection_failed": "Could not reach server.",
+    "unauthorized": "Session expired. Sign in again.",
+    "not_found": "Not found.",
+    "server_error": "Server error."
+  }
+}

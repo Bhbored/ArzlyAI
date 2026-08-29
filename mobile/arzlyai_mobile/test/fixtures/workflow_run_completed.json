@@ -1,0 +1,53 @@
+{
+  "runId": "11111111-1111-1111-1111-111111111111",
+  "presetKey": "daily-linkedin-ai-post",
+  "status": "Completed",
+  "nodes": [
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000014",
+      "nodeKey": "content-writer",
+      "displayName": "AI Content Writer",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "AI agents are useful when they stay grounded in facts.",
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000015",
+      "nodeKey": "approve-content",
+      "displayName": "Review Content",
+      "type": "HumanApproval",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "Edited LinkedIn post about grounded AI agents.",
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000018",
+      "nodeKey": "linkedin-publisher",
+      "displayName": "LinkedIn Publisher",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "Edited LinkedIn post about grounded AI agents.",
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000019",
+      "nodeKey": "linkedin.posts",
+      "displayName": "Post to LinkedIn",
+      "type": "Integration",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "urn:li:share:123",
+      "error": null
+    }
+  ],
+  "approval": {
+    "originalContent": "AI agents are useful when they stay grounded in facts.",
+    "currentContent": "Edited LinkedIn post about grounded AI agents.",
+    "wasEdited": true
+  },
+  "finalResponse": "urn:li:share:123"
+}
