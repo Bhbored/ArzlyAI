@@ -93,6 +93,12 @@ extension PresetDetailsSupport on PresetDetails {
             )
             .toSet()
             .toList(growable: false);
+      case CredentialPhase.editRequest:
+        final writer = primaryWorkflowAgent();
+        if (writer == null) return [];
+        return [
+          providerCredentialEnvelopeKey(writer.modelConfiguration.provider),
+        ];
       case CredentialPhase.approval:
         return integrations
             .expand(

@@ -1,9 +1,10 @@
 using ArzlyAI.Application.DTOs.Presets;
 using ArzlyAI.Domain.Presets;
+using ArzlyAI.Application.Services.Models;
 
 namespace ArzlyAI.Application.Mappers.Presets;
 
-public sealed class PresetMapper : IPresetMapper
+public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetMapper
 {
     public PresetSummaryResponse ToSummaryResponse(PresetDefinition preset) =>
         new(preset.Id, preset.Key, preset.Name, preset.Description, preset.Version);
@@ -34,7 +35,7 @@ public sealed class PresetMapper : IPresetMapper
             integration.Integration.Description,
             integration.Integration.CredentialSchemaJson)).ToList());
 
-    private static AgentResponse ToAgentResponse(AgentDefinition agent) => new(
+    private AgentResponse ToAgentResponse(AgentDefinition agent) => new(
         agent.Key,
         agent.Name,
         agent.Instructions,
@@ -50,7 +51,9 @@ public sealed class PresetMapper : IPresetMapper
             agent.DefaultTemperature,
             agent.MinimumTemperature,
             agent.MaximumTemperature,
-            agent.AllowTemperatureOverride),
+            agent.AllowTemperatureOverride && capabilities.SupportsTemperature(
+                agent.Model.Provider.Key,
+                agent.Model.Key)),
         new AgentHarnessResponse(
             agent.Harness.PlanningEnabled,
             agent.Harness.TodoTrackingEnabled,

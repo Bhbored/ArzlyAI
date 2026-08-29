@@ -13,4 +13,4 @@ sealed class CredentialRequirement with _$CredentialRequirement {
   }) = _CredentialRequirement;
 }
 
-enum CredentialPhase { workflowStart, approval }
+enum CredentialPhase { workflowStart, approval, editRequest }

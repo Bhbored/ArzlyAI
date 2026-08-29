@@ -1,0 +1,16 @@
+[
+  {
+    "id": "gpt-5-mini",
+    "displayName": "GPT-5 Mini",
+    "ownedBy": "openai",
+    "createdAtUtc": "2025-04-14T00:00:00+00:00",
+    "supportsTemperature": false
+  },
+  {
+    "id": "gpt-4.1-mini",
+    "displayName": "GPT 4.1 Mini",
+    "ownedBy": "openai",
+    "createdAtUtc": "2025-04-14T00:00:00+00:00",
+    "supportsTemperature": true
+  }
+]

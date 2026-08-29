@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_catalog_provider.dart';
-import 'package:arzlyai_mobile/ui/features/presets/preset_catalog_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/catalog/preset_catalog_screen.dart';
 import 'helpers/fakes.dart';
 import 'helpers/test_app.dart';
 

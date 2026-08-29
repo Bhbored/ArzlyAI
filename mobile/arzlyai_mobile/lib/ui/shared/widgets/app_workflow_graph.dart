@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 
@@ -8,15 +9,15 @@ class AppWorkflowGraph extends StatelessWidget {
   const AppWorkflowGraph({
     required this.nodes,
     required this.connections,
+    this.nodeStatuses = const {},
+    this.onNodeTap,
     super.key,
   });
 
   final List<WorkflowNode> nodes;
   final List<WorkflowConnection> connections;
-
-  static const double _nodeHeight = 76;
-  static const double _verticalGap = 40;
-  static const double _portRadius = 5;
+  final Map<String, WorkflowNodeStatus> nodeStatuses;
+  final void Function(WorkflowNode node, WorkflowNodeStatus? status)? onNodeTap;
 
   @override
   Widget build(BuildContext context) {
@@ -25,20 +26,23 @@ class AppWorkflowGraph extends StatelessWidget {
     }
 
     final theme = ShadTheme.of(context);
+    final nodeHeight = context.workflowNodeHeight;
+    final verticalGap = context.workflowVerticalGap;
+    final portRadius = context.workflowPortRadius;
     final ordered = [...nodes]..sort((a, b) => a.position.compareTo(b.position));
     final horizontalPadding = context.paddingMedium;
     final nodeWidth = context.screenWidth - horizontalPadding * 4;
     final canvasWidth = nodeWidth + horizontalPadding * 2;
     final canvasHeight =
         horizontalPadding * 2 +
-        ordered.length * _nodeHeight +
-        (ordered.length - 1) * _verticalGap;
+        ordered.length * nodeHeight +
+        (ordered.length - 1) * verticalGap;
 
     final nodeRects = <String, Rect>{};
     for (var i = 0; i < ordered.length; i++) {
       final x = horizontalPadding;
-      final y = horizontalPadding + i * (_nodeHeight + _verticalGap);
-      nodeRects[ordered[i].id] = Rect.fromLTWH(x, y, nodeWidth, _nodeHeight);
+      final y = horizontalPadding + i * (nodeHeight + verticalGap);
+      nodeRects[ordered[i].id] = Rect.fromLTWH(x, y, nodeWidth, nodeHeight);
     }
 
     return DecoratedBox(
@@ -52,6 +56,7 @@ class AppWorkflowGraph extends StatelessWidget {
         child: CustomPaint(
           foregroundPainter: _WorkflowGridPainter(
             color: theme.colorScheme.border.withValues(alpha: 0.35),
+            spacing: context.workflowGridSpacing,
           ),
           child: SizedBox(
             width: canvasWidth,
@@ -65,8 +70,9 @@ class AppWorkflowGraph extends StatelessWidget {
                     connections: connections,
                     nodeRects: nodeRects,
                     color: theme.colorScheme.primary,
-                    portRadius: _portRadius,
+                    portRadius: portRadius,
                     vertical: true,
+                    strokeWidth: context.borderWidthThick,
                   ),
                 ),
                 ...ordered.map((node) {
@@ -76,7 +82,13 @@ class AppWorkflowGraph extends StatelessWidget {
                     top: rect.top,
                     width: rect.width,
                     height: rect.height,
-                    child: _WorkflowNodeTile(node: node),
+                    child: _WorkflowNodeTile(
+                      node: node,
+                      status: nodeStatuses[node.id],
+                      onTap: onNodeTap == null
+                          ? null
+                          : () => onNodeTap!(node, nodeStatuses[node.id]),
+                    ),
                   );
                 }),
               ],
@@ -89,42 +101,67 @@ class AppWorkflowGraph extends StatelessWidget {
 }
 
 class _WorkflowNodeTile extends StatelessWidget {
-  const _WorkflowNodeTile({required this.node});
+  const _WorkflowNodeTile({
+    required this.node,
+    this.status,
+    this.onTap,
+  });
 
   final WorkflowNode node;
+  final WorkflowNodeStatus? status;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final accent = _nodeAccent(theme, node.type);
+    final accent = _nodeAccent(theme, node.type, status);
     final icon = _nodeIcon(node.type);
+    final isActive = status == WorkflowNodeStatus.running ||
+        status == WorkflowNodeStatus.waitingForApproval;
+    final isCompleted = status == WorkflowNodeStatus.completed;
 
-    return DecoratedBox(
+    final tile = DecoratedBox(
       decoration: BoxDecoration(
         color: theme.colorScheme.card,
         borderRadius: BorderRadius.circular(context.borderRadiusMedium),
-        border: Border.all(color: accent, width: 1.5),
+        border: Border.all(
+          color: accent,
+          width: isActive
+              ? context.borderWidthThick
+              : isCompleted
+              ? context.borderWidthMedium
+              : context.borderWidthMedium,
+        ),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: accent.withValues(alpha: isActive ? 0.7 : isCompleted ? 0.45 : 0.15),
+            blurRadius: isActive
+                ? context.glowBlurLarge
+                : isCompleted
+                ? context.glowBlurMedium
+                : context.glowBlurSmall,
+            spreadRadius: isActive
+                ? context.glowSpreadMedium
+                : isCompleted
+                ? context.glowSpreadSmall
+                : 0,
+            offset: context.shadowOffsetSmall,
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: context.tilePadding,
         child: Row(
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.14),
+                color: accent.withValues(alpha: isActive ? 0.28 : 0.14),
                 borderRadius: BorderRadius.circular(context.borderRadiusMedium),
               ),
               child: SizedBox(
-                width: 40,
-                height: 40,
-                child: Icon(icon, size: 20, color: accent),
+                width: context.workflowNodeIconBox,
+                height: context.workflowNodeIconBox,
+                child: Icon(icon, size: context.iconMedium, color: accent),
               ),
             ),
             SizedBox(width: context.spaceSmall),
@@ -144,25 +181,92 @@ class _WorkflowNodeTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    humanizePresetToken(node.type),
+                    _statusLabel(node.type, status),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.muted.copyWith(
                       color: theme.colorScheme.mutedForeground,
-                      fontSize: 12,
-                      height: 1.2,
                     ),
                   ),
                 ],
               ),
             ),
+            if (status == WorkflowNodeStatus.running)
+              SizedBox(
+                width: context.loadingIndicatorSmall,
+                height: context.loadingIndicatorSmall,
+                child: CircularProgressIndicator(
+                  strokeWidth: context.loadingStrokeWidth,
+                ),
+              ),
+            if (isCompleted)
+              Icon(LucideIcons.check, size: context.iconMedium, color: accent),
+            if (status == WorkflowNodeStatus.failed)
+              Icon(
+                LucideIcons.x,
+                size: context.loadingIndicatorSmall,
+                color: theme.colorScheme.destructive,
+              ),
           ],
         ),
       ),
     );
+
+    Widget interactive = tile;
+    if (onTap != null) {
+      interactive = GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: tile,
+      );
+    }
+
+    if (!isActive) return interactive;
+
+    return interactive
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
+        .boxShadow(
+          begin: BoxShadow(
+            color: accent.withValues(alpha: 0.55),
+            blurRadius: context.glowBlurMedium,
+            spreadRadius: context.glowSpreadSmall,
+          ),
+          end: BoxShadow(
+            color: accent.withValues(alpha: 0.95),
+            blurRadius: context.glowBlurLarge,
+            spreadRadius: context.glowSpreadLarge,
+          ),
+          duration: 650.ms,
+        );
   }
 
-  static Color _nodeAccent(ShadThemeData theme, String type) {
+  static String _statusLabel(String type, WorkflowNodeStatus? status) {
+    if (status == null) return humanizePresetToken(type);
+    return switch (status) {
+      WorkflowNodeStatus.running => 'Running',
+      WorkflowNodeStatus.waitingForApproval => 'Waiting for approval',
+      WorkflowNodeStatus.completed => 'Completed',
+      WorkflowNodeStatus.failed => 'Failed',
+      WorkflowNodeStatus.skipped => 'Skipped',
+      WorkflowNodeStatus.idle => humanizePresetToken(type),
+      WorkflowNodeStatus.unknown => humanizePresetToken(type),
+    };
+  }
+
+  static Color _nodeAccent(
+    ShadThemeData theme,
+    String type,
+    WorkflowNodeStatus? status,
+  ) {
+    if (status == WorkflowNodeStatus.failed) {
+      return theme.colorScheme.destructive;
+    }
+    if (status == WorkflowNodeStatus.completed) {
+      return theme.colorScheme.primary;
+    }
+    if (status == WorkflowNodeStatus.waitingForApproval) {
+      return theme.colorScheme.accent;
+    }
     switch (type) {
       case 'HumanApproval':
         return theme.colorScheme.accent;
@@ -186,9 +290,10 @@ class _WorkflowNodeTile extends StatelessWidget {
 }
 
 class _WorkflowGridPainter extends CustomPainter {
-  _WorkflowGridPainter({required this.color});
+  _WorkflowGridPainter({required this.color, required this.spacing});
 
   final Color color;
+  final double spacing;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -196,7 +301,6 @@ class _WorkflowGridPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1;
 
-    const spacing = 24;
     for (double x = 0; x < size.width; x += spacing) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
@@ -207,7 +311,7 @@ class _WorkflowGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WorkflowGridPainter oldDelegate) {
-    return oldDelegate.color != color;
+    return oldDelegate.color != color || oldDelegate.spacing != spacing;
   }
 }
 
@@ -218,6 +322,7 @@ class _WorkflowEdgePainter extends CustomPainter {
     required this.color,
     required this.portRadius,
     required this.vertical,
+    required this.strokeWidth,
   });
 
   final List<WorkflowConnection> connections;
@@ -225,12 +330,13 @@ class _WorkflowEdgePainter extends CustomPainter {
   final Color color;
   final double portRadius;
   final bool vertical;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
       ..color = color
-      ..strokeWidth = 2.5
+      ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
@@ -287,6 +393,7 @@ class _WorkflowEdgePainter extends CustomPainter {
     return oldDelegate.connections != connections ||
         oldDelegate.nodeRects != nodeRects ||
         oldDelegate.color != color ||
-        oldDelegate.vertical != vertical;
+        oldDelegate.vertical != vertical ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

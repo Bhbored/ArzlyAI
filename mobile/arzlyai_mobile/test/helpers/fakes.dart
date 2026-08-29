@@ -7,6 +7,7 @@ import 'package:arzlyai_mobile/core/network/configs/api_config.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
+import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/submit_approval_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/security/credential_envelope.dart';
@@ -23,9 +24,17 @@ import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_response.dart';
+import 'package:arzlyai_mobile/core/network/dto/request/models/list_openai_models_request.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/models/openai_model_response.dart';
+import 'package:arzlyai_mobile/core/network/services/models/openai_model_service.dart';
+import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
+import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 
 Map<String, dynamic> fixtureJson(String name) {
-  return jsonDecode(File('test/fixtures/$name').readAsStringSync())
+  return jsonDecode(
+    File('test/presets/daily_linkedin_ai_post/fixtures/$name').readAsStringSync(),
+  )
       as Map<String, dynamic>;
 }
 
@@ -47,6 +56,52 @@ WorkflowRunResponse waitingRunDto() {
 
 WorkflowRunResponse completedRunDto() {
   return WorkflowRunResponse.fromJson(fixtureJson('workflow_run_completed.json'));
+}
+
+WorkflowRunResponse regeneratedWaitingRunDto() {
+  return WorkflowRunResponse.fromJson(
+    fixtureJson('workflow_run_waiting_regenerated.json'),
+  );
+}
+
+List<OpenAiModelResponse> fixtureOpenAiModelResponses() {
+  final list = jsonDecode(
+    File('test/fixtures/network/openai_models.json').readAsStringSync(),
+  ) as List<dynamic>;
+  return list
+      .map(
+        (item) => OpenAiModelResponse.fromJson(
+          Map<String, dynamic>.from(item as Map),
+        ),
+      )
+      .toList();
+}
+
+List<OpenAiModel> fixtureOpenAiModels() {
+  const mapper = OpenAiModelMapper();
+  return fixtureOpenAiModelResponses()
+      .map((dto) => mapper.fromDto(dto))
+      .toList(growable: false);
+}
+
+class FakeOpenAiModelService extends OpenAiModelService {
+  FakeOpenAiModelService() : super(ApiExecutor(Dio()));
+
+  List<OpenAiModelResponse>? result;
+  Object? error;
+  ListOpenAiModelsRequest? lastRequest;
+  var callCount = 0;
+
+  @override
+  Future<List<OpenAiModelResponse>> listModels(
+    ListOpenAiModelsRequest request,
+  ) async {
+    callCount++;
+    lastRequest = request;
+    final failure = error;
+    if (failure != null) throw failure;
+    return result ?? [];
+  }
 }
 
 const dummyEnvelope = CredentialEnvelope(
@@ -115,17 +170,24 @@ class FakeWorkflowService extends WorkflowService {
     WorkflowRunResponse? startResult,
     WorkflowRunResponse? getResult,
     WorkflowRunResponse? approvalResult,
+    WorkflowRunResponse? editApprovalResult,
+    WorkflowRunResponse? rejectApprovalResult,
     this.startError,
     this.getError,
     this.approvalError,
   }) : startResult = startResult ?? waitingRunDto(),
        getResult = getResult ?? waitingRunDto(),
        approvalResult = approvalResult ?? completedRunDto(),
+       editApprovalResult = editApprovalResult ?? regeneratedWaitingRunDto(),
+       rejectApprovalResult = rejectApprovalResult ??
+           waitingRunDto().copyWith(status: 'Cancelled'),
        super(ApiExecutor(Dio()));
 
   WorkflowRunResponse startResult;
   WorkflowRunResponse getResult;
   WorkflowRunResponse approvalResult;
+  WorkflowRunResponse editApprovalResult;
+  WorkflowRunResponse rejectApprovalResult;
   Object? startError;
   Object? getError;
   Object? approvalError;
@@ -161,7 +223,14 @@ class FakeWorkflowService extends WorkflowService {
     lastApproval = request;
     final error = approvalError;
     if (error != null) throw error;
-    return approvalResult;
+    switch (request.decision) {
+      case ApprovalDecision.edit:
+        return editApprovalResult;
+      case ApprovalDecision.reject:
+        return rejectApprovalResult;
+      case ApprovalDecision.accept:
+        return approvalResult;
+    }
   }
 }
 
@@ -191,6 +260,14 @@ class SeededDetails extends PresetDetailsNotifier {
 
   @override
   Future<PresetDetails?> build() async => details;
+}
+
+class SeededOpenAiModels extends OpenAiModels {
+  SeededOpenAiModels(this.models);
+  final List<OpenAiModel> models;
+
+  @override
+  Future<List<OpenAiModel>> build() async => models;
 }
 
 class OnlineMode extends OfflineMode {

@@ -1,0 +1,296 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
+import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
+import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
+import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
+import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
+import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
+import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/result_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/review_screen.dart';
+import 'package:arzlyai_mobile/ui/features/settings/settings_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_integration_card.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_dialog.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_live_workflow_graph.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_workflow_node_screen.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_status.dart';
+
+class PresetDetailsScreen extends ConsumerStatefulWidget {
+  const PresetDetailsScreen({super.key});
+
+  @override
+  ConsumerState<PresetDetailsScreen> createState() => _PresetDetailsScreenState();
+}
+
+class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(activeRunProvider, (previous, next) {
+      next.whenData((run) {
+        if (run?.status == WorkflowRunStatus.waitingForApproval &&
+            previous?.value?.approval?.originalContent !=
+                run?.approval?.originalContent) {
+          ref.read(reviewDraftTempProvider.notifier).clear();
+        }
+      });
+    }, fireImmediately: true);
+  }
+
+  bool _isTerminal(WorkflowRunStatus status) {
+    return status == WorkflowRunStatus.completed ||
+        status == WorkflowRunStatus.failed ||
+        status == WorkflowRunStatus.cancelled ||
+        status == WorkflowRunStatus.expired;
+  }
+
+  WorkflowNode? _writerNode(PresetDetails preset) {
+    final writer = preset.configurableWorkflowAgent();
+    if (writer == null) return null;
+    return preset.workflow.nodes
+        .where((node) => node.key == writer.key)
+        .firstOrNull;
+  }
+
+  Future<void> _resetWorkflow() async {
+    ref.read(runConfigTempProvider.notifier).clear();
+    ref.read(reviewDraftTempProvider.notifier).clear();
+    await ref.read(activeRunProvider.notifier).reset();
+  }
+
+  void _openConfigure(PresetDetails preset, Agent writer) {
+    final runScreen = configureRunScreenForPreset(preset.key);
+    if (runScreen == null) return;
+    ref.read(runConfigTempProvider.notifier).update(
+      RunConfigState(
+        topic: '',
+        model: writer.modelConfiguration.selectedModel,
+        temperature: writer.modelConfiguration.temperature,
+      ),
+    );
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => runScreen));
+  }
+
+  void _openReview() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ReviewScreen()),
+    );
+  }
+
+  void _openNodeDetails(WorkflowNode node) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AppWorkflowNodeScreen(node: node)),
+    );
+  }
+
+  void _openResult() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ResultScreen()),
+    );
+  }
+
+  void _onWorkflowNodeTap(
+    PresetDetails preset,
+    WorkflowNode node,
+    WorkflowNodeStatus? status,
+  ) {
+    final run = ref.read(activeRunProvider).value;
+    final writer = preset.configurableWorkflowAgent();
+    final writerNode = _writerNode(preset);
+
+    if (writer != null &&
+        (node.id == writerNode?.id || node.key == writer.key)) {
+      if (run == null || _isTerminal(run.status)) {
+        _openConfigure(preset, writer);
+      } else if (status == WorkflowNodeStatus.completed) {
+        _openNodeDetails(node);
+      }
+      return;
+    }
+
+    if (node.type == 'HumanApproval') {
+      if (status == WorkflowNodeStatus.waitingForApproval ||
+          status == WorkflowNodeStatus.completed) {
+        _openReview();
+      }
+      return;
+    }
+
+    if (node.type == 'Integration' &&
+        status == WorkflowNodeStatus.completed &&
+        run != null &&
+        _isTerminal(run.status)) {
+      _openResult();
+      return;
+    }
+
+    if (status == WorkflowNodeStatus.completed ||
+        status == WorkflowNodeStatus.failed ||
+        status == WorkflowNodeStatus.running) {
+      _openNodeDetails(node);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final details = ref.watch(presetDetailsProvider);
+    final activeRunId = ref.watch(selectedRunIdProvider);
+    final theme = ShadTheme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        title: Text(
+          details.maybeWhen(
+            data: (preset) => preset?.name ?? 'Preset',
+            orElse: () => 'Preset',
+          ),
+          style: theme.textTheme.h4.copyWith(color: theme.colorScheme.foreground),
+        ),
+        actions: activeRunId == null
+            ? null
+            : [
+                ShadButton.ghost(
+                  onPressed: () async {
+                    final ok = await AppDialog.confirm(
+                      context,
+                      title: 'Start over',
+                      message:
+                          'Clear the current run and configure a new workflow?',
+                    );
+                    if (!ok) return;
+                    await _resetWorkflow();
+                  },
+                  child: Text(
+                    'Start over',
+                    style: theme.textTheme.small.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+      ),
+      body: details.when(
+        data: (preset) {
+          if (preset == null) {
+            return Center(
+              child: Text(
+                'Select a preset',
+                style: theme.textTheme.p.copyWith(color: theme.colorScheme.foreground),
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(context.paddingMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  preset.description,
+                  style: theme.textTheme.p.copyWith(
+                    color: theme.colorScheme.foreground,
+                  ),
+                ),
+                SizedBox(height: context.spaceMedium),
+                Text(
+                  'Workflow',
+                  style: theme.textTheme.h4.copyWith(
+                    color: theme.colorScheme.foreground,
+                  ),
+                ),
+                SizedBox(height: context.spaceSmall / 2),
+                Text(
+                  'Tap a step to configure or view details.',
+                  style: theme.textTheme.muted.copyWith(
+                    color: theme.colorScheme.mutedForeground,
+                  ),
+                ),
+                SizedBox(height: context.spaceSmall),
+                AppLiveWorkflowGraph(
+                  nodes: preset.workflow.nodes,
+                  connections: preset.workflow.connections,
+                  onNodeTap: (node, status) =>
+                      _onWorkflowNodeTap(preset, node, status),
+                ),
+                if (activeRunId != null) ...[
+                  SizedBox(height: context.spaceSmall),
+                  AppButton.ghost(
+                    label: 'Start over',
+                    onPressed: () async {
+                      final ok = await AppDialog.confirm(
+                        context,
+                        title: 'Start over',
+                        message:
+                            'Clear the current run and configure a new workflow?',
+                      );
+                      if (!ok) return;
+                      await _resetWorkflow();
+                    },
+                  ),
+                ],
+                if (preset.integrations.isNotEmpty) ...[
+                  SizedBox(height: context.spaceMedium),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Required integrations',
+                          style: theme.textTheme.h4.copyWith(
+                            color: theme.colorScheme.foreground,
+                          ),
+                        ),
+                      ),
+                      ShadButton.ghost(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.settings,
+                              size: context.iconSmall,
+                              color: theme.colorScheme.primary,
+                            ),
+                            SizedBox(width: context.spaceSmall / 2),
+                            Text(
+                              'Settings',
+                              style: theme.textTheme.small.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: context.spaceSmall),
+                  ...preset.integrations.map(
+                    (integration) => Padding(
+                      padding: EdgeInsets.only(bottom: context.spaceSmall),
+                      child: AppIntegrationCard(integration: integration),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+        loading: () => const AppStatus.loading(),
+        error: (error, _) => AppStatus.error(message: '$error'),
+      ),
+    );
+  }
+}

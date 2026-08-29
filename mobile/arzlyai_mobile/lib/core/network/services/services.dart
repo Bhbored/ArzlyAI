@@ -1,3 +1,5 @@
+export 'package:arzlyai_mobile/core/network/services/models/openai_model_service.dart'
+    hide retry;
 export 'package:arzlyai_mobile/core/network/services/preset/preset_service.dart'
     hide retry;
 export 'package:arzlyai_mobile/core/network/services/security/security_service.dart'

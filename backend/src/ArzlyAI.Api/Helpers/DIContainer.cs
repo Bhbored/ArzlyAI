@@ -13,9 +13,11 @@ using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
 using ArzlyAI.Application.Services.Agents;
 using ArzlyAI.Application.Services.Notifications;
+using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows;
+using ArzlyAI.Application.Services.Workflows.Execution;
 using ArzlyAI.Infrastructure.Agents;
 using ArzlyAI.Infrastructure.Health;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
@@ -27,6 +29,7 @@ using ArzlyAI.Infrastructure.Persistence.Repositories.Presets;
 using ArzlyAI.Infrastructure.Persistence.Repositories.Workflows;
 using ArzlyAI.Infrastructure.Scheduling;
 using ArzlyAI.Infrastructure.Security;
+using ArzlyAI.Infrastructure.Services.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.RateLimiting;
@@ -197,9 +200,16 @@ public static class DIContainer
 
     private static IServiceCollection RegisterApplicationServices(this IServiceCollection services)
     {
+        services.AddSingleton<IModelCapabilityPolicy, OpenAiModelCapabilityPolicy>();
         services.AddSingleton<IPresetMapper, PresetMapper>();
         services.AddSingleton<IWorkflowRunMapper, WorkflowRunMapper>();
+        services.AddSingleton<IWorkflowGraphPlanner, WorkflowGraphPlanner>();
+        services.AddSingleton<IWorkflowInputMapper, WorkflowInputMapper>();
         services.AddScoped<IPresetService, PresetService>();
+        services.AddScoped<IOpenAiModelCatalogService, OpenAiModelCatalogService>();
+        services.AddScoped<IWorkflowNodeHandler, AgentWorkflowNodeHandler>();
+        services.AddScoped<IWorkflowNodeHandler, HumanApprovalWorkflowNodeHandler>();
+        services.AddScoped<IWorkflowNodeHandler, IntegrationWorkflowNodeHandler>();
         services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
         return services;
     }
@@ -210,6 +220,8 @@ public static class DIContainer
         services.AddSingleton<ICredentialEnvelopeProtector, EphemeralCredentialEnvelopeProtector>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
         services.AddSingleton<INotificationService, LoggingNotificationService>();
+        services.AddHttpClient<IOpenAiModelClient, OpenAiModelClient>(client =>
+            client.BaseAddress = new Uri("https://api.openai.com/"));
         return services;
     }
 

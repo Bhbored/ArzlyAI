@@ -16,6 +16,8 @@ import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
+import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import '../helpers/fakes.dart';
 
@@ -25,6 +27,7 @@ ProviderContainer _container({
   required MemoryCredentialStore store,
   required FakeEnvelopeService envelopes,
   required AppDatabase db,
+  required OpenAiModelRepository openAiRepo,
   bool online = true,
   bool offlineMode = false,
 }) {
@@ -35,6 +38,7 @@ ProviderContainer _container({
       workflowHubClientProvider.overrideWithValue(hub),
       credentialStoreProvider.overrideWithValue(store),
       credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
+      openAiModelRepositoryProvider.overrideWithValue(openAiRepo),
       internetConnectionProvider.overrideWithValue(online),
       offlineModeProvider.overrideWith(
         offlineMode ? ForcedOfflineMode.new : OnlineMode.new,
@@ -51,8 +55,9 @@ void main() {
   late MemoryCredentialStore store;
   late FakeEnvelopeService envelopes;
   late FakeHub hub;
+  late OpenAiModelRepository openAiRepo;
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
@@ -61,6 +66,13 @@ void main() {
         'urn:li:person:1';
     envelopes = FakeEnvelopeService();
     hub = FakeHub();
+    openAiRepo = OpenAiModelRepository(
+      FakeOpenAiModelService()..result = fixtureOpenAiModelResponses(),
+      CredentialRepository(store),
+      envelopes,
+      const OpenAiModelMapper(),
+    );
+    await openAiRepo.listModels();
   });
 
   tearDown(() async {
@@ -75,6 +87,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     await container.read(activeRunProvider.future);
@@ -90,6 +103,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
       online: false,
     );
     addTearDown(container.dispose);
@@ -113,6 +127,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     container.read(runConfigTempProvider.notifier).update(
@@ -140,6 +155,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     container.read(runConfigTempProvider.notifier).update(
@@ -163,6 +179,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     container.read(runConfigTempProvider.notifier).update(
@@ -182,7 +199,7 @@ void main() {
     expect(recovered?.nodes, isNotEmpty);
   });
 
-  test('edit approval sends numeric decision and linkedin envelope', () async {
+  test('edit approval sends openai envelope and returns waiting', () async {
     final workflows = FakeWorkflowService();
     final container = _container(
       workflows: workflows,
@@ -190,6 +207,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     container.read(runConfigTempProvider.notifier).update(
@@ -199,19 +217,90 @@ void main() {
     await container.read(activeRunProvider.notifier).start(
       container.read(runConfigTempProvider),
     );
-    container.read(reviewDraftTempProvider.notifier).update('edited post');
+    container.read(reviewDraftTempProvider.notifier).update(
+      'Use a stronger opening',
+    );
     await container.read(activeRunProvider.notifier).submitApproval(
       ApprovalDecision.edit,
-      editedContent: 'edited post',
+      editedContent: 'Use a stronger opening',
     );
     expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
-    expect(workflows.lastApproval?.editedContent, 'edited post');
+    expect(workflows.lastApproval?.editedContent, 'Use a stronger opening');
     expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
+    expect(
+      envelopes.lastCredentials,
+      contains(providerCredentialEnvelopeKey('openai')),
+    );
+    expect(
+      envelopes.lastCredentials,
+      isNot(contains(integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'))),
+    );
+    final run = container.read(activeRunProvider).value;
+    expect(run?.status, WorkflowRunStatus.waitingForApproval);
+    expect(run?.finalResponse, isNull);
+    expect(
+      run?.approval?.originalContent,
+      contains('stronger opening'),
+    );
+  });
+
+  test('accept approval sends linkedin envelope and completes', () async {
+    final workflows = FakeWorkflowService();
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(topic: 'AI agents'),
+    );
+    await container.read(activeRunProvider.future);
+    await container.read(activeRunProvider.notifier).start(
+      container.read(runConfigTempProvider),
+    );
+    await container.read(activeRunProvider.notifier).submitApproval(
+      ApprovalDecision.accept,
+    );
+    expect(workflows.lastApproval?.decision, ApprovalDecision.accept);
+    expect(workflows.lastApproval?.editedContent, isNull);
     expect(
       envelopes.lastCredentials,
       contains(integrationFieldEnvelopeKey('linkedin.posts', 'accessToken')),
     );
     expect(container.read(activeRunProvider).value?.finalResponse, 'urn:li:share:123');
+  });
+
+  test('repeated edit approval cycles stay waiting', () async {
+    final workflows = FakeWorkflowService();
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(topic: 'AI agents'),
+    );
+    await container.read(activeRunProvider.future);
+    await container.read(activeRunProvider.notifier).start(
+      container.read(runConfigTempProvider),
+    );
+    for (final feedback in ['Shorter', 'Even shorter']) {
+      await container.read(activeRunProvider.notifier).submitApproval(
+        ApprovalDecision.edit,
+        editedContent: feedback,
+      );
+      expect(container.read(activeRunProvider).value?.status,
+          WorkflowRunStatus.waitingForApproval);
+    }
+    expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
   });
 
   test('reject approval omits credentials', () async {
@@ -224,6 +313,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
+      openAiRepo: openAiRepo,
     );
     addTearDown(container.dispose);
     container.read(runConfigTempProvider.notifier).update(
@@ -238,5 +328,61 @@ void main() {
     );
     expect(workflows.lastApproval?.decision, ApprovalDecision.reject);
     expect(workflows.lastApproval?.credentials, isNull);
+  });
+
+  test('start omits temperature for non-supporting model', () async {
+    final workflows = FakeWorkflowService();
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(
+        topic: 'AI agents',
+        model: 'gpt-5-mini',
+        temperature: 0.7,
+      ),
+    );
+    await container.read(activeRunProvider.future);
+    await container.read(activeRunProvider.notifier).start(
+      container.read(runConfigTempProvider),
+    );
+    final override = workflows.lastStart!.agentOverrides.single;
+    expect(override.model, 'gpt-5-mini');
+    expect(override.temperature, isNull);
+    expect(envelopes.lastCredentials?['openai.apiKey'], 'sk-test');
+    expect(workflows.lastStart!.credentials, dummyEnvelope);
+  });
+
+  test('start includes model and temperature for supporting model', () async {
+    final workflows = FakeWorkflowService();
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(
+        topic: 'AI agents',
+        model: 'gpt-4.1-mini',
+        temperature: 0.4,
+      ),
+    );
+    await container.read(activeRunProvider.future);
+    await container.read(activeRunProvider.notifier).start(
+      container.read(runConfigTempProvider),
+    );
+    final override = workflows.lastStart!.agentOverrides.single;
+    expect(override.model, 'gpt-4.1-mini');
+    expect(override.temperature, 0.4);
   });
 }

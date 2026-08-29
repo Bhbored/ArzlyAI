@@ -6,7 +6,7 @@ public interface IAgentRuntime
         AgentDefinition agent,
         string input,
         string model,
-        double temperature,
+        double? temperature,
         string apiKey,
         CancellationToken cancellationToken);
 }

@@ -32,6 +32,7 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 - `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
 - SignalR node-status events, Quartz scheduling boundary, rate limits, health probes, and structured logging.
+- Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
 - Empty Flutter Android/iOS shell ready for the first vertical slice.
 - Empty React TypeScript admin shell reserved for later preset administration.
 
@@ -41,6 +42,8 @@ Flutter SQLite will be the source of truth for user workflow instances, history,
 
 - [LinkedIn preset](docs/presets/linkedin-preset.md)
 - [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
+- [Flutter online OpenAI model-catalog prompt](docs/presets/flutter-openai-model-catalog-prompt.md)
+- [Flutter LinkedIn edit-regeneration prompt](docs/presets/flutter-linkedin-edit-regeneration-prompt.md)
 - [Contributor instructions](AGENTS.md)
 
 ## Backend Development
@@ -64,6 +67,7 @@ Operational endpoints:
 | `GET` | `/health/ready` | Readiness including PostgreSQL connectivity |
 | `GET` | `/api/v1/presets` | Published preset catalog |
 | `GET` | `/api/v1/presets/{key}` | Complete preset graph |
+| `POST` | `/api/v1/providers/openai/models` | List usable account models and UI capabilities using an encrypted API key |
 | `POST` | `/api/v1/workflows/runs` | Start a preset run |
 | `GET` | `/api/v1/workflows/runs/{runId}` | Retrieve an ephemeral run |
 | `POST` | `/api/v1/workflows/runs/{runId}/approval` | Accept, edit, or reject output |
@@ -116,7 +120,7 @@ There is no registration or backend user database. Credentials are encrypted cli
 
 ## Stage 1 Limitations
 
-- Workflow execution currently supports the seeded linear flow rather than a generic branching/parallel DAG.
+- Workflow graphs are validated and executed sequentially in topological order; parallel branches and conditional routing are not implemented yet.
 - Runs are memory-backed and expire after 30 minutes.
 - Notifications are logged; FCM/APNs delivery is not implemented.
 - Scheduling cannot yet reconstruct a local workflow snapshot or obtain fresh credentials.

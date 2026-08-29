@@ -6,6 +6,7 @@ import 'package:arzlyai_mobile/data/providers/credentials/credential_requirement
 import 'package:arzlyai_mobile/data/providers/settings/settings_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_credential_field.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_text_field.dart';
 
@@ -67,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
                 }).toList(),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const AppScreenLoader(),
             error: (error, _) => Text(
               '$error',
               style: theme.textTheme.p.copyWith(color: theme.colorScheme.destructive),

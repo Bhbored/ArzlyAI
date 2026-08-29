@@ -1,11 +1,13 @@
 ﻿import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:arzlyai_mobile/core/network/dev_ssl.dart';
 import 'package:arzlyai_mobile/core/themes/theme_mode_provider.dart';
 import 'package:arzlyai_mobile/core/themes/theme_selector.dart';
-import 'package:arzlyai_mobile/ui/features/presets/preset_catalog_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/catalog/preset_catalog_screen.dart';
 
 const _languageKey = 'language';
 
@@ -25,6 +27,9 @@ Future<Locale> _prepareLocale() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb) {
+    DevSslHttpOverrides.enableIfDebug();
+  }
   final startLocale = await _prepareLocale();
   await EasyLocalization.ensureInitialized();
 

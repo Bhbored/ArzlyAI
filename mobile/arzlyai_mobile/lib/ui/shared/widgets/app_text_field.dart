@@ -30,7 +30,7 @@ class AppTextField extends ConsumerWidget {
 
   factory AppTextField.reviewDraft({Key? key}) => AppTextField._(
     kind: AppTextFieldKind.reviewDraft,
-    placeholder: 'Edited post',
+    placeholder: 'e.g. Use a stronger opening and shorten the post',
     maxLines: 8,
     key: key,
   );

@@ -1,0 +1,53 @@
+{
+  "runId": "11111111-1111-1111-1111-111111111111",
+  "presetKey": "daily-linkedin-ai-post",
+  "status": "WaitingForApproval",
+  "nodes": [
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000014",
+      "nodeKey": "content-writer",
+      "displayName": "AI Content Writer",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "Shorter post with a stronger opening about AI agents.",
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000015",
+      "nodeKey": "approve-content",
+      "displayName": "Review Content",
+      "type": "HumanApproval",
+      "status": "WaitingForApproval",
+      "isRunning": false,
+      "output": null,
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000018",
+      "nodeKey": "linkedin-publisher",
+      "displayName": "LinkedIn Publisher",
+      "type": "Agent",
+      "status": "Idle",
+      "isRunning": false,
+      "output": null,
+      "error": null
+    },
+    {
+      "nodeId": "00000000-0000-0000-0000-000000000019",
+      "nodeKey": "linkedin.posts",
+      "displayName": "Post to LinkedIn",
+      "type": "Integration",
+      "status": "Idle",
+      "isRunning": false,
+      "output": null,
+      "error": null
+    }
+  ],
+  "approval": {
+    "originalContent": "Shorter post with a stronger opening about AI agents.",
+    "currentContent": "Shorter post with a stronger opening about AI agents.",
+    "wasEdited": false
+  },
+  "finalResponse": null
+}

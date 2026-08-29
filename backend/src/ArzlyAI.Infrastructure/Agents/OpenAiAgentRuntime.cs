@@ -14,19 +14,22 @@ public sealed class OpenAiAgentRuntime(
     ILogger<OpenAiAgentRuntime> logger) : IAgentRuntime
 {
     public async Task<string> ExecuteAsync(AgentDefinition definition, string input, string model,
-        double temperature, string apiKey, CancellationToken cancellationToken)
+        double? temperature, string apiKey, CancellationToken cancellationToken)
     {
         using var operation = Operation.Time("OpenAiAgentRuntime.Execute");
         logger.LogInformation("Executing agent {AgentKey} with model {Model}", definition.Key, model);
         var chatClient = new ResponsesClient(apiKey).AsIChatClientWithStoredOutputDisabled(model);
+        var chatOptions = new ChatOptions
+        {
+            Instructions = definition.Instructions
+        };
+        if (temperature is not null)
+            chatOptions.Temperature = (float)temperature.Value;
+
         var agent = chatClient.AsHarnessAgent(new HarnessAgentOptions
         {
             Name = definition.Key,
-            ChatOptions = new ChatOptions
-            {
-                Instructions = definition.Instructions,
-                Temperature = (float)temperature
-            },
+            ChatOptions = chatOptions,
             DisableAgentModeProvider = !definition.Harness.PlanningEnabled,
             DisableTodoProvider = !definition.Harness.TodoTrackingEnabled,
             DisableCompaction = !definition.Harness.ContextCompactionEnabled,

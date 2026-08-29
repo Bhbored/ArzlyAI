@@ -1,6 +1,7 @@
 using ArzlyAI.Application.Mappers.Presets;
 using ArzlyAI.Application.Repositories.Presets;
 using ArzlyAI.Application.Services.Presets;
+using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Domain.Catalog;
 using ArzlyAI.Domain.Enums;
 using ArzlyAI.Domain.Presets;
@@ -16,7 +17,7 @@ public sealed class PresetServiceTests
         var preset = CreatePreset();
         var service = new PresetService(
             new PresetRepositoryStub(preset),
-            new PresetMapper(),
+            new PresetMapper(new OpenAiModelCapabilityPolicy()),
             NullLogger<PresetService>.Instance);
 
         var response = await service.GetByKeyAsync(preset.Key, CancellationToken.None);
@@ -32,7 +33,7 @@ public sealed class PresetServiceTests
     private static PresetDefinition CreatePreset()
     {
         var provider = new ProviderDefinition { Id = Guid.NewGuid(), Key = "openai", DisplayName = "OpenAI" };
-        var model = new ModelDefinition { Id = Guid.NewGuid(), ProviderId = provider.Id, Key = "model", DisplayName = "Model", Provider = provider };
+        var model = new ModelDefinition { Id = Guid.NewGuid(), ProviderId = provider.Id, Key = "gpt-4.1-mini", DisplayName = "GPT-4.1 mini", Provider = provider };
         provider.Models.Add(model);
         var preset = new PresetDefinition { Id = Guid.NewGuid(), Key = "preset", Name = "Preset", Description = "Description", Version = 1, IsPublished = true, UpdatedAtUtc = DateTimeOffset.UtcNow };
         var agent = new AgentDefinition

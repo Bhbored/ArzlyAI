@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
 
 class AppStatus extends StatelessWidget {
   const AppStatus.loading({super.key})
@@ -22,7 +23,7 @@ class AppStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppScreenLoader();
     }
     return Center(
       child: Column(

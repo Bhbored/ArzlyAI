@@ -1,0 +1,6 @@
+{
+  "keyId": "key-1",
+  "algorithm": "RSA-OAEP-256+A256GCM",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LF1IlDLKiv3Orrc\n-----END PUBLIC KEY-----",
+  "maximumLifetimeSeconds": 120
+}

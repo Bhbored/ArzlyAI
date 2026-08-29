@@ -58,7 +58,7 @@ class AppIntegrationCard extends StatelessWidget {
                   children: [
                     Icon(
                       LucideIcons.keyRound,
-                      size: 14,
+                      size: context.iconSmall,
                       color: theme.colorScheme.primary,
                     ),
                     SizedBox(width: context.spaceSmall / 2),
@@ -80,7 +80,6 @@ class AppIntegrationCard extends StatelessWidget {
             'Add these credentials in Settings before you run this preset.',
             style: theme.textTheme.muted.copyWith(
               color: theme.colorScheme.mutedForeground,
-              fontSize: 12,
             ),
           ),
         ],
