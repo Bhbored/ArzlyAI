@@ -25,6 +25,19 @@ class SettingsController extends _$SettingsController {
         .update(SettingsCredentialsState(credentialValues: stored));
   }
 
+  Future<void> reloadCredentials() async {
+    final providers = await ref.read(providersCatalogProvider.future);
+    final providerKeys = providers
+        .map((provider) => providerCredentialEnvelopeKey(provider.key))
+        .toList();
+    final stored = await ref
+        .read(credentialRepositoryProvider)
+        .readDraftValues(providerKeys);
+    ref
+        .read(settingsCredentialsTempProvider.notifier)
+        .update(SettingsCredentialsState(credentialValues: stored));
+  }
+
   Future<void> save() async {
     final draft = ref.read(settingsCredentialsTempProvider);
     await ref

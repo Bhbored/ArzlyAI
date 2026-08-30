@@ -24,6 +24,7 @@ class DefaultAiModelController extends _$DefaultAiModelController {
     await ref
         .read(aiSettingsRepositoryProvider)
         .saveDefault(provider: provider, modelId: modelId);
+    if (!ref.mounted) return;
     ref.invalidate(defaultAiModelProvider);
     state = AsyncData(DefaultAiModel(provider: provider, modelId: modelId));
   }

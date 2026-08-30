@@ -112,6 +112,7 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
                 ),
               ],
               if (writer != null &&
+                  writer.modelConfiguration.isTemperatureEditable &&
                   selectedOnlineModel?.supportsTemperature == true) ...[
                 SizedBox(height: context.spaceMedium),
                 Text(

@@ -14,6 +14,7 @@ namespace ArzlyAI.Infrastructure.Agents;
 
 public sealed class GeminiAgentRuntime(
     HttpClient httpClient,
+    IModelCapabilityPolicy capabilities,
     ILogger<GeminiAgentRuntime> logger) : IAgentRuntime
 {
     public string ProviderKey => AiProviderKeys.Gemini;
@@ -33,10 +34,98 @@ public sealed class GeminiAgentRuntime(
             : $"models/{normalizedModel}";
         logger.LogInformation("Executing agent {AgentKey} with model {Model}", definition.Key, normalizedModel);
 
+        return definition.Harness.WebSearchEnabled
+            ? await ExecuteBoundedWebSearchAsync(
+                definition,
+                input,
+                normalizedModel,
+                modelPath,
+                temperature,
+                apiKey,
+                cancellationToken)
+            : await ExecuteGenerateContentAsync(
+                definition,
+                input,
+                modelPath,
+                temperature,
+                apiKey,
+                includeWebSearch: false,
+                includeSchema: true,
+                cancellationToken);
+    }
+
+    private async Task<string> ExecuteBoundedWebSearchAsync(
+        AgentDefinition definition,
+        string input,
+        string normalizedModel,
+        string modelPath,
+        double? temperature,
+        string apiKey,
+        CancellationToken cancellationToken)
+    {
+        if (!capabilities.SupportsWebSearch(ProviderKey, normalizedModel))
+            throw new ArgumentException($"Model '{normalizedModel}' does not support Gemini hosted web search.");
+
+        var searchPasses = BoundedWebSearchSupport.SearchPassCount(definition.Harness.MaxIterations);
+        var evidence = new List<string>(searchPasses);
+        for (var pass = 0; pass < searchPasses; pass++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var passInput = pass == 0
+                ? input
+                : BoundedWebSearchSupport.BuildFollowUpResearchInput(
+                    input,
+                    evidence,
+                    pass + 1,
+                    searchPasses);
+            var content = await ExecuteGenerateContentAsync(
+                definition,
+                passInput,
+                modelPath,
+                temperature,
+                apiKey,
+                includeWebSearch: true,
+                includeSchema: false,
+                cancellationToken);
+            evidence.Add(BoundedWebSearchSupport.TruncateEvidence(content));
+        }
+
+        var finalContent = evidence[^1];
+        if (string.IsNullOrWhiteSpace(definition.OutputSchemaJson))
+            return finalContent;
+        if (BoundedWebSearchSupport.TryExtractJsonObject(finalContent, out var finalJson))
+            return finalJson;
+
+        logger.LogInformation(
+            "Gemini completed {SearchPasses} research passes for schema-backed agent {AgentKey}; " +
+            "running a JSON formatting pass.",
+            searchPasses,
+            definition.Key);
+        return await ExecuteGenerateContentAsync(
+            definition,
+            BoundedWebSearchSupport.BuildFormattingInput(input, evidence),
+            modelPath,
+            temperature,
+            apiKey,
+            includeWebSearch: false,
+            includeSchema: true,
+            cancellationToken);
+    }
+
+    private async Task<string> ExecuteGenerateContentAsync(
+        AgentDefinition definition,
+        string input,
+        string modelPath,
+        double? temperature,
+        string apiKey,
+        bool includeWebSearch,
+        bool includeSchema,
+        CancellationToken cancellationToken)
+    {
         var generationConfig = new Dictionary<string, object?>();
         if (temperature is not null)
             generationConfig["temperature"] = temperature.Value;
-        if (!string.IsNullOrWhiteSpace(definition.OutputSchemaJson))
+        if (includeSchema && !string.IsNullOrWhiteSpace(definition.OutputSchemaJson))
         {
             using var schemaDocument = JsonDocument.Parse(definition.OutputSchemaJson);
             generationConfig["responseMimeType"] = "application/json";
@@ -47,7 +136,7 @@ public sealed class GeminiAgentRuntime(
         {
             ["systemInstruction"] = new
             {
-                parts = new[] { new { text = definition.Instructions } }
+                parts = new[] { new { text = BuildSystemContent(definition, includeSchema) } }
             },
             ["contents"] = new[]
             {
@@ -60,7 +149,7 @@ public sealed class GeminiAgentRuntime(
         };
         if (generationConfig.Count > 0)
             payload["generationConfig"] = generationConfig;
-        if (definition.Harness.WebSearchEnabled)
+        if (includeWebSearch)
         {
             payload["tools"] = new[]
             {
@@ -82,8 +171,8 @@ public sealed class GeminiAgentRuntime(
             throw new UnauthorizedAccessException("Gemini rejected the supplied API key.");
         response.EnsureSuccessStatusCode();
 
-        var body = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(
-            cancellationToken: cancellationToken)
+        var rawBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var body = JsonSerializer.Deserialize<GenerateContentResponse>(rawBody, JsonOptions)
             ?? throw new InvalidOperationException("Gemini returned an empty response.");
         var text = body.Candidates?
             .SelectMany(candidate => candidate.Content?.Parts ?? [])
@@ -92,8 +181,24 @@ public sealed class GeminiAgentRuntime(
             .ToArray() ?? [];
         if (text.Length == 0)
             throw new InvalidOperationException($"Agent '{definition.Key}' returned no output.");
-        return string.Join('\n', text).Trim();
+        var content = string.Join('\n', text).Trim();
+        if (!includeSchema || string.IsNullOrWhiteSpace(definition.OutputSchemaJson))
+            return content;
+        if (BoundedWebSearchSupport.TryExtractJsonObject(content, out var json))
+            return json;
+        throw new InvalidOperationException(
+            $"Agent '{definition.Key}' must return JSON but returned plain text.");
     }
+
+    private static string BuildSystemContent(AgentDefinition definition, bool includeSchema) =>
+        includeSchema && !string.IsNullOrWhiteSpace(definition.OutputSchemaJson)
+            ? $"{definition.Instructions}\n\nReturn only valid JSON matching this schema:\n{definition.OutputSchemaJson}"
+            : definition.Instructions;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private sealed record GenerateContentResponse(
         [property: JsonPropertyName("candidates")] IReadOnlyList<Candidate>? Candidates);

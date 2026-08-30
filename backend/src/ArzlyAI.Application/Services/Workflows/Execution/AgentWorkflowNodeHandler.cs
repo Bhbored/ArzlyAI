@@ -31,8 +31,14 @@ public sealed class AgentWorkflowNodeHandler(
             return new WorkflowNodeExecutionResult(
                 input, WorkflowNodeStatus.Completed, $"{context.Step.DisplayName} completed.");
 
-        var provider = ResolveProvider(agent, context.AgentOverride?.Provider);
-        var model = ResolveModel(agent, provider, context.AgentOverride?.Model);
+        var provider = AgentProviderResolution.Resolve(
+            agent,
+            context.AgentOverride,
+            context.Run,
+            context.Step.Id,
+            capabilities);
+        var effectiveModel = ResolveEffectiveModel(agent, context, provider);
+        var model = ResolveModel(agent, provider, effectiveModel);
         if (agent.Harness.WebSearchEnabled &&
             !capabilities.SupportsWebSearch(provider, model))
             throw new ArgumentException($"Model '{model}' does not support hosted web search.");
@@ -68,15 +74,44 @@ public sealed class AgentWorkflowNodeHandler(
                 .ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.Ordinal));
     }
 
-    private static string ResolveProvider(AgentDefinition agent, string? requested)
+    private string? ResolveEffectiveModel(
+        AgentDefinition agent,
+        WorkflowNodeExecutionContext context,
+        string provider)
     {
-        if (string.IsNullOrWhiteSpace(requested))
-            return agent.Model.Provider.Key;
-        if (!agent.AllowModelOverride)
-            throw new ArgumentException($"Agent '{agent.Key}' does not allow provider changes.");
-        if (!AiProviderKeys.IsSupported(requested))
-            throw new ArgumentException($"Provider '{requested}' is not supported.");
-        return requested.ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(context.AgentOverride?.Model))
+            return context.AgentOverride.Model;
+
+        foreach (var node in context.Run.Nodes)
+        {
+            if (node.Type != WorkflowNodeType.Agent) continue;
+            if (node.Status != WorkflowNodeStatus.Completed) continue;
+            if (string.IsNullOrWhiteSpace(node.EffectiveModel)) continue;
+            var nodeProvider = node.EffectiveProvider ?? provider;
+            if (agent.Harness.WebSearchEnabled &&
+                !capabilities.SupportsWebSearch(nodeProvider, node.EffectiveModel))
+            {
+                continue;
+            }
+            return node.EffectiveModel;
+        }
+
+        foreach (var otherOverride in context.Run.AgentOverrides)
+        {
+            if (string.Equals(otherOverride.AgentKey, agent.Key, StringComparison.Ordinal))
+                continue;
+            if (string.IsNullOrWhiteSpace(otherOverride.Model)) continue;
+            var otherProvider = otherOverride.Provider ?? provider;
+            if (agent.Harness.WebSearchEnabled &&
+                !capabilities.SupportsWebSearch(otherProvider, otherOverride.Model))
+            {
+                continue;
+            }
+            return otherOverride.Model;
+        }
+
+        var currentNode = context.Run.Nodes.SingleOrDefault(node => node.NodeId == context.Step.Id);
+        return currentNode?.EffectiveModel;
     }
 
     private string ResolveModel(AgentDefinition agent, string provider, string? requested)

@@ -68,7 +68,11 @@ class SmartPurchaseReportView extends StatelessWidget {
       );
     }
     return SingleChildScrollView(
-      child: Text(fallback, style: theme.textTheme.p),
+      child: Text(
+        'The search finished without a structured recommendation report. '
+        'Use "Try a different search" to refine your request.',
+        style: theme.textTheme.p,
+      ),
     );
   }
 

@@ -25,7 +25,18 @@ import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import '../../helpers/fakes.dart';
+
+final _deepseekChat = ProviderModel(
+  id: 'deepseek-chat',
+  displayName: 'DeepSeek Chat',
+  provider: 'deepseek',
+  ownedBy: 'deepseek',
+  createdAtUtc: DateTime.utc(2025, 1, 1),
+  supportsTemperature: true,
+  supportsWebSearch: true,
+);
 
 WorkflowRunResponse _runFixture(String name) {
   return WorkflowRunResponse.fromJson(
@@ -147,6 +158,63 @@ void main() {
     expect(
       envelopes.lastCredentials,
       contains(providerCredentialEnvelopeKey('openai')),
+    );
+  });
+
+  test('confirm accept sends deepseek envelope from stored overrides', () async {
+    store.values.clear();
+    store.values[providerCredentialEnvelopeKey('deepseek')] = 'ds-test';
+    final waiting = _runFixture('workflow_run_requirements_waiting.json');
+    final workflows = FakeWorkflowService(
+      startResult: waiting,
+      approvalResult: waiting,
+    );
+    final models = [...fixtureProviderModels(), _deepseekChat];
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        workflowServiceProvider.overrideWithValue(workflows),
+        workflowHubClientProvider.overrideWithValue(hub),
+        credentialStoreProvider.overrideWithValue(store),
+        credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
+        providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
+        availableProviderModelsProvider.overrideWith(
+          () => SeededAvailableProviderModels(models),
+        ),
+        internetConnectionProvider.overrideWithValue(true),
+        offlineModeProvider.overrideWith(OnlineMode.new),
+        presetDetailsProvider.overrideWith(
+          () => SeededDetails(smartPurchaseDetails()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(runConfigTempProvider.notifier).update(
+          RunConfigState(
+            inputs: const {
+              'purchaseGoal': 'Laptop for university',
+              'countryCode': 'US',
+              'currencyCode': 'USD',
+            },
+            agentOverrides: const {
+              'shop-and-recommend': AgentOverrideDraft(model: 'deepseek-chat'),
+            },
+          ),
+        );
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.accept);
+
+    expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
+    expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
+    expect(
+      envelopes.lastCredentials,
+      isNot(contains(providerCredentialEnvelopeKey('openai'))),
     );
   });
 

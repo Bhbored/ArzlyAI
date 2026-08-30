@@ -18,13 +18,14 @@ import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_transport_state.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
-import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
-import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
@@ -76,9 +77,9 @@ class ActiveRun extends _$ActiveRun {
       final primaryInput = config.topic.trim().isNotEmpty
           ? config.topic.trim()
           : effectiveInputs.values
-              .where((value) => value.trim().isNotEmpty)
-              .firstOrNull ??
-              '';
+                    .where((value) => value.trim().isNotEmpty)
+                    .firstOrNull ??
+                '';
       final topicError = AppValidators.requiredNonEmpty(primaryInput);
       if (topicError != null) {
         state = AsyncError(ArgumentError(topicError), StackTrace.current);
@@ -88,11 +89,12 @@ class ActiveRun extends _$ActiveRun {
       final writer = details.configurableWorkflowAgent();
       final overrides = await _buildOverrides(config, details, writer);
       final credentialRepo = ref.read(credentialRepositoryProvider);
-      final startKeys = {
-        ...details.envelopeKeysForPhase(CredentialPhase.workflowStart),
-        ..._overrideProviderKeys(overrides),
-      }.toList(growable: false);
-      final startCredentials = await credentialRepo.readForEnvelopeKeys(startKeys);
+      final startKeys = details.workflowStartCredentialKeys(
+        overrideProviders: overrides.map((item) => item.provider ?? ''),
+      );
+      final startCredentials = await credentialRepo.readForEnvelopeKeys(
+        startKeys,
+      );
       final missingStart = credentialRepo.missingEnvelopeKeys(
         startKeys,
         startCredentials,
@@ -114,9 +116,9 @@ class ActiveRun extends _$ActiveRun {
               overrides.map((e) => e.toJson()).toList(),
             ),
           );
-      ref.read(workflowTransportProvider.notifier).setInFlight(
-        pendingLocalWorkflowId: instance.id,
-      );
+      ref
+          .read(workflowTransportProvider.notifier)
+          .setInFlight(pendingLocalWorkflowId: instance.id);
       final dto = await ref
           .read(workflowServiceProvider)
           .start(
@@ -129,11 +131,7 @@ class ActiveRun extends _$ActiveRun {
           );
       final run = await ref
           .read(workflowRepositoryProvider)
-          .persistDto(
-            dto,
-            localWorkflowId: instance.id,
-            expiryUtc: expiryUtc,
-          );
+          .persistDto(dto, localWorkflowId: instance.id, expiryUtc: expiryUtc);
       ref.read(selectedRunIdProvider.notifier).update(run.runId);
       _lastEventAt = DateTime.now().toUtc();
       state = AsyncData(run);
@@ -144,9 +142,7 @@ class ActiveRun extends _$ActiveRun {
     } catch (e, s) {
       if (isReceiveTimeoutError(e) && instance != null) {
         ref.read(workflowTransportProvider.notifier).setProcessing();
-        unawaited(
-          _reconcileAfterStartTimeout(instance.id, expiryUtc),
-        );
+        unawaited(_reconcileAfterStartTimeout(instance.id, expiryUtc));
         return;
       }
       ref.read(workflowTransportProvider.notifier).clear();
@@ -176,11 +172,7 @@ class ActiveRun extends _$ActiveRun {
     if (runId == null) return;
     final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
     if (local == null) return;
-    await _reconcileRun(
-      runId,
-      local.localWorkflowId ?? '',
-      local.expiryUtc,
-    );
+    await _reconcileRun(runId, local.localWorkflowId ?? '', local.expiryUtc);
   }
 
   Future<void> resumeIfProcessing() async {
@@ -191,7 +183,9 @@ class ActiveRun extends _$ActiveRun {
     }
     final runId = ref.read(selectedRunIdProvider);
     if (runId != null) {
-      final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
+      final local = await ref
+          .read(workflowRepositoryProvider)
+          .getLocalRun(runId);
       if (local != null) {
         await _reconcileRun(
           runId,
@@ -237,10 +231,9 @@ class ActiveRun extends _$ActiveRun {
       }
       snapshotBeforeOptimistic = current;
       final approvalNodeId = _pendingApprovalNodeId(current);
-      ref.read(workflowTransportProvider.notifier).setInFlight(
-        approval: true,
-        approvalNodeId: approvalNodeId,
-      );
+      ref
+          .read(workflowTransportProvider.notifier)
+          .setInFlight(approval: true, approvalNodeId: approvalNodeId);
       final optimistic = _optimisticApproval(current, decision);
       await ref.read(workflowRepositoryProvider).persistRun(optimistic);
       state = AsyncData(optimistic);
@@ -254,11 +247,12 @@ class ActiveRun extends _$ActiveRun {
       final dto = await ref
           .read(workflowServiceProvider)
           .submitApproval(current.runId, request);
+      final localWorkflowId = await _resolveLocalWorkflowId(current);
       final run = await ref
           .read(workflowRepositoryProvider)
           .persistDto(
             dto,
-            localWorkflowId: current.localWorkflowId ?? '',
+            localWorkflowId: localWorkflowId,
             expiryUtc: current.expiryUtc,
           );
       state = AsyncData(run);
@@ -287,13 +281,6 @@ class ActiveRun extends _$ActiveRun {
     }
   }
 
-  List<String> _overrideProviderKeys(List<AgentOverrideRequest> overrides) =>
-      overrides
-          .map((item) => item.provider)
-          .whereType<String>()
-          .map(providerCredentialEnvelopeKey)
-          .toList(growable: false);
-
   Future<List<AgentOverrideRequest>> _buildOverrides(
     RunConfigState config,
     PresetDetails details,
@@ -310,10 +297,18 @@ class ActiveRun extends _$ActiveRun {
         if (agent == null) continue;
         final model = entry.value.model;
         if (model == null) continue;
-        final provider = entry.value.provider ?? agent.modelConfiguration.provider;
+        final provider = repo.resolveProviderForModel(
+          models,
+          model,
+          configuredProvider: entry.value.provider,
+          fallbackProvider: agent.modelConfiguration.provider,
+        );
         double? temperature;
         if (agent.modelConfiguration.isTemperatureEditable) {
-          final supportsTemperature = repo.modelSupportsTemperature(models, model);
+          final supportsTemperature = repo.modelSupportsTemperature(
+            models,
+            model,
+          );
           if (supportsTemperature == true) {
             temperature = AppValidators.clampTemperature(
               entry.value.temperature ?? agent.modelConfiguration.temperature,
@@ -333,10 +328,16 @@ class ActiveRun extends _$ActiveRun {
       }
     } else if (writer != null && writer.modelConfiguration.isModelEditable) {
       final model = config.model ?? writer.modelConfiguration.selectedModel;
-      final provider = config.provider ?? writer.modelConfiguration.provider;
+      final provider = repo.resolveProviderForModel(
+        models,
+        model,
+        configuredProvider: config.provider,
+        fallbackProvider: writer.modelConfiguration.provider,
+      );
       double? temperature;
       final supportsTemperature = repo.modelSupportsTemperature(models, model);
-      if (supportsTemperature == true) {
+      if (writer.modelConfiguration.isTemperatureEditable &&
+          supportsTemperature == true) {
         temperature = AppValidators.clampTemperature(
           config.temperature ?? writer.modelConfiguration.temperature,
           writer.modelConfiguration.minimumTemperature,
@@ -352,7 +353,96 @@ class ActiveRun extends _$ActiveRun {
         ),
       );
     }
+    _ensureOverrideProviders(overrides, details, models, repo);
+    _ensureStartupAgentOverrides(overrides, details, models, repo);
     return overrides;
+  }
+
+  void _ensureOverrideProviders(
+    List<AgentOverrideRequest> overrides,
+    PresetDetails details,
+    List<ProviderModel> models,
+    ProviderModelRepository repo,
+  ) {
+    for (var index = 0; index < overrides.length; index++) {
+      final override = overrides[index];
+      if (override.provider != null && override.provider!.isNotEmpty) continue;
+      final model = override.model;
+      if (model == null || model.isEmpty) continue;
+      final agent = details.agents
+          .where((item) => item.key == override.agentKey)
+          .firstOrNull;
+      final provider = repo.resolveProviderForModel(
+        models,
+        model,
+        fallbackProvider: agent?.modelConfiguration.provider ?? '',
+      );
+      if (provider.isEmpty) continue;
+      overrides[index] = AgentOverrideRequest(
+        agentKey: override.agentKey,
+        provider: provider,
+        model: override.model,
+        temperature: override.temperature,
+      );
+    }
+  }
+
+  void _ensureStartupAgentOverrides(
+    List<AgentOverrideRequest> overrides,
+    PresetDetails details,
+    List<ProviderModel> models,
+    ProviderModelRepository repo,
+  ) {
+    if (overrides.isEmpty) return;
+    final configurable = details.configurableWorkflowAgent();
+    final template = configurable == null
+        ? overrides.first
+        : overrides
+              .where((item) => item.agentKey == configurable.key)
+              .firstOrNull ??
+            overrides.first;
+    final templateModel = template.model;
+    if (templateModel == null || templateModel.isEmpty) return;
+    final templateProvider = repo.resolveProviderForModel(
+      models,
+      templateModel,
+      configuredProvider: template.provider,
+      fallbackProvider:
+          configurable?.modelConfiguration.provider ??
+          details.agents
+              .where((agent) => agent.key == template.agentKey)
+              .firstOrNull
+              ?.modelConfiguration
+              .provider ??
+          '',
+    );
+    if (templateProvider.isEmpty) return;
+    final covered = overrides.map((item) => item.agentKey).toSet();
+    for (final agent in details.startupModelAgents()) {
+      if (covered.contains(agent.key)) continue;
+      double? temperature;
+      if (agent.modelConfiguration.isTemperatureEditable) {
+        final supportsTemperature = repo.modelSupportsTemperature(
+          models,
+          templateModel,
+        );
+        if (supportsTemperature == true) {
+          temperature = AppValidators.clampTemperature(
+            agent.modelConfiguration.temperature,
+            agent.modelConfiguration.minimumTemperature,
+            agent.modelConfiguration.maximumTemperature,
+          );
+        }
+      }
+      overrides.add(
+        AgentOverrideRequest(
+          agentKey: agent.key,
+          provider: templateProvider,
+          model: templateModel,
+          temperature: temperature,
+        ),
+      );
+    }
   }
 
   Future<SubmitApprovalRequest> _buildApprovalRequest({
@@ -375,21 +465,21 @@ class ActiveRun extends _$ActiveRun {
         if (current.hasRemainingIntegrationAfterApproval(approvalIndex)) {
           return _approvalRequestWithCredentials(
             decision: decision,
-            phase: CredentialPhase.approval,
+            current: current,
             credentialRepo: credentialRepo,
             editedContent: null,
           );
         }
         return _approvalRequestWithCredentials(
           decision: decision,
-          phase: CredentialPhase.workflowStart,
+          current: current,
           credentialRepo: credentialRepo,
           editedContent: null,
         );
       case ApprovalDecision.edit:
         return _approvalRequestWithCredentials(
           decision: decision,
-          phase: CredentialPhase.editRequest,
+          current: current,
           credentialRepo: credentialRepo,
           editedContent: editedContent,
         );
@@ -398,7 +488,7 @@ class ActiveRun extends _$ActiveRun {
 
   Future<SubmitApprovalRequest> _approvalRequestWithCredentials({
     required ApprovalDecision decision,
-    required CredentialPhase phase,
+    required WorkflowRun current,
     required CredentialRepository credentialRepo,
     required String? editedContent,
   }) async {
@@ -406,8 +496,32 @@ class ActiveRun extends _$ActiveRun {
     if (details == null) {
       throw StateError('Preset details are required');
     }
-    final keys = details.envelopeKeysForPhase(phase);
-    final credentials = await credentialRepo.readForPreset(details, phase);
+    final overrideProviders = await _overrideProvidersForRun(current);
+    final keys = details.approvalCredentialKeys(
+      run: current,
+      decision: decision,
+      overrideProvidersByAgent: overrideProviders,
+    );
+    if (keys.isEmpty) {
+      return SubmitApprovalRequest(
+        decision: decision,
+        editedContent: editedContent,
+      );
+    }
+    final credentials = await credentialRepo.readForEnvelopeKeys(keys);
+    final approvalIndex = current.waitingApprovalIndex();
+    if (decision == ApprovalDecision.accept &&
+        approvalIndex != null &&
+        current.hasRemainingIntegrationAfterApproval(approvalIndex)) {
+      final linkedIn = await ref
+          .read(connectorCredentialRepositoryProvider)
+          .readEnvelopeValues(ConnectorKeys.linkedin);
+      for (final entry in linkedIn.entries) {
+        if (entry.value.trim().isNotEmpty) {
+          credentials[entry.key] = entry.value;
+        }
+      }
+    }
     final missing = credentialRepo.missingEnvelopeKeys(keys, credentials);
     if (missing.isNotEmpty) {
       throw StateError('Missing credentials: ${missing.join(', ')}');
@@ -422,6 +536,56 @@ class ActiveRun extends _$ActiveRun {
     );
   }
 
+  Future<Map<String, String>> _overrideProvidersForRun(WorkflowRun run) async {
+    final repo = ref.read(workflowRepositoryProvider);
+    var localWorkflowId = run.localWorkflowId?.trim();
+    if (localWorkflowId == null || localWorkflowId.isEmpty) {
+      final persisted = await repo.getLocalRun(run.runId);
+      localWorkflowId = persisted?.localWorkflowId?.trim();
+    }
+    if (localWorkflowId != null && localWorkflowId.isNotEmpty) {
+      final instance = await repo.getInstance(localWorkflowId);
+      final overrides = _parseModelOverrides(instance?.modelOverridesJson);
+      if (overrides.isNotEmpty) {
+        return {
+          for (final override in overrides)
+            if (override.provider != null && override.provider!.isNotEmpty)
+              override.agentKey: override.provider!,
+        };
+      }
+    }
+    return {
+      for (final node in run.nodes)
+        if (node.type == 'Agent' &&
+            node.effectiveProvider != null &&
+            node.effectiveProvider!.isNotEmpty)
+          node.nodeKey: node.effectiveProvider!,
+    };
+  }
+
+  Future<String> _resolveLocalWorkflowId(WorkflowRun run) async {
+    var localWorkflowId = run.localWorkflowId?.trim();
+    if (localWorkflowId != null && localWorkflowId.isNotEmpty) {
+      return localWorkflowId;
+    }
+    final persisted = await ref
+        .read(workflowRepositoryProvider)
+        .getLocalRun(run.runId);
+    return persisted?.localWorkflowId?.trim() ?? '';
+  }
+
+  List<AgentOverrideRequest> _parseModelOverrides(String? json) {
+    if (json == null || json.trim().isEmpty) return [];
+    final list = jsonDecode(json) as List<dynamic>;
+    return list
+        .map(
+          (item) => AgentOverrideRequest.fromJson(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
+  }
+
   Future<void> _reconcileAfterStartTimeout(
     String localWorkflowId,
     DateTime? expiryUtc,
@@ -433,10 +597,7 @@ class ActiveRun extends _$ActiveRun {
     } catch (_) {}
     final run = await ref
         .read(workflowRepositoryProvider)
-        .reconcileLatestForWorkflow(
-          localWorkflowId,
-          expiryUtc: expiryUtc,
-        );
+        .reconcileLatestForWorkflow(localWorkflowId, expiryUtc: expiryUtc);
     if (!ref.mounted) return;
     if (run != null) {
       _applyReconciledRun(run);
@@ -456,11 +617,13 @@ class ActiveRun extends _$ActiveRun {
       await ref.read(workflowHubClientProvider).reconnect();
     } catch (_) {}
     try {
-      final run = await ref.read(workflowRepositoryProvider).reconcileByRunId(
-        runId,
-        localWorkflowId: localWorkflowId,
-        expiryUtc: expiryUtc,
-      );
+      final run = await ref
+          .read(workflowRepositoryProvider)
+          .reconcileByRunId(
+            runId,
+            localWorkflowId: localWorkflowId,
+            expiryUtc: expiryUtc,
+          );
       if (!ref.mounted) return;
       if (run != null) {
         _applyReconciledRun(run);
@@ -499,9 +662,10 @@ class ActiveRun extends _$ActiveRun {
       ref.read(workflowTransportProvider.notifier).setProcessing();
     }
     unawaited(
-      ref.read(workflowHubClientProvider).subscribeToRun(run.runId).catchError(
-        (_) {},
-      ),
+      ref
+          .read(workflowHubClientProvider)
+          .subscribeToRun(run.runId)
+          .catchError((_) {}),
     );
   }
 
@@ -577,9 +741,15 @@ class ActiveRun extends _$ActiveRun {
       final repo = ref.read(workflowRepositoryProvider);
       final dto = await repo.fetchRemote(run.runId);
       if (!ref.mounted || state.value?.runId != run.runId) return;
+      var localWorkflowId = run.localWorkflowId?.trim();
+      if (localWorkflowId == null || localWorkflowId.isEmpty) {
+        localWorkflowId = (await repo.getLocalRun(run.runId))
+            ?.localWorkflowId
+            ?.trim();
+      }
       final refreshed = await repo.persistDto(
         dto,
-        localWorkflowId: run.localWorkflowId ?? run.runId,
+        localWorkflowId: localWorkflowId ?? '',
         expiryUtc: run.expiryUtc,
       );
       if (!ref.mounted || state.value?.runId != refreshed.runId) return;

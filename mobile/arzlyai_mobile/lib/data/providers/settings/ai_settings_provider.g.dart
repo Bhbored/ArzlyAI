@@ -73,7 +73,7 @@ final class DefaultAiModelControllerProvider
 }
 
 String _$defaultAiModelControllerHash() =>
-    r'3b1b25003409ce130125e3f2c145d0a3af3e7f9a';
+    r'72ab168c83783d12ef70e670cecdc3d2f76afa92';
 
 abstract class _$DefaultAiModelController
     extends $AsyncNotifier<DefaultAiModel?> {

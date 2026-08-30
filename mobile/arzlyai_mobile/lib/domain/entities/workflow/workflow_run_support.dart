@@ -25,4 +25,19 @@ extension WorkflowRunSupport on WorkflowRun {
     }
     return false;
   }
+
+  int? agentIndexBeforeApproval(int approvalIndex) {
+    if (approvalIndex <= 0) return null;
+    for (var i = approvalIndex - 1; i >= 0; i--) {
+      if (nodes[i].type == 'Agent') return i;
+    }
+    return null;
+  }
+
+  int? nextAgentIndexAfterApproval(int approvalIndex) {
+    for (var i = approvalIndex + 1; i < nodes.length; i++) {
+      if (nodes[i].type == 'Agent') return i;
+    }
+    return null;
+  }
 }

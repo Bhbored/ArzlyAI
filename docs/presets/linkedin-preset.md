@@ -22,7 +22,7 @@ This documents the code currently in the repository, including the Stage 1 bound
 | Version | `1` |
 | Workflow key | `generate-and-publish` |
 | Required input | `topic` |
-| Provider | OpenAI |
+| Provider | OpenAI by default; OpenAI, Anthropic, Gemini, or DeepSeek by override |
 | Default model | `gpt-5-mini` |
 | Integration | `linkedin.posts` |
 | Human approval | Required before publishing |
@@ -52,8 +52,8 @@ Flutter receives four nodes and three directed connections. It should render `Wo
 | Key | `content-writer` |
 | Runtime | `Model` |
 | Default temperature | `0.7` when the selected model supports it |
-| Model editable | Yes, within the provider's catalog models |
-| Temperature editable | Model-dependent; false for GPT-5 Mini, true for supported GPT-4 models |
+| Model editable | Yes, across supported provider catalog models with saved API keys |
+| Temperature editable | Allowed by the preset and shown only when the selected model supports it |
 | System prompt editable | No |
 
 Locked instructions:
@@ -72,7 +72,7 @@ Harness policy:
 - Tool approval disabled.
 - Maximum three iterations.
 - File memory, web search, and agent skills disabled.
-- OpenAI stored output disabled.
+- Provider-native stored output disabled where applicable.
 
 ## Node 2: Review Content
 
@@ -88,7 +88,7 @@ Available decisions:
 - `Edit` treats `EditedContent` as feedback, reruns the nearest unique upstream agent, and pauses at this approval node again.
 - `Reject` cancels the run without calling LinkedIn.
 
-The node enters `WaitingForApproval` and SignalR emits `NodeChanged`. Credentials are not retained across the pause: Accept needs fresh LinkedIn credentials, while Edit needs a fresh OpenAI credential envelope for regeneration. Reject needs none.
+The node enters `WaitingForApproval` and SignalR emits `NodeChanged`. Credentials are not retained across the pause: Accept needs fresh LinkedIn credentials, while Edit needs a fresh `{provider}.apiKey` envelope for the selected writer provider. Reject needs none.
 
 ## Node 3: LinkedIn Publisher
 
@@ -134,7 +134,7 @@ sequenceDiagram
     DB-->>App: Agents + harness + graph + integration schema
     App->>API: GET /api/v1/security/encryption-key
     API-->>App: Ephemeral RSA public key
-    Note over App: Encrypt OpenAI API key
+    Note over App: Encrypt selected provider API key
     App->>API: POST /api/v1/workflows/runs
     API->>Hub: content-writer Running
     API->>Agent: Locked prompt + topic + allowed settings
@@ -142,7 +142,7 @@ sequenceDiagram
     API->>Hub: content-writer Completed
     API->>Hub: approve-content WaitingForApproval
     API-->>App: Run snapshot and draft
-    Note over App: Accept encrypts LinkedIn credentials; Edit encrypts OpenAI credentials
+    Note over App: Accept encrypts LinkedIn credentials; Edit encrypts selected provider credentials
     App->>API: POST /api/v1/workflows/runs/{runId}/approval
     API->>Hub: linkedin-publisher Running/Completed
     API->>LI: POST /rest/posts with exact approved text
@@ -182,6 +182,7 @@ Conceptual request:
   "agentOverrides": [
     {
       "agentKey": "content-writer",
+      "provider": "openai",
       "model": "gpt-5-mini",
       "temperature": null
     }
@@ -198,7 +199,7 @@ Conceptual request:
 }
 ```
 
-The encrypted credential JSON for this phase must contain `openai.apiKey` (or the override provider's `{provider}.apiKey`). Flutter loads selectable models from `GET /api/v1/providers` and `POST /api/v1/providers/{provider}/models`, filters by saved keys and `supportsWebSearch` when required, and sends `AgentOverrideRequest.provider` with the run. Settings stores a default model in SQLite. The backend rejects unsupported combinations and omits temperature for models that do not support it.
+The encrypted credential JSON for this phase must contain the selected provider's `{provider}.apiKey`. Flutter loads selectable models from `GET /api/v1/providers` and `POST /api/v1/providers/{provider}/models`, filters providers by saved keys, and sends `AgentOverrideRequest.provider` and `model` together. Settings stores a default model in SQLite. The backend rejects provider/model mismatches and omits temperature for models that do not support it.
 
 ### Approve, edit, or reject
 
@@ -224,7 +225,7 @@ Conceptual request-an-edit request:
 }
 ```
 
-`ApprovalDecision` currently uses the default ASP.NET JSON enum representation: `0` is Accept, `1` is Edit, and `2` is Reject. Accept's fresh encrypted JSON must contain `linkedin.accessToken` and `linkedin.authorUrn`. Edit's envelope must instead contain `openai.apiKey`; it regenerates and never calls LinkedIn. Rejection stops immediately and requires no credentials.
+`ApprovalDecision` currently uses the default ASP.NET JSON enum representation: `0` is Accept, `1` is Edit, and `2` is Reject. Accept's fresh encrypted JSON must contain `linkedin.accessToken` and `linkedin.authorUrn`. Edit's envelope must instead contain the writer's selected `{provider}.apiKey`; it regenerates and never calls LinkedIn. Rejection stops immediately and requires no credentials.
 
 For Edit, the engine follows incoming graph connections backward from the approval node and requires exactly one nearest upstream agent. It injects the supplied feedback as the generic `editFeedback` mapped input, resets that agent and downstream runtime snapshots, executes from the agent, and pauses at approval again. The execution service contains no preset-key-specific loop.
 
@@ -245,7 +246,7 @@ SignalR is transient. `WorkflowRunResponse` is the authoritative snapshot for re
 
 ## Scheduling
 
-Scheduling and user notifications are client-owned. Flutter persists the activated preset, topic, and schedule in SQLite, registers the appropriate OS background task or local notification, and sends a new short-lived credential envelope when execution begins. The backend exposes no scheduling endpoint and runs workflows only in response to client requests.
+Scheduling and user notifications are client-owned. Flutter persists the activated preset, topic, provider/model override, and schedule in SQLite, registers the appropriate OS background task or local notification, and sends a new short-lived credential envelope for that provider when execution begins. Legacy schedules without a provider infer it from the stored model. The backend exposes no scheduling endpoint and runs workflows only in response to client requests.
 
 The implementation plan for the Flutter agent is in [`flutter-client-scheduling-notifications.md`](flutter-client-scheduling-notifications.md).
 
@@ -260,7 +261,7 @@ flowchart LR
     Encrypt --> Envelope["Short-lived envelope"]
     Wrap --> Envelope
     Envelope --> Memory["Backend request memory"]
-    Memory --> OpenAI["OpenAI"]
+    Memory --> AIProvider["Selected AI provider"]
     Memory --> LinkedIn["LinkedIn"]
     Memory -. "not persisted" .-> Gone["Discarded"]
 ```

@@ -3,6 +3,7 @@ using ArzlyAI.Application.Mappers.Workflows;
 using ArzlyAI.Application.Models;
 using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
+using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows.Execution;
@@ -22,6 +23,7 @@ public sealed class WorkflowExecutionService(
     IEnumerable<IWorkflowNodeHandler> nodeHandlers,
     IWorkflowRealtimeNotifier realtime,
     IWorkflowRunMapper mapper,
+    IModelCapabilityPolicy capabilities,
     ILogger<WorkflowExecutionService> logger) : IWorkflowExecutionService
 {
     private static readonly TimeSpan WorkflowExecutionTimeout = TimeSpan.FromMinutes(10);
@@ -37,7 +39,7 @@ public sealed class WorkflowExecutionService(
         var plan = graphPlanner.Plan(preset.Workflow);
         ValidateOverrides(preset, request.AgentOverrides);
         var credentials = credentialsProtector.Decrypt(request.Credentials);
-        var run = CreateRun(preset, request);
+        var run = CreateRun(preset, request, capabilities);
         await runs.AddAsync(run, cancellationToken);
 
         // Workflow execution must outlive the mobile HTTP request. A client can
@@ -195,7 +197,10 @@ public sealed class WorkflowExecutionService(
         nodeHandlers.SingleOrDefault(handler => handler.NodeType == nodeType)
         ?? throw new InvalidOperationException($"No workflow node handler is installed for '{nodeType}'.");
 
-    private static WorkflowRun CreateRun(PresetDefinition preset, StartWorkflowRequest request) => new()
+    private static WorkflowRun CreateRun(
+        PresetDefinition preset,
+        StartWorkflowRequest request,
+        IModelCapabilityPolicy capabilities) => new()
     {
         Id = Guid.NewGuid(),
         PresetKey = preset.Key,
@@ -213,8 +218,34 @@ public sealed class WorkflowExecutionService(
             var agentOverride = request.AgentOverrides.SingleOrDefault(
                 candidate => candidate.AgentKey == step.ReferenceKey);
             var effectiveProvider = agent?.Model.Provider.Key;
-            if (agentOverride?.Provider is not null && agent?.AllowModelOverride == true)
-                effectiveProvider = agentOverride.Provider.ToLowerInvariant();
+            if (agent is not null && agentOverride is not null && agent.AllowModelOverride)
+            {
+                if (!string.IsNullOrWhiteSpace(agentOverride.Provider))
+                {
+                    effectiveProvider = agentOverride.Provider.ToLowerInvariant();
+                }
+                else if (!string.IsNullOrWhiteSpace(agentOverride.Model))
+                {
+                    effectiveProvider = AgentProviderResolution.InferProviderFromModel(
+                        agentOverride.Model,
+                        capabilities) ?? effectiveProvider;
+                }
+                else
+                {
+                    var siblingOverride = request.AgentOverrides.FirstOrDefault(item =>
+                        !string.Equals(item.AgentKey, agent.Key, StringComparison.Ordinal));
+                    if (!string.IsNullOrWhiteSpace(siblingOverride?.Provider))
+                    {
+                        effectiveProvider = siblingOverride.Provider.ToLowerInvariant();
+                    }
+                    else if (!string.IsNullOrWhiteSpace(siblingOverride?.Model))
+                    {
+                        effectiveProvider = AgentProviderResolution.InferProviderFromModel(
+                            siblingOverride.Model,
+                            capabilities) ?? effectiveProvider;
+                    }
+                }
+            }
             return new WorkflowNodeRun
             {
                 NodeId = step.Id,
@@ -324,7 +355,7 @@ public sealed class WorkflowExecutionService(
             : finalNode.Output;
     }
 
-    private static void ValidateOverrides(
+    private void ValidateOverrides(
         PresetDefinition preset,
         IReadOnlyList<AgentOverrideRequest> overrides)
     {
@@ -337,5 +368,32 @@ public sealed class WorkflowExecutionService(
         var unknown = overrides.FirstOrDefault(item => !knownAgents.Contains(item.AgentKey));
         if (unknown is not null)
             throw new ArgumentException($"Agent '{unknown.AgentKey}' is not defined by the preset.");
+
+        foreach (var agentOverride in overrides)
+        {
+            if (string.IsNullOrWhiteSpace(agentOverride.Provider)) continue;
+
+            var agent = preset.Agents.Single(candidate => candidate.Key == agentOverride.AgentKey);
+            var provider = agentOverride.Provider.ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(agentOverride.Model))
+            {
+                if (!string.Equals(provider, agent.Model.Provider.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException(
+                        $"A model override is required when changing agent '{agent.Key}' to provider '{provider}'.");
+                }
+                continue;
+            }
+
+            var inferredProvider = AgentProviderResolution.InferProviderFromModel(
+                agentOverride.Model,
+                capabilities);
+            if (inferredProvider is not null &&
+                !string.Equals(provider, inferredProvider, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    $"Model '{agentOverride.Model}' does not belong to provider '{provider}'.");
+            }
+        }
     }
 }

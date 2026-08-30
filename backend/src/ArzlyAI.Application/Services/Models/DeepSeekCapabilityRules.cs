@@ -7,5 +7,8 @@ internal static class DeepSeekCapabilityRules
 
     public static bool SupportsTemperature(string model) => IsUsable(model);
 
-    public static bool SupportsWebSearch(string _) => false;
+    public static bool SupportsWebSearch(string model) =>
+        model.Equals("deepseek-v4-flash", StringComparison.OrdinalIgnoreCase) ||
+        model.Equals("deepseek-v4-pro", StringComparison.OrdinalIgnoreCase) ||
+        model.StartsWith("deepseek-v4-flash-", StringComparison.OrdinalIgnoreCase);
 }

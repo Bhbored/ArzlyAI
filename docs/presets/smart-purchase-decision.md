@@ -13,7 +13,7 @@ flowchart TD
     C --> D[Your pick]
 ```
 
-The first approval prevents expensive web search on a misunderstood request. Accept continues with a fresh OpenAI credential envelope; Edit sends feedback back to the understand agent; Reject cancels. The final approval lets the user keep the recommendation or try a different search. Final Accept requires no credentials because no nodes remain.
+The first approval prevents expensive web search on a misunderstood request. Accept continues with a fresh credential envelope for the selected AI provider; Edit sends feedback back to the understand agent; Reject cancels. The final approval lets the user keep the recommendation or try a different search. Final Accept requires no credentials because no nodes remain.
 
 ## Inputs
 
@@ -30,9 +30,11 @@ The first approval prevents expensive web search on a misunderstood request. Acc
 | Agent | Responsibility | Web search | Max iterations |
 | --- | --- | ---: | ---: |
 | `understand-request` | Restates the ask in plain language with a short checklist. | No | 3 |
-| `shop-and-recommend` | Searches the web for local retailers, compares 4–8 matching products, outputs `arzly.report` v4. | Yes | 8 |
+| `shop-and-recommend` | Searches the web for local retailers, returns at least three sourced suggestions when available, and outputs `arzly.report` v4. | Yes | 8 |
 
 Only `shop-and-recommend` allows model and temperature overrides on the client.
+
+DeepSeek, Anthropic, and Gemini web-search models use up to three provider-native hosted-search passes. Each pass receives the findings from earlier passes and is instructed to use different queries and sources to close product, pricing, availability, URL, image, and specification gaps. The pass count is bounded by the agent's `MaxIterations`; the final structured-output pass receives all accumulated evidence. OpenAI uses its Harness-managed iterative search.
 
 ## Result contract
 
@@ -60,7 +62,7 @@ Supported blocks are `recommendation`, `candidateComparison`, `riskCallout`, and
 ## Credentials
 
 - Workflow start requires `openai.apiKey` (seed default) plus any `{provider}.apiKey` used in a model override.
-- `shop-and-recommend` requires a model with hosted web search; DeepSeek is excluded until it supports web search.
+- `shop-and-recommend` requires a model marked as supporting hosted web search by the backend capability policy.
 - Configure keys in Settings (`GET /api/v1/providers`); default model is stored in SQLite and seeds preset pickers.
 - Start and first-gate Accept/Edit need a fresh envelope.
 - Final Accept needs no credentials.
@@ -70,8 +72,9 @@ Supported blocks are `recommendation`, `candidateComparison`, `riskCallout`, and
 - `backend/src/ArzlyAI.Infrastructure/Persistence/Seeds/SmartPurchaseDecisionPresetSeed.cs`
 - `backend/src/ArzlyAI.Application/Services/Workflows/Rendering/ArzlyReportHtmlRenderer.cs`
 - `backend/src/ArzlyAI.Infrastructure/Agents/OpenAiAgentRuntime.cs` (Harness web search)
-- `backend/src/ArzlyAI.Infrastructure/Agents/AnthropicAgentRuntime.cs`
-- `backend/src/ArzlyAI.Infrastructure/Agents/GeminiAgentRuntime.cs`
+- `backend/src/ArzlyAI.Infrastructure/Agents/DeepSeekAgentRuntime.cs` (bounded native hosted-search passes)
+- `backend/src/ArzlyAI.Infrastructure/Agents/AnthropicAgentRuntime.cs` (bounded native hosted-search passes)
+- `backend/src/ArzlyAI.Infrastructure/Agents/GeminiAgentRuntime.cs` (bounded native hosted-search passes)
 - `backend/src/ArzlyAI.Api/Controllers/v1/ProviderModelsController.cs`
 
 ## Mobile files
@@ -86,6 +89,7 @@ Supported blocks are `recommendation`, `candidateComparison`, `riskCallout`, and
 
 - Sequential execution only; Edit on the final gate re-runs search, not the understand step.
 - Prices and availability are point-in-time research observations from web search.
+- Repeated provider-native searches can try alternative indexed sources, but retailer anti-bot responses and inaccessible pages can still leave prices, availability, direct links, or images unverified.
 - Store links must be verified HTTPS product pages from in-country retailers; global catalog pages may appear when local listings are thin.
 - Product images require verified direct HTTPS image URLs; hotlink blocking on retailer CDNs can still hide images in the WebView.
 - The workflow never invents stores, prices, images, or links.

@@ -115,11 +115,34 @@ class ProviderModelRepository {
     return models;
   }
 
-  ProviderModel? findModel(List<ProviderModel> models, String modelId) {
+  ProviderModel? findModel(
+    List<ProviderModel> models,
+    String modelId, [
+    String? provider,
+  ]) {
     for (final model in models) {
-      if (model.id == modelId) return model;
+      if (model.id != modelId) continue;
+      if (provider != null &&
+          provider.isNotEmpty &&
+          model.provider != provider) {
+        continue;
+      }
+      return model;
     }
     return null;
+  }
+
+  String resolveProviderForModel(
+    List<ProviderModel> models,
+    String modelId, {
+    String? configuredProvider,
+    required String fallbackProvider,
+  }) {
+    if (configuredProvider != null && configuredProvider.isNotEmpty) {
+      final explicit = findModel(models, modelId, configuredProvider);
+      if (explicit != null) return explicit.provider;
+    }
+    return findModel(models, modelId)?.provider ?? fallbackProvider;
   }
 
   bool? modelSupportsTemperature(

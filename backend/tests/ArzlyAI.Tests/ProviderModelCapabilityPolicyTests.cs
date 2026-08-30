@@ -30,7 +30,9 @@ public sealed class ProviderModelCapabilityPolicyTests
     }
 
     [Theory]
+    [InlineData(AiProviderKeys.DeepSeek, "deepseek-v4-flash", true)]
     [InlineData(AiProviderKeys.DeepSeek, "deepseek-chat", false)]
+    [InlineData(AiProviderKeys.OpenAi, "gpt-3.5-turbo", false)]
     [InlineData(AiProviderKeys.Anthropic, "claude-sonnet-4-20250514", true)]
     [InlineData(AiProviderKeys.Gemini, "gemini-2.5-flash", true)]
     public void SupportsWebSearch_WhenProviderVaries_ReturnsExpected(

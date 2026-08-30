@@ -24,7 +24,7 @@
         "temperature": 0.7,
         "minimumTemperature": 0.0,
         "maximumTemperature": 1.0,
-        "isTemperatureEditable": false
+        "isTemperatureEditable": true
       },
       "harness": {
         "planningEnabled": false,

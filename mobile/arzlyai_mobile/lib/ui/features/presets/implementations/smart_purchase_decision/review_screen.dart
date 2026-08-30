@@ -12,6 +12,7 @@ import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provid
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_brief_panel.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_report_view.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_review_content.dart';
@@ -98,7 +99,16 @@ class _SmartPurchaseReviewScreenState
         run != null &&
         run.renderedResult?.mediaType == 'text/html' &&
         (run.renderedResult?.content.trim().isNotEmpty ?? false);
-    final showFeedbackField = !hasHtml || _showFeedback;
+    const reportMapper = ArzlyReportMapper();
+    final nativeReport = run == null
+        ? null
+        : run.report ??
+            reportMapper.fromJsonString(content) ??
+            reportMapper.fromJsonString(run.finalResponse);
+    final hasRenderableReport = hasHtml || nativeReport != null;
+    final showFeedbackField = finalReview
+        ? _showFeedback
+        : (!hasHtml || _showFeedback);
     final online = ref.watch(internetConnectionProvider);
     final offlineMode = ref.watch(offlineModeProvider).value ?? false;
     final transport = ref.watch(workflowTransportProvider);
@@ -163,7 +173,7 @@ class _SmartPurchaseReviewScreenState
                   ],
                   AppButton.primary(
                     label: labels?.acceptLabel ?? 'Accept',
-                    onPressed: busy
+                    onPressed: busy || (finalReview && !hasRenderableReport)
                         ? null
                         : () async {
                             final ok = await AppDialog.confirm(
@@ -183,14 +193,15 @@ class _SmartPurchaseReviewScreenState
                   SizedBox(height: context.spaceSmall),
                   AppButton.ghost(
                     label: labels?.editLabel ?? 'Edit',
-                    onPressed:
-                        busy ||
-                            (!hasHtml &&
-                                AppValidators.requiredNonEmpty(draft) != null)
+                    onPressed: busy
                         ? null
                         : () async {
-                            if (hasHtml && !_showFeedback) {
+                            if ((hasHtml || finalReview) && !_showFeedback) {
                               setState(() => _showFeedback = true);
+                              return;
+                            }
+                            if (!hasHtml &&
+                                AppValidators.requiredNonEmpty(draft) != null) {
                               return;
                             }
                             if (AppValidators.requiredNonEmpty(draft) != null) {

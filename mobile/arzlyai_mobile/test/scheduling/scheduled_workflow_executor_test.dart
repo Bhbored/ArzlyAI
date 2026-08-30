@@ -128,6 +128,62 @@ void main() {
     expect(workflowService.lastStart?.credentials.requestId, 'r');
   });
 
+  for (final config in [
+    ('anthropic', 'claude-sonnet-4-20250514'),
+    ('gemini', 'gemini-2.5-flash'),
+    ('deepseek', 'deepseek-chat'),
+  ]) {
+    test('background generation uses ${config.$1} override credentials', () async {
+      final provider = config.$1;
+      final model = config.$2;
+      credentialStore.values[providerCredentialEnvelopeKey(provider)] =
+          '$provider-key';
+      await workflowRepository.updateInstance(
+        id: localWorkflowId,
+        topic: 'AI agents',
+        modelOverridesJson: jsonEncode([
+          {
+            'agentKey': 'content-writer',
+            'provider': provider,
+            'model': model,
+          },
+        ]),
+      );
+
+      await executor.execute(localWorkflowId);
+
+      expect(
+        envelopeService.lastCredentials,
+        containsPair(providerCredentialEnvelopeKey(provider), '$provider-key'),
+      );
+      expect(workflowService.lastStart?.agentOverrides.single.provider, provider);
+      expect(workflowService.lastStart?.agentOverrides.single.model, model);
+    });
+  }
+
+  test('legacy scheduled override infers provider from model', () async {
+    credentialStore.values[providerCredentialEnvelopeKey('deepseek')] =
+        'deepseek-key';
+    await workflowRepository.updateInstance(
+      id: localWorkflowId,
+      topic: 'AI agents',
+      modelOverridesJson: jsonEncode([
+        {'agentKey': 'content-writer', 'model': 'deepseek-chat'},
+      ]),
+    );
+
+    await executor.execute(localWorkflowId);
+
+    expect(
+      envelopeService.lastCredentials,
+      containsPair(providerCredentialEnvelopeKey('deepseek'), 'deepseek-key'),
+    );
+    expect(
+      workflowService.lastStart?.agentOverrides.single.provider,
+      'deepseek',
+    );
+  });
+
   test('waiting for approval persists run and shows draft-ready notification', () async {
     await executor.execute(localWorkflowId);
 
