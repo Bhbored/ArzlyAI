@@ -32,7 +32,13 @@ class WorkflowScheduler {
       constraints: Constraints(networkType: NetworkType.connected),
       inputData: {'localWorkflowId': schedule.localWorkflowId},
     );
-    await notifications.scheduleReminder(schedule);
+    final configuration = await scheduleRepository.getConfiguration(
+      schedule.localWorkflowId,
+    );
+    await notifications.scheduleReminder(
+      schedule,
+      presetName: configuration?.presetName ?? 'ArzlyAI workflow',
+    );
   }
 
   Future<void> cancelSchedule(String localWorkflowId) async {

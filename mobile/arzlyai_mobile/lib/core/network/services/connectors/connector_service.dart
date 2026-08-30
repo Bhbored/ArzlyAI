@@ -2,6 +2,9 @@ import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/network/client/dio_client.dart';
 import 'package:arzlyai_mobile/core/network/configs/http_methods.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/connectors/google_sheet_headers_response.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/connectors/google_sheet_tab_response.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/connectors/google_spreadsheet_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_session_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_status_response.dart';
 import 'package:arzlyai_mobile/core/network/executor/api_executor.dart';
@@ -107,6 +110,62 @@ class ConnectorService {
       failure: (error, statusCode) {
         if (statusCode == 404) return false;
         _logger.e('Failed to disconnect connector');
+        throw error;
+      },
+    );
+  }
+
+  Future<List<GoogleSpreadsheetResponse>> listGoogleSpreadsheets() async {
+    final data = await _getGoogleResource(
+      'connectors/google/resources/spreadsheets',
+    );
+    return (data as List<dynamic>)
+        .map(
+          (item) =>
+              GoogleSpreadsheetResponse.fromJson(item as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  }
+
+  Future<List<GoogleSheetTabResponse>> listGoogleTabs(
+    String spreadsheetId,
+  ) async {
+    final id = Uri.encodeComponent(spreadsheetId);
+    final data = await _getGoogleResource(
+      'connectors/google/resources/spreadsheets/$id/tabs',
+    );
+    return (data as List<dynamic>)
+        .map(
+          (item) =>
+              GoogleSheetTabResponse.fromJson(item as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  }
+
+  Future<GoogleSheetHeadersResponse> listGoogleHeaders(
+    String spreadsheetId,
+    String tabTitle,
+  ) async {
+    final id = Uri.encodeComponent(spreadsheetId);
+    final title = Uri.encodeComponent(tabTitle);
+    final data = await _getGoogleResource(
+      'connectors/google/resources/spreadsheets/$id/tabs/$title/headers',
+    );
+    return GoogleSheetHeadersResponse.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<dynamic> _getGoogleResource(String path) async {
+    final response = await _apiExecutor.execute(
+      ApiRequest(
+        path: path,
+        method: HttpMethod.get,
+        headers: await _deviceHeaders(),
+      ),
+    );
+    return response.when(
+      success: (data, statusCode, meta) => data,
+      failure: (error, statusCode) {
+        _logger.e('Failed to retrieve Google resource metadata');
         throw error;
       },
     );

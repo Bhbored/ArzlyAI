@@ -11,6 +11,10 @@ class Schedules extends Table {
   DateTimeColumn get lastSucceededAtUtc => dateTime().nullable()();
   TextColumn get lastOutcome => text().nullable()();
   TextColumn get failureMessage => text().nullable()();
+  TextColumn get recurrenceJson => text().withDefault(const Constant('{}'))();
+  TextColumn get workflowInputsJson =>
+      text().withDefault(const Constant('{}'))();
+  TextColumn get presetName => text().withDefault(const Constant('ArzlyAI'))();
 
   @override
   Set<Column> get primaryKey => {localWorkflowId};

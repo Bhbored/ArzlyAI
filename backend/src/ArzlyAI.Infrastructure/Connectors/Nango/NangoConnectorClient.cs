@@ -85,7 +85,8 @@ public sealed class NangoConnectorClient(
                           throw new InvalidOperationException(
                               "Nango connection did not contain an OAuth access token.");
         var subject = ReadSubject(root, credentials);
-        return new NangoOAuthCredentials(accessToken, subject);
+        var email = ReadMetadataValue(root, credentials, "email");
+        return new NangoOAuthCredentials(accessToken, subject, email);
     }
 
     public async Task DeleteConnectionAsync(
@@ -138,17 +139,28 @@ public sealed class NangoConnectorClient(
 
     private static string? ReadSubject(JsonElement root, JsonElement credentials)
     {
+        var metadataSubject = ReadMetadataValue(root, credentials, "sub");
+        if (!string.IsNullOrWhiteSpace(metadataSubject)) return metadataSubject;
+
+        if (!credentials.TryGetProperty("raw", out var raw)) return null;
+        var idToken = OptionalString(raw, "id_token");
+        return string.IsNullOrWhiteSpace(idToken) ? null : ReadJwtSubject(idToken);
+    }
+
+    private static string? ReadMetadataValue(
+        JsonElement root,
+        JsonElement credentials,
+        string property)
+    {
         if (root.TryGetProperty("metadata", out var metadata))
         {
-            var metadataSubject = OptionalString(metadata, "sub");
-            if (!string.IsNullOrWhiteSpace(metadataSubject)) return metadataSubject;
+            var metadataValue = OptionalString(metadata, property);
+            if (!string.IsNullOrWhiteSpace(metadataValue)) return metadataValue;
         }
 
         if (!credentials.TryGetProperty("raw", out var raw)) return null;
-        var rawSubject = OptionalString(raw, "sub");
-        if (!string.IsNullOrWhiteSpace(rawSubject)) return rawSubject;
-        var idToken = OptionalString(raw, "id_token");
-        return string.IsNullOrWhiteSpace(idToken) ? null : ReadJwtSubject(idToken);
+        var rawValue = OptionalString(raw, property);
+        return string.IsNullOrWhiteSpace(rawValue) ? null : rawValue;
     }
 
     private static string? ReadJwtSubject(string token)

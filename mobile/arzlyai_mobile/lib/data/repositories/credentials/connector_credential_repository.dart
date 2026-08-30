@@ -1,7 +1,8 @@
-import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 part 'connector_credential_repository.g.dart';
@@ -10,13 +11,18 @@ Duration? retry(int _, Object _) => null;
 
 @Riverpod(keepAlive: true, retry: retry)
 ConnectorCredentialRepository connectorCredentialRepository(Ref ref) {
-  return ConnectorCredentialRepository(ref.watch(appDatabaseProvider));
+  return ConnectorCredentialRepository(
+    ref.watch(credentialStoreProvider),
+    legacyDatabase: ref.watch(appDatabaseProvider),
+  );
 }
 
 class ConnectorCredentialRepository {
-  ConnectorCredentialRepository(this._db);
+  ConnectorCredentialRepository(this._store, {AppDatabase? legacyDatabase})
+    : _legacyDatabase = legacyDatabase;
 
-  final AppDatabase _db;
+  final CredentialStore _store;
+  final AppDatabase? _legacyDatabase;
 
   Future<bool> isConnected(String connectorKey) async {
     final fields = await _readFields(connectorKey);
@@ -27,61 +33,101 @@ class ConnectorCredentialRepository {
 
   Future<Map<String, String>> readEnvelopeValues(String connectorKey) async {
     final fields = await _readFields(connectorKey);
-    if (connectorKey == ConnectorKeys.linkedin) {
-      return {
-        integrationFieldEnvelopeKey(
-          'linkedin.posts',
-          LinkedInConnectorFields.accessToken,
-        ): fields[LinkedInConnectorFields.accessToken] ?? '',
-        integrationFieldEnvelopeKey(
-          'linkedin.posts',
-          LinkedInConnectorFields.authorUrn,
-        ): fields[LinkedInConnectorFields.authorUrn] ?? '',
-      };
-    }
-    return {};
+    final integrationKey = _integrationKey(connectorKey);
+    return {
+      for (final field in _allFieldsFor(connectorKey))
+        if (fields[field]?.trim().isNotEmpty ?? false)
+          integrationFieldEnvelopeKey(integrationKey, field): fields[field]!,
+    };
   }
 
   Future<void> saveFields(
     String connectorKey,
     Map<String, String> fields,
   ) async {
-    final now = DateTime.now().toUtc();
-    await _db.batch((batch) {
-      for (final entry in fields.entries) {
-        final trimmed = entry.value.trim();
-        if (trimmed.isEmpty) continue;
-        batch.insert(
-          _db.connectorCredentials,
-          ConnectorCredentialsCompanion.insert(
-            connectorKey: connectorKey,
-            fieldKey: entry.key,
-            value: trimmed,
-            updatedAtUtc: now,
-          ),
-          mode: InsertMode.insertOrReplace,
-        );
-      }
+    await _store.writeValues({
+      for (final entry in fields.entries)
+        _storageKey(connectorKey, entry.key): entry.value,
     });
+    final saved = await _readSecureFields(connectorKey);
+    if (_requiredFieldsFor(
+      connectorKey,
+    ).any((field) => saved[field]?.trim().isEmpty ?? true)) {
+      throw StateError('Connector credentials could not be stored securely.');
+    }
+    await _deleteLegacyConnector(connectorKey);
   }
 
   Future<void> deleteConnector(String connectorKey) async {
-    await (_db.delete(
-      _db.connectorCredentials,
-    )..where((row) => row.connectorKey.equals(connectorKey))).go();
+    for (final field in _allFieldsFor(connectorKey)) {
+      await _store.deleteValue(_storageKey(connectorKey, field));
+    }
+    await _deleteLegacyConnector(connectorKey);
   }
 
   Future<Map<String, String>> _readFields(String connectorKey) async {
-    final rows = await (_db.select(
-      _db.connectorCredentials,
+    final secureFields = await _readSecureFields(connectorKey);
+    if (_requiredFieldsFor(
+      connectorKey,
+    ).every((field) => secureFields[field]?.trim().isNotEmpty ?? false)) {
+      return secureFields;
+    }
+    final legacyFields = await _readLegacyFields(connectorKey);
+    if (legacyFields.isEmpty) return secureFields;
+    await saveFields(connectorKey, legacyFields);
+    return _readSecureFields(connectorKey);
+  }
+
+  Future<Map<String, String>> _readSecureFields(String connectorKey) async {
+    final values = await _store.readValues([
+      for (final field in _allFieldsFor(connectorKey))
+        _storageKey(connectorKey, field),
+    ]);
+    final fields = <String, String>{};
+    for (final field in _allFieldsFor(connectorKey)) {
+      final value = values[_storageKey(connectorKey, field)];
+      if (value != null) fields[field] = value;
+    }
+    return fields;
+  }
+
+  Future<Map<String, String>> _readLegacyFields(String connectorKey) async {
+    final db = _legacyDatabase;
+    if (db == null) return {};
+    final rows = await (db.select(
+      db.connectorCredentials,
     )..where((row) => row.connectorKey.equals(connectorKey))).get();
     return {for (final row in rows) row.fieldKey: row.value};
   }
 
-  List<String> _requiredFieldsFor(String connectorKey) {
-    if (connectorKey == ConnectorKeys.linkedin) {
-      return LinkedInConnectorFields.all;
-    }
-    return [];
+  Future<void> _deleteLegacyConnector(String connectorKey) async {
+    final db = _legacyDatabase;
+    if (db == null) return;
+    await (db.delete(
+      db.connectorCredentials,
+    )..where((row) => row.connectorKey.equals(connectorKey))).go();
   }
+
+  List<String> _requiredFieldsFor(String connectorKey) {
+    return switch (connectorKey) {
+      ConnectorKeys.linkedin => LinkedInConnectorFields.all,
+      ConnectorKeys.google => GoogleConnectorFields.required,
+      _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+    };
+  }
+
+  List<String> _allFieldsFor(String connectorKey) => switch (connectorKey) {
+    ConnectorKeys.linkedin => LinkedInConnectorFields.all,
+    ConnectorKeys.google => GoogleConnectorFields.all,
+    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+  };
+
+  String _integrationKey(String connectorKey) => switch (connectorKey) {
+    ConnectorKeys.linkedin => 'linkedin.posts',
+    ConnectorKeys.google => 'google',
+    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+  };
+
+  String _storageKey(String connectorKey, String field) =>
+      'connector.$connectorKey.$field';
 }

@@ -12,6 +12,7 @@ import 'package:arzlyai_mobile/core/storage/device/device_id_store.dart';
 import 'package:arzlyai_mobile/core/network/services/connectors/connector_service.dart';
 import 'package:arzlyai_mobile/data/repositories/connectors/connector_auth_launcher.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/data/repositories/connectors/connector_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/connectors/connector_credential_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/connectors/connector_mapper.dart';
@@ -19,9 +20,8 @@ import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import '../storage/device_id_store_test.dart';
 
 Map<String, dynamic> _fixture(String name) {
-  return jsonDecode(
-    File('test/fixtures/network/$name').readAsStringSync(),
-  ) as Map<String, dynamic>;
+  return jsonDecode(File('test/fixtures/network/$name').readAsStringSync())
+      as Map<String, dynamic>;
 }
 
 ConnectorRepository _repository(
@@ -40,7 +40,7 @@ ConnectorRepository _repository(
   final service = ConnectorService(ApiExecutor(dio), DeviceIdStore(storage));
   return ConnectorRepository(
     service,
-    ConnectorCredentialRepository(db),
+    ConnectorCredentialRepository(CredentialStore(storage), legacyDatabase: db),
     ConnectorAuthLauncher(),
     const ConnectorMapper(),
     const ConnectorCredentialMapper(),
@@ -72,58 +72,91 @@ void main() {
         );
       },
     );
-    final local = ConnectorCredentialRepository(db);
+    final local = ConnectorCredentialRepository(
+      CredentialStore(storage),
+      legacyDatabase: db,
+    );
 
     await repository.syncCredentials(ConnectorKeys.linkedin);
 
     expect(await local.isConnected(ConnectorKeys.linkedin), isTrue);
-    expect(
-      await local.readEnvelopeValues(ConnectorKeys.linkedin),
-      {
-        integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'):
-            'li-access-token',
-        integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn'):
-            'urn:li:person:abc123',
-      },
-    );
+    expect(await local.readEnvelopeValues(ConnectorKeys.linkedin), {
+      integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'):
+          'li-access-token',
+      integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn'):
+          'urn:li:person:abc123',
+    });
   });
 
-  test('syncCredentials rejects partial response without overwriting', () async {
-    final local = ConnectorCredentialRepository(db);
-    await local.saveFields(ConnectorKeys.linkedin, {
-      LinkedInConnectorFields.accessToken: 'keep-token',
-      LinkedInConnectorFields.authorUrn: 'urn:li:person:keep',
-    });
+  test(
+    'syncCredentials rejects partial response without overwriting',
+    () async {
+      final local = ConnectorCredentialRepository(
+        CredentialStore(storage),
+        legacyDatabase: db,
+      );
+      await local.saveFields(ConnectorKeys.linkedin, {
+        LinkedInConnectorFields.accessToken: 'keep-token',
+        LinkedInConnectorFields.authorUrn: 'urn:li:person:keep',
+      });
 
+      final repository = _repository(
+        db,
+        storage,
+        onRequest: (options) async {
+          return Response(
+            requestOptions: options,
+            data: {'linkedin.accessToken': 'new-token'},
+            statusCode: 200,
+          );
+        },
+      );
+
+      await expectLater(
+        repository.syncCredentials(ConnectorKeys.linkedin),
+        throwsA(isA<StateError>()),
+      );
+      expect(await local.readEnvelopeValues(ConnectorKeys.linkedin), {
+        integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'):
+            'keep-token',
+        integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn'):
+            'urn:li:person:keep',
+      });
+    },
+  );
+
+  test('syncCredentials stores Google token in secure storage', () async {
     final repository = _repository(
       db,
       storage,
       onRequest: (options) async {
         return Response(
           requestOptions: options,
-          data: {'linkedin.accessToken': 'new-token'},
+          data: _fixture('connector_credentials_google.json'),
           statusCode: 200,
         );
       },
     );
+    final local = ConnectorCredentialRepository(
+      CredentialStore(storage),
+      legacyDatabase: db,
+    );
 
-    await expectLater(
-      repository.syncCredentials(ConnectorKeys.linkedin),
-      throwsA(isA<StateError>()),
-    );
-    expect(
-      await local.readEnvelopeValues(ConnectorKeys.linkedin),
-      {
-        integrationFieldEnvelopeKey('linkedin.posts', 'accessToken'):
-            'keep-token',
-        integrationFieldEnvelopeKey('linkedin.posts', 'authorUrn'):
-            'urn:li:person:keep',
-      },
-    );
+    await repository.syncCredentials(ConnectorKeys.google);
+
+    expect(await local.readEnvelopeValues(ConnectorKeys.google), {
+      integrationFieldEnvelopeKey('google', 'accessToken'):
+          'google-access-token',
+      integrationFieldEnvelopeKey('google', 'email'): 'person@example.com',
+    });
+    expect(await db.select(db.connectorCredentials).get(), isEmpty);
   });
 
   test('disconnect 204 clears local credentials', () async {
-    final local = ConnectorCredentialRepository(db);
+    final local = ConnectorCredentialRepository(
+      CredentialStore(storage),
+      legacyDatabase: db,
+    );
     await local.saveFields(ConnectorKeys.linkedin, {
       LinkedInConnectorFields.accessToken: 'li-token',
       LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
@@ -145,7 +178,10 @@ void main() {
   });
 
   test('disconnect 404 preserves local credentials', () async {
-    final local = ConnectorCredentialRepository(db);
+    final local = ConnectorCredentialRepository(
+      CredentialStore(storage),
+      legacyDatabase: db,
+    );
     await local.saveFields(ConnectorKeys.linkedin, {
       LinkedInConnectorFields.accessToken: 'li-token',
       LinkedInConnectorFields.authorUrn: 'urn:li:person:1',

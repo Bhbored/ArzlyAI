@@ -56,22 +56,21 @@ class ConnectorRepository {
     return _localCredentials.isConnected(connectorKey);
   }
 
-  Future<void> connectLinkedIn({CancelToken? cancelToken}) async {
-    final session = await createSession(ConnectorKeys.linkedin);
-    await _authLauncher.launchLinkedInConnect(session.connectUrl);
-    await _pollUntilRemoteConnected(
-      ConnectorKeys.linkedin,
-      cancelToken: cancelToken,
-    );
-    await syncCredentials(ConnectorKeys.linkedin);
+  Future<void> connect(String connectorKey, {CancelToken? cancelToken}) async {
+    _validateConnectorKey(connectorKey);
+    final session = await createSession(connectorKey);
+    await _authLauncher.launchConnect(connectorKey, session.connectUrl);
+    await _pollUntilRemoteConnected(connectorKey, cancelToken: cancelToken);
+    await syncCredentials(connectorKey);
   }
 
-  Future<void> finishConnectingLinkedIn({CancelToken? cancelToken}) async {
-    await _pollUntilRemoteConnected(
-      ConnectorKeys.linkedin,
-      cancelToken: cancelToken,
-    );
-    await syncCredentials(ConnectorKeys.linkedin);
+  Future<void> finishConnecting(
+    String connectorKey, {
+    CancelToken? cancelToken,
+  }) async {
+    _validateConnectorKey(connectorKey);
+    await _pollUntilRemoteConnected(connectorKey, cancelToken: cancelToken);
+    await syncCredentials(connectorKey);
   }
 
   Future<void> syncCredentials(String connectorKey) async {
@@ -134,17 +133,16 @@ class ConnectorRepository {
     String connectorKey,
     Map<String, String> apiValues,
   ) async {
-    if (connectorKey == ConnectorKeys.linkedin) {
-      final envelopeValues = _credentialMapper.linkedInEnvelopeValues(
-        apiValues,
-      );
-      if (envelopeValues == null) {
-        throw StateError('LinkedIn credentials response was incomplete.');
-      }
-      final localFields = _credentialMapper.linkedInLocalFields(envelopeValues);
-      await _localCredentials.saveFields(connectorKey, localFields);
-      return;
+    final localFields = _credentialMapper.localFields(connectorKey, apiValues);
+    if (localFields == null) {
+      throw StateError('$connectorKey credentials response was incomplete.');
     }
-    throw ArgumentError('Unsupported connector key: $connectorKey');
+    await _localCredentials.saveFields(connectorKey, localFields);
+  }
+
+  void _validateConnectorKey(String connectorKey) {
+    if (!ConnectorKeys.all.contains(connectorKey)) {
+      throw ArgumentError('Unsupported connector key: $connectorKey');
+    }
   }
 }

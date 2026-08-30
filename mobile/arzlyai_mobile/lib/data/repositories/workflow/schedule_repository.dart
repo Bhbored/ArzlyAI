@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_task_keys.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/workflow_schedule.dart';
+import 'package:arzlyai_mobile/domain/entities/scheduling/schedule_recurrence.dart';
+import 'package:arzlyai_mobile/domain/entities/scheduling/scheduled_workflow_configuration.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 part 'schedule_repository.g.dart';
@@ -30,25 +35,54 @@ class ScheduleRepository {
   }
 
   Future<WorkflowSchedule?> getByWorkflowId(String localWorkflowId) async {
-    final row = await (_db.select(_db.schedules)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.schedules)
+              ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
+            .getSingleOrNull();
     return row == null ? null : _fromRow(row);
   }
 
+  Future<ScheduledWorkflowConfiguration?> getConfiguration(
+    String localWorkflowId,
+  ) async {
+    final row = await _db
+        .customSelect(
+          '''
+SELECT recurrence_json, workflow_inputs_json, preset_name
+FROM schedules
+WHERE local_workflow_id = ?
+''',
+          variables: [Variable.withString(localWorkflowId)],
+        )
+        .getSingleOrNull();
+    if (row == null) return null;
+    final recurrenceData =
+        jsonDecode(row.read<String>('recurrence_json')) as Map<String, dynamic>;
+    final inputsData =
+        jsonDecode(row.read<String>('workflow_inputs_json'))
+            as Map<String, dynamic>;
+    return ScheduledWorkflowConfiguration(
+      recurrence: ScheduleRecurrence.fromJson(recurrenceData),
+      inputs: inputsData.map((key, value) => MapEntry(key, value.toString())),
+      presetName: row.read<String>('preset_name'),
+    );
+  }
+
   Future<List<WorkflowSchedule>> listEnabled() async {
-    final rows = await (_db.select(_db.schedules)
-          ..where((t) => t.enabled.equals(true)))
-        .get();
+    final rows = await (_db.select(
+      _db.schedules,
+    )..where((t) => t.enabled.equals(true))).get();
     return rows.map(_fromRow).toList();
   }
 
   Future<List<WorkflowSchedule>> listDue(DateTime nowUtc) async {
-    final rows = await (_db.select(_db.schedules)
-          ..where(
-            (t) => t.enabled.equals(true) & t.nextRunAtUtc.isSmallerOrEqualValue(nowUtc),
-          ))
-        .get();
+    final rows =
+        await (_db.select(_db.schedules)..where(
+              (t) =>
+                  t.enabled.equals(true) &
+                  t.nextRunAtUtc.isSmallerOrEqualValue(nowUtc),
+            ))
+            .get();
     return rows.map(_fromRow).toList();
   }
 
@@ -57,27 +91,48 @@ class ScheduleRepository {
     required String localTime,
     required String timeZoneId,
     required bool enabled,
+    ScheduleRecurrence? recurrence,
+    Map<String, String> workflowInputs = const {},
+    String presetName = 'ArzlyAI',
     DateTime? nextRunAtUtc,
   }) async {
+    final rule = recurrence ?? ScheduleRecurrence.daily();
     final platformTaskId = ScheduleTaskKeys.platformTaskId(localWorkflowId);
-    final next = nextRunAtUtc ??
+    final next =
+        nextRunAtUtc ??
         _calculator.nextOccurrenceUtc(
           localTime: localTime,
           timeZoneId: timeZoneId,
+          recurrence: rule,
         );
-    await _db.into(_db.schedules).insertOnConflictUpdate(
-      SchedulesCompanion.insert(
-        localWorkflowId: localWorkflowId,
-        localTime: localTime,
-        timeZoneId: timeZoneId,
-        enabled: Value(enabled),
-        platformTaskId: Value(platformTaskId),
-        nextRunAtUtc: next,
-        lastAttemptAtUtc: const Value.absent(),
-        lastSucceededAtUtc: const Value.absent(),
-        lastOutcome: const Value.absent(),
-        failureMessage: const Value.absent(),
-      ),
+    await _db
+        .into(_db.schedules)
+        .insertOnConflictUpdate(
+          SchedulesCompanion.insert(
+            localWorkflowId: localWorkflowId,
+            localTime: localTime,
+            timeZoneId: timeZoneId,
+            enabled: Value(enabled),
+            platformTaskId: Value(platformTaskId),
+            nextRunAtUtc: next,
+            lastAttemptAtUtc: const Value.absent(),
+            lastSucceededAtUtc: const Value.absent(),
+            lastOutcome: const Value.absent(),
+            failureMessage: const Value.absent(),
+          ),
+        );
+    await _db.customStatement(
+      '''
+UPDATE schedules
+SET recurrence_json = ?, workflow_inputs_json = ?, preset_name = ?
+WHERE local_workflow_id = ?
+''',
+      [
+        jsonEncode(rule.toJson()),
+        jsonEncode(workflowInputs),
+        presetName,
+        localWorkflowId,
+      ],
     );
     return WorkflowSchedule(
       localWorkflowId: localWorkflowId,
@@ -96,16 +151,17 @@ class ScheduleRepository {
   }
 
   Future<void> delete(String localWorkflowId) async {
-    await (_db.delete(_db.schedules)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-        .go();
+    await (_db.delete(
+      _db.schedules,
+    )..where((t) => t.localWorkflowId.equals(localWorkflowId))).go();
   }
 
   Future<bool> tryClaimOccurrence(String localWorkflowId) async {
     return _db.transaction(() async {
-      final row = await (_db.select(_db.schedules)
-            ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-          .getSingleOrNull();
+      final row =
+          await (_db.select(_db.schedules)
+                ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
+              .getSingleOrNull();
       if (row == null || !row.enabled) return false;
 
       final now = DateTime.now().toUtc();
@@ -122,9 +178,9 @@ class ScheduleRepository {
         return false;
       }
 
-      await (_db.update(_db.schedules)
-            ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-          .write(
+      await (_db.update(
+        _db.schedules,
+      )..where((t) => t.localWorkflowId.equals(localWorkflowId))).write(
         SchedulesCompanion(
           lastAttemptAtUtc: Value(now),
           lastOutcome: const Value(ScheduleOutcomes.started),
@@ -141,20 +197,23 @@ class ScheduleRepository {
     DateTime? succeededAtUtc,
   }) async {
     final now = succeededAtUtc ?? DateTime.now().toUtc();
-    final row = await (_db.select(_db.schedules)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.schedules)
+              ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
+            .getSingleOrNull();
     if (row == null) return;
+    final configuration = await getConfiguration(localWorkflowId);
 
     final next = _calculator.nextOccurrenceUtc(
       localTime: row.localTime,
       timeZoneId: row.timeZoneId,
+      recurrence: configuration?.recurrence,
       afterUtc: now,
     );
 
-    await (_db.update(_db.schedules)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-        .write(
+    await (_db.update(
+      _db.schedules,
+    )..where((t) => t.localWorkflowId.equals(localWorkflowId))).write(
       SchedulesCompanion(
         lastSucceededAtUtc: Value(now),
         lastOutcome: Value(outcome),
@@ -170,18 +229,27 @@ class ScheduleRepository {
     String outcome = ScheduleOutcomes.failed,
   }) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.schedules)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
-        .write(
+    final instance = await (_db.select(
+      _db.workflowInstances,
+    )..where((row) => row.id.equals(localWorkflowId))).getSingleOrNull();
+    final persistedMessage = isReceiptWorkflowKey(instance?.presetKey ?? '')
+        ? 'Receipt workflow could not run in the background.'
+        : message;
+    await (_db.update(
+      _db.schedules,
+    )..where((t) => t.localWorkflowId.equals(localWorkflowId))).write(
       SchedulesCompanion(
         lastAttemptAtUtc: Value(now),
         lastOutcome: Value(outcome),
-        failureMessage: Value(message),
+        failureMessage: Value(persistedMessage),
       ),
     );
   }
 
-  Future<void> updateNextRunAtUtc(String localWorkflowId, DateTime nextRunAtUtc) async {
+  Future<void> updateNextRunAtUtc(
+    String localWorkflowId,
+    DateTime nextRunAtUtc,
+  ) async {
     await (_db.update(_db.schedules)
           ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
         .write(SchedulesCompanion(nextRunAtUtc: Value(nextRunAtUtc)));

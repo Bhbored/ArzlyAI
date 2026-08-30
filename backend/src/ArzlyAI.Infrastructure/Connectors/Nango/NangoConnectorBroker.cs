@@ -57,21 +57,15 @@ public sealed class NangoConnectorBroker(
             definition.IntegrationId,
             connection.ConnectionId,
             cancellationToken);
-        if (definition.Key != "linkedin")
-            throw new NotSupportedException($"Credential mapping is not implemented for '{definition.Key}'.");
-
-        var subject = credentials.Subject ?? await linkedInIdentity.GetSubjectAsync(
-            credentials.AccessToken,
-            cancellationToken);
-        var authorUrn = subject.StartsWith("urn:li:person:", StringComparison.Ordinal)
-            ? subject
-            : $"urn:li:person:{subject}";
-        logger.LogInformation("Mapped credentials for connector {ConnectorKey}", definition.Key);
-        return new Dictionary<string, string>(StringComparer.Ordinal)
+        var mapped = definition.Key switch
         {
-            ["linkedin.accessToken"] = credentials.AccessToken,
-            ["linkedin.authorUrn"] = authorUrn
+            "linkedin" => await MapLinkedInAsync(credentials, cancellationToken),
+            "google" => MapGoogle(credentials),
+            _ => throw new NotSupportedException(
+                $"Credential mapping is not implemented for '{definition.Key}'.")
         };
+        logger.LogInformation("Mapped credentials for connector {ConnectorKey}", definition.Key);
+        return mapped;
     }
 
     public async Task<bool> DisconnectAsync(
@@ -106,12 +100,46 @@ public sealed class NangoConnectorBroker(
 
     private ConnectorDefinition Resolve(string connectorKey)
     {
-        if (!connectorKey.Equals("linkedin", StringComparison.OrdinalIgnoreCase))
-            throw new KeyNotFoundException($"Connector '{connectorKey}' is not supported.");
-        var integrationId = options.Value.LinkedInIntegrationId;
+        var key = connectorKey.ToLowerInvariant();
+        var integrationId = key switch
+        {
+            "linkedin" => options.Value.LinkedInIntegrationId,
+            "google" => options.Value.GoogleIntegrationId,
+            _ => throw new KeyNotFoundException($"Connector '{connectorKey}' is not supported.")
+        };
         if (string.IsNullOrWhiteSpace(integrationId))
-            throw new InvalidOperationException("Nango:LinkedInIntegrationId is not configured.");
-        return new ConnectorDefinition("linkedin", integrationId);
+            throw new InvalidOperationException(
+                $"Nango:{(key == "google" ? "Google" : "LinkedIn")}IntegrationId is not configured.");
+        return new ConnectorDefinition(key, integrationId);
+    }
+
+    private async Task<IReadOnlyDictionary<string, string>> MapLinkedInAsync(
+        NangoOAuthCredentials credentials,
+        CancellationToken cancellationToken)
+    {
+        var subject = credentials.Subject ?? await linkedInIdentity.GetSubjectAsync(
+            credentials.AccessToken,
+            cancellationToken);
+        var authorUrn = subject.StartsWith("urn:li:person:", StringComparison.Ordinal)
+            ? subject
+            : $"urn:li:person:{subject}";
+        return new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["linkedin.accessToken"] = credentials.AccessToken,
+            ["linkedin.authorUrn"] = authorUrn
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string> MapGoogle(
+        NangoOAuthCredentials credentials)
+    {
+        var mapped = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["google.accessToken"] = credentials.AccessToken
+        };
+        if (!string.IsNullOrWhiteSpace(credentials.Email))
+            mapped["google.email"] = credentials.Email;
+        return mapped;
     }
 
     private sealed record ConnectorDefinition(string Key, string IntegrationId);

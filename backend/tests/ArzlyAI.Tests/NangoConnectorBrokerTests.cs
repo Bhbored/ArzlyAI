@@ -41,6 +41,44 @@ public sealed class NangoConnectorBrokerTests
     }
 
     [Fact]
+    public async Task GetCredentialsAsync_WhenGoogleConnected_MapsGoogleEnvelopeKeys()
+    {
+        var client = ConnectedClient();
+        client.Credentials = new NangoOAuthCredentials(
+            "google-secret-token",
+            "google-subject",
+            "owner@example.com");
+        var broker = CreateBroker(client);
+
+        var result = await broker.GetCredentialsAsync(
+            "google",
+            Guid.NewGuid(),
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("google-secret-token", result["google.accessToken"]);
+        Assert.Equal("owner@example.com", result["google.email"]);
+        Assert.DoesNotContain("linkedin.authorUrn", result.Keys);
+    }
+
+    [Fact]
+    public async Task GetCredentialsAsync_WhenGoogleEmailMissing_OmitsEmailKey()
+    {
+        var client = ConnectedClient();
+        client.Credentials = new NangoOAuthCredentials("google-secret-token", null);
+        var broker = CreateBroker(client);
+
+        var result = await broker.GetCredentialsAsync(
+            "google",
+            Guid.NewGuid(),
+            CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("google-secret-token", result["google.accessToken"]);
+        Assert.DoesNotContain("google.email", result.Keys);
+    }
+
+    [Fact]
     public async Task GetCredentialsAsync_WhenNotConnected_ReturnsNullForApiNotFound()
     {
         var broker = CreateBroker(new NangoClientStub());
@@ -87,7 +125,8 @@ public sealed class NangoConnectorBrokerTests
         Options.Create(new NangoOptions
         {
             ApiKey = "nango-test-key",
-            LinkedInIntegrationId = "linkedin"
+            LinkedInIntegrationId = "linkedin",
+            GoogleIntegrationId = "google"
         }),
         logger ?? new CapturingLogger<NangoConnectorBroker>());
 
@@ -107,7 +146,7 @@ public sealed class NangoConnectorBrokerTests
     private sealed class NangoClientStub : INangoConnectorClient
     {
         public IReadOnlyList<NangoConnectionSummary> Connections { get; init; } = [];
-        public NangoOAuthCredentials Credentials { get; init; } = new("token", "subject");
+        public NangoOAuthCredentials Credentials { get; set; } = new("token", "subject");
         public string? SessionIntegrationId { get; private set; }
         public string? DeletedConnectionId { get; private set; }
 

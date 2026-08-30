@@ -12,17 +12,47 @@ public sealed class WorkflowInputMapperTests
     {
         var step = new WorkflowStepDefinition
         {
-            Id = Guid.NewGuid(), WorkflowId = Guid.NewGuid(), Position = 0,
-            Type = WorkflowNodeType.Agent, ReferenceKey = "agent", DisplayName = "Agent",
+            Id = Guid.NewGuid(),
+            WorkflowId = Guid.NewGuid(),
+            Position = 0,
+            Type = WorkflowNodeType.Agent,
+            ReferenceKey = "agent",
+            DisplayName = "Agent",
             InputMappingJson = "{\"optional\":\"$.inputs.optional?\"}"
         };
         var result = new WorkflowInputMapper().Map(step, [step], new WorkflowRun
         {
-            Id = Guid.NewGuid(), PresetKey = "test", Inputs = []
+            Id = Guid.NewGuid(),
+            PresetKey = "test",
+            Inputs = []
         });
 
         Assert.Equal(string.Empty, result["optional"]);
     }
+
+    [Fact]
+    public void Map_WhenLiteralPathProvided_MapsSeedConstant()
+    {
+        var step = new WorkflowStepDefinition
+        {
+            Id = Guid.NewGuid(),
+            WorkflowId = Guid.NewGuid(),
+            Position = 0,
+            Type = WorkflowNodeType.Operation,
+            ReferenceKey = "receipt.analyze",
+            DisplayName = "Analyze",
+            InputMappingJson = """{"mode":"$.literal.monthly-spending"}"""
+        };
+
+        var result = new WorkflowInputMapper().Map(step, [step], new WorkflowRun
+        {
+            Id = Guid.NewGuid(),
+            PresetKey = "receipt"
+        });
+
+        Assert.Equal("monthly-spending", result["mode"]);
+    }
+
     private readonly WorkflowInputMapper mapper = new();
 
     [Fact]
@@ -105,12 +135,12 @@ public sealed class WorkflowInputMapperTests
         WorkflowNodeType type,
         int position,
         string inputMappingJson = "{}") => new()
-    {
-        Id = Guid.NewGuid(),
-        Position = position,
-        Type = type,
-        ReferenceKey = $"node-{position}",
-        DisplayName = $"Node {position}",
-        InputMappingJson = inputMappingJson
-    };
+        {
+            Id = Guid.NewGuid(),
+            Position = position,
+            Type = type,
+            ReferenceKey = $"node-{position}",
+            DisplayName = $"Node {position}",
+            InputMappingJson = inputMappingJson
+        };
 }

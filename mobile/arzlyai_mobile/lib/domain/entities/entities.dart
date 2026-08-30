@@ -1,3 +1,6 @@
+export 'connectors/google_sheet_headers.dart';
+export 'connectors/google_sheet_tab.dart';
+export 'connectors/google_spreadsheet.dart';
 export 'preset/preset.dart';
 export 'preset/input_schema.dart';
 export 'preset/approval_configuration.dart';

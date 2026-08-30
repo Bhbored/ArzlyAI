@@ -8,6 +8,7 @@ import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception_extensions.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
@@ -58,6 +59,7 @@ class ActiveRun extends _$ActiveRun {
     if (_busy) return;
     _busy = true;
     WorkflowInstance? instance;
+    var receiptRun = false;
     final expiryUtc = DateTime.now().toUtc().add(const Duration(minutes: 30));
     try {
       final online = ref.read(internetConnectionProvider);
@@ -71,6 +73,7 @@ class ActiveRun extends _$ActiveRun {
       }
       final details = await ref.read(presetDetailsProvider.future);
       if (details == null) return;
+      receiptRun = isReceiptWorkflowKey(details.key);
       final effectiveInputs = config.inputs.isEmpty
           ? <String, String>{'topic': config.topic.trim()}
           : Map<String, String>.from(config.inputs);
@@ -146,7 +149,9 @@ class ActiveRun extends _$ActiveRun {
         return;
       }
       ref.read(workflowTransportProvider.notifier).clear();
-      state = AsyncError(e, s);
+      state = receiptRun
+          ? AsyncError(receiptSafeError(e), StackTrace.current)
+          : AsyncError(e, s);
     } finally {
       _busy = false;
     }
@@ -275,7 +280,9 @@ class ActiveRun extends _$ActiveRun {
             .read(workflowRepositoryProvider)
             .persistRun(snapshotBeforeOptimistic);
       }
-      state = AsyncError(e, s);
+      state = isReceiptWorkflowKey(current?.presetKey ?? '')
+          ? AsyncError(receiptSafeError(e), StackTrace.current)
+          : AsyncError(e, s);
     } finally {
       _busy = false;
     }
@@ -398,9 +405,9 @@ class ActiveRun extends _$ActiveRun {
     final template = configurable == null
         ? overrides.first
         : overrides
-              .where((item) => item.agentKey == configurable.key)
-              .firstOrNull ??
-            overrides.first;
+                  .where((item) => item.agentKey == configurable.key)
+                  .firstOrNull ??
+              overrides.first;
     final templateModel = template.model;
     if (templateModel == null || templateModel.isEmpty) return;
     final templateProvider = repo.resolveProviderForModel(
@@ -743,9 +750,9 @@ class ActiveRun extends _$ActiveRun {
       if (!ref.mounted || state.value?.runId != run.runId) return;
       var localWorkflowId = run.localWorkflowId?.trim();
       if (localWorkflowId == null || localWorkflowId.isEmpty) {
-        localWorkflowId = (await repo.getLocalRun(run.runId))
-            ?.localWorkflowId
-            ?.trim();
+        localWorkflowId = (await repo.getLocalRun(
+          run.runId,
+        ))?.localWorkflowId?.trim();
       }
       final refreshed = await repo.persistDto(
         dto,

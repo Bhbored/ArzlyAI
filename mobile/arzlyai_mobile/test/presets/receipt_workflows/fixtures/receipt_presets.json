@@ -1,0 +1,51 @@
+[
+  {
+    "key": "receipt-monthly-spending",
+    "mode": "monthly-spending",
+    "requiresBudget": false,
+    "requiresTaxRate": false,
+    "requiresCategory": false
+  },
+  {
+    "key": "receipt-weekly-budget",
+    "mode": "weekly-budget",
+    "requiresBudget": true,
+    "requiresTaxRate": false,
+    "requiresCategory": false
+  },
+  {
+    "key": "receipt-quarterly-tax",
+    "mode": "quarterly-tax",
+    "requiresBudget": false,
+    "requiresTaxRate": true,
+    "requiresCategory": false
+  },
+  {
+    "key": "receipt-yearly-review",
+    "mode": "yearly-review",
+    "requiresBudget": false,
+    "requiresTaxRate": false,
+    "requiresCategory": false
+  },
+  {
+    "key": "receipt-category-dive",
+    "mode": "category-dive",
+    "requiresBudget": false,
+    "requiresTaxRate": false,
+    "requiresCategory": true
+  },
+  {
+    "key": "receipt-anomaly-detector",
+    "mode": "anomaly-detector",
+    "requiresBudget": false,
+    "requiresTaxRate": false,
+    "requiresCategory": false
+  },
+  {
+    "key": "receipt-savings-tracker",
+    "mode": "savings-tracker",
+    "requiresBudget": true,
+    "requiresTaxRate": false,
+    "requiresCategory": false
+  }
+]

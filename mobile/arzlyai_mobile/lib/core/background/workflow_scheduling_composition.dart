@@ -84,9 +84,10 @@ class WorkflowSchedulingComposition {
       securityService,
       CredentialEnvelopeBuilder(),
     );
+    final credentialStore = CredentialStore(SecureStorageAndroid());
     final credentialRepository = CredentialRepository(
-      CredentialStore(SecureStorageAndroid()),
-      ConnectorCredentialRepository(db),
+      credentialStore,
+      ConnectorCredentialRepository(credentialStore, legacyDatabase: db),
     );
     final workflowRepository = WorkflowRepository(
       db,

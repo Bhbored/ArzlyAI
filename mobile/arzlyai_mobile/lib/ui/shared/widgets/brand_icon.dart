@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 class BrandIcon extends StatelessWidget {
   const BrandIcon._({
     required this.assetPath,
-    required this.backgroundColor,
+    this.backgroundColor,
     this.tintColor,
     this.monochrome = true,
     this.size = 40,
@@ -32,8 +31,17 @@ class BrandIcon extends StatelessWidget {
     );
   }
 
+  factory BrandIcon.google({double size = 40, Key? key}) {
+    return BrandIcon._(
+      key: key,
+      assetPath: 'assets/icons/connectors/google.svg',
+      monochrome: false,
+      size: size,
+    );
+  }
+
   final String assetPath;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final Color? tintColor;
   final bool monochrome;
   final double size;
@@ -41,11 +49,12 @@ class BrandIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconSize = size * 0.52;
+    final theme = ShadTheme.of(context);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor ?? theme.colorScheme.card,
         borderRadius: BorderRadius.circular(size * 0.22),
       ),
       alignment: Alignment.center,

@@ -19,13 +19,9 @@ class ConnectorConnect extends _$ConnectorConnect {
     _cancelToken = CancelToken();
     state = const AsyncLoading();
     try {
-      if (connectorKey == 'linkedin') {
-        await ref
-            .read(connectorRepositoryProvider)
-            .connectLinkedIn(cancelToken: _cancelToken);
-      } else {
-        throw ArgumentError('Unsupported connector key: $connectorKey');
-      }
+      await ref
+          .read(connectorRepositoryProvider)
+          .connect(connectorKey, cancelToken: _cancelToken);
       ref.invalidate(connectorLocalStatusProvider(connectorKey));
       ref.invalidate(connectorRemoteStatusProvider(connectorKey));
       state = const AsyncData(null);
@@ -39,13 +35,9 @@ class ConnectorConnect extends _$ConnectorConnect {
     _cancelToken = CancelToken();
     state = const AsyncLoading();
     try {
-      if (connectorKey == 'linkedin') {
-        await ref
-            .read(connectorRepositoryProvider)
-            .finishConnectingLinkedIn(cancelToken: _cancelToken);
-      } else {
-        throw ArgumentError('Unsupported connector key: $connectorKey');
-      }
+      await ref
+          .read(connectorRepositoryProvider)
+          .finishConnecting(connectorKey, cancelToken: _cancelToken);
       ref.invalidate(connectorLocalStatusProvider(connectorKey));
       ref.invalidate(connectorRemoteStatusProvider(connectorKey));
       state = const AsyncData(null);

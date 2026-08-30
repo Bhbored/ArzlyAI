@@ -11,6 +11,7 @@ import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.da
 import 'package:arzlyai_mobile/data/services/scheduling/scheduled_workflow_executor.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
+import 'package:arzlyai_mobile/domain/entities/scheduling/schedule_recurrence.dart';
 
 part 'schedule_providers.g.dart';
 
@@ -25,7 +26,9 @@ Future<LocalNotificationService> localNotificationService(Ref ref) async {
 
 @Riverpod(keepAlive: true, retry: scheduleRetry)
 Future<WorkflowScheduler> workflowScheduler(Ref ref) async {
-  final notifications = await ref.watch(localNotificationServiceProvider.future);
+  final notifications = await ref.watch(
+    localNotificationServiceProvider.future,
+  );
   return WorkflowScheduler(
     scheduleRepository: ref.watch(scheduleRepositoryProvider),
     notifications: notifications,
@@ -34,7 +37,9 @@ Future<WorkflowScheduler> workflowScheduler(Ref ref) async {
 
 @Riverpod(keepAlive: true, retry: scheduleRetry)
 Future<ScheduledWorkflowExecutor> scheduledWorkflowExecutor(Ref ref) async {
-  final notifications = await ref.watch(localNotificationServiceProvider.future);
+  final notifications = await ref.watch(
+    localNotificationServiceProvider.future,
+  );
   final scheduler = await ref.watch(workflowSchedulerProvider.future);
   return ScheduledWorkflowExecutor(
     workflowRepository: ref.watch(workflowRepositoryProvider),
@@ -89,15 +94,23 @@ class ScheduleController extends _$ScheduleController {
   Future<void> enable({
     required String localTime,
     required String timeZoneId,
+    ScheduleRecurrence? recurrence,
+    Map<String, String> workflowInputs = const {},
+    String presetName = 'ArzlyAI workflow',
   }) async {
     state = const AsyncLoading();
     try {
-      final schedule = await ref.read(scheduleRepositoryProvider).upsert(
-        localWorkflowId: localWorkflowId,
-        localTime: localTime,
-        timeZoneId: timeZoneId,
-        enabled: true,
-      );
+      final schedule = await ref
+          .read(scheduleRepositoryProvider)
+          .upsert(
+            localWorkflowId: localWorkflowId,
+            localTime: localTime,
+            timeZoneId: timeZoneId,
+            enabled: true,
+            recurrence: recurrence,
+            workflowInputs: workflowInputs,
+            presetName: presetName,
+          );
       final scheduler = await ref.read(workflowSchedulerProvider.future);
       await scheduler.registerSchedule(schedule);
       ref.invalidate(workflowScheduleEnabledProvider(localWorkflowId));
@@ -110,7 +123,9 @@ class ScheduleController extends _$ScheduleController {
   Future<void> disable() async {
     state = const AsyncLoading();
     try {
-      await ref.read(scheduleRepositoryProvider).setEnabled(localWorkflowId, false);
+      await ref
+          .read(scheduleRepositoryProvider)
+          .setEnabled(localWorkflowId, false);
       final scheduler = await ref.read(workflowSchedulerProvider.future);
       await scheduler.cancelSchedule(localWorkflowId);
       ref.invalidate(workflowScheduleEnabledProvider(localWorkflowId));

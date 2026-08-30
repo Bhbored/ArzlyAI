@@ -12,15 +12,15 @@ ConnectorAuthLauncher connectorAuthLauncher(Ref ref) {
 }
 
 class ConnectorAuthLauncher {
-  Future<void> launchLinkedInConnect(String connectUrl) async {
+  Future<void> launchConnect(String connectorKey, String connectUrl) async {
     final callback = await FlutterWebAuth2.authenticate(
       url: connectUrl,
-      callbackUrlScheme: ConnectorOAuthConfig.linkedInCallbackScheme,
+      callbackUrlScheme: ConnectorOAuthConfig.callbackScheme,
     );
     final callbackUri = Uri.parse(callback);
     final error = callbackUri.queryParameters['error'];
     if (error != null && error.isNotEmpty) {
-      throw StateError('LinkedIn authorization failed.');
+      throw StateError('$connectorKey authorization failed.');
     }
   }
 }

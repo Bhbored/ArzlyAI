@@ -45,14 +45,18 @@ class LocalNotificationService {
   }
 
   Future<bool> requestPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return granted ?? false;
     }
-    final ios = _plugin.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (ios != null) {
       final granted = await ios.requestPermissions(alert: true, badge: true);
       return granted ?? false;
@@ -60,12 +64,15 @@ class LocalNotificationService {
     return true;
   }
 
-  Future<void> scheduleReminder(WorkflowSchedule schedule) async {
+  Future<void> scheduleReminder(
+    WorkflowSchedule schedule, {
+    String presetName = 'ArzlyAI workflow',
+  }) async {
     final id = _reminderId(schedule.localWorkflowId);
     await _plugin.zonedSchedule(
       id: id,
-      title: 'ArzlyAI workflow due',
-      body: 'Your ArzlyAI workflow is due—tap to run it.',
+      title: '$presetName due',
+      body: 'Your scheduled $presetName run is due.',
       scheduledDate: tz.TZDateTime.from(schedule.nextRunAtUtc, tz.UTC),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       payload: NotificationPayload(
@@ -83,11 +90,12 @@ class LocalNotificationService {
   Future<void> showDraftReady({
     required String localWorkflowId,
     required String runId,
+    String presetName = 'LinkedIn',
   }) async {
     await _plugin.show(
       id: _resultId(localWorkflowId),
-      title: 'LinkedIn draft ready',
-      body: 'Your LinkedIn draft is ready to review.',
+      title: '$presetName ready',
+      body: 'Your $presetName result is ready to review.',
       notificationDetails: _resultDetails(),
       payload: NotificationPayload(
         action: NotificationActions.review,
@@ -100,11 +108,12 @@ class LocalNotificationService {
   Future<void> showTapToRun({
     required String localWorkflowId,
     String? message,
+    String presetName = 'ArzlyAI workflow',
   }) async {
     await _plugin.show(
       id: _resultId(localWorkflowId),
-      title: 'ArzlyAI workflow due',
-      body: message ?? 'Your ArzlyAI workflow is due—tap to run it.',
+      title: '$presetName needs attention',
+      body: message ?? 'Tap to run $presetName.',
       notificationDetails: _reminderDetails(),
       payload: NotificationPayload(
         action: NotificationActions.run,
@@ -113,14 +122,33 @@ class LocalNotificationService {
     );
   }
 
-  Future<void> showSkippedReview({
+  Future<void> showCompleted({
     required String localWorkflowId,
     required String runId,
+    required String presetName,
   }) async {
     await _plugin.show(
       id: _resultId(localWorkflowId),
-      title: 'Review your draft',
-      body: 'A LinkedIn draft is already waiting for your review.',
+      title: '$presetName delivered',
+      body: 'Your scheduled $presetName run completed.',
+      notificationDetails: _resultDetails(),
+      payload: NotificationPayload(
+        action: NotificationActions.run,
+        localWorkflowId: localWorkflowId,
+        runId: runId,
+      ).encode(),
+    );
+  }
+
+  Future<void> showSkippedReview({
+    required String localWorkflowId,
+    required String runId,
+    String presetName = 'LinkedIn',
+  }) async {
+    await _plugin.show(
+      id: _resultId(localWorkflowId),
+      title: 'Review $presetName',
+      body: 'A $presetName result is already waiting for your review.',
       notificationDetails: _resultDetails(),
       payload: NotificationPayload(
         action: NotificationActions.review,
@@ -131,8 +159,10 @@ class LocalNotificationService {
   }
 
   Future<void> _createChannels() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android == null) return;
     await android.createNotificationChannel(
       const AndroidNotificationChannel(

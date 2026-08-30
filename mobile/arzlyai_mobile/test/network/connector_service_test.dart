@@ -8,10 +8,8 @@ import 'package:arzlyai_mobile/core/storage/device/device_id_store.dart';
 import 'package:arzlyai_mobile/core/network/services/connectors/connector_service.dart';
 import '../storage/device_id_store_test.dart';
 
-Map<String, dynamic> _fixture(String name) {
-  return jsonDecode(
-    File('test/fixtures/network/$name').readAsStringSync(),
-  ) as Map<String, dynamic>;
+dynamic _fixture(String name) {
+  return jsonDecode(File('test/fixtures/network/$name').readAsStringSync());
 }
 
 ConnectorService _service(
@@ -91,11 +89,7 @@ void main() {
     final missingService = _service(
       storage,
       onRequest: (options) async {
-        return Response(
-          requestOptions: options,
-          data: {},
-          statusCode: 404,
-        );
+        return Response(requestOptions: options, data: {}, statusCode: 404);
       },
     );
     final missing = await missingService.getCredentials('linkedin');
@@ -119,5 +113,40 @@ void main() {
       },
     );
     expect(await missingService.disconnect('linkedin'), isFalse);
+  });
+
+  test('Google resource endpoints map spreadsheet metadata', () async {
+    final paths = <String>[];
+    final service = _service(
+      storage,
+      onRequest: (options) async {
+        paths.add(options.path);
+        final fixture = switch (options.path) {
+          String path when path.endsWith('/headers') =>
+            'google_sheet_headers.json',
+          String path when path.endsWith('/tabs') => 'google_sheet_tabs.json',
+          _ => 'google_spreadsheets.json',
+        };
+        return Response(
+          requestOptions: options,
+          data: _fixture(fixture),
+          statusCode: 200,
+        );
+      },
+    );
+
+    final spreadsheets = await service.listGoogleSpreadsheets();
+    final tabs = await service.listGoogleTabs('sheet/with slash');
+    final headers = await service.listGoogleHeaders(
+      'sheet/with slash',
+      'August Receipts',
+    );
+
+    expect(spreadsheets.first.name, 'Receipts');
+    expect(tabs.single.rowCount, 1000);
+    expect(headers.headers, ['Date', 'Vendor', 'Amount']);
+    expect(paths[1], contains('sheet%2Fwith%20slash'));
+    expect(paths[2], contains('August%20Receipts'));
+    expect(await storage.getValue(DeviceIdStorageKeys.deviceId), isNotNull);
   });
 }

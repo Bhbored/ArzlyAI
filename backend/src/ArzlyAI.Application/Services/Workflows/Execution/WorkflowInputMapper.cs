@@ -40,6 +40,10 @@ public sealed partial class WorkflowInputMapper : IWorkflowInputMapper
         IReadOnlyList<WorkflowStepDefinition> plan,
         WorkflowRun run)
     {
+        const string literalPrefix = "$.literal.";
+        if (path.StartsWith(literalPrefix, StringComparison.Ordinal))
+            return path[literalPrefix.Length..];
+
         const string inputPrefix = "$.inputs.";
         if (path.StartsWith(inputPrefix, StringComparison.Ordinal))
         {

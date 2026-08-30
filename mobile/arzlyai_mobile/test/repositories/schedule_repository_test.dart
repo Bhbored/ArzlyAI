@@ -5,6 +5,7 @@ import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.da
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
+import 'package:arzlyai_mobile/domain/entities/scheduling/schedule_recurrence.dart';
 
 void main() {
   late AppDatabase db;
@@ -55,5 +56,60 @@ void main() {
     );
     final schedule = await repository.getByWorkflowId('wf-1');
     expect(schedule?.localTime, '09:30');
+  });
+
+  test(
+    'upsert persists complete inputs and recurrence configuration',
+    () async {
+      final recurrence = ScheduleRecurrence(
+        type: ScheduleRecurrenceType.quarterly,
+        anchorDate: DateTime(2026, 2, 28),
+      );
+      await repository.upsert(
+        localWorkflowId: 'receipt-1',
+        localTime: '07:15',
+        timeZoneId: 'America/New_York',
+        enabled: true,
+        recurrence: recurrence,
+        workflowInputs: const {
+          'spreadsheetId': 'sheet-1',
+          'sourceRange': "'Receipts'!A:Z",
+          'columnMappingJson': '{"date":"Date"}',
+          'deliveryMode': 'deliver',
+        },
+        presetName: 'Quarterly Receipt Tax',
+      );
+
+      final configuration = await repository.getConfiguration('receipt-1');
+
+      expect(configuration?.recurrence.type, ScheduleRecurrenceType.quarterly);
+      expect(configuration?.recurrence.anchorDate, DateTime(2026, 2, 28));
+      expect(configuration?.inputs['spreadsheetId'], 'sheet-1');
+      expect(configuration?.inputs['deliveryMode'], 'deliver');
+      expect(configuration?.presetName, 'Quarterly Receipt Tax');
+    },
+  );
+
+  test('recordSuccess advances using stored recurrence', () async {
+    await repository.upsert(
+      localWorkflowId: 'wf-monthly',
+      localTime: '08:00',
+      timeZoneId: 'UTC',
+      enabled: true,
+      recurrence: ScheduleRecurrence(
+        type: ScheduleRecurrenceType.monthly,
+        anchorDate: DateTime(2026, 1, 31),
+      ),
+      nextRunAtUtc: DateTime.utc(2026, 1, 31, 8),
+    );
+
+    await repository.recordSuccess(
+      localWorkflowId: 'wf-monthly',
+      outcome: ScheduleOutcomes.started,
+      succeededAtUtc: DateTime.utc(2026, 1, 31, 9),
+    );
+
+    final schedule = await repository.getByWorkflowId('wf-monthly');
+    expect(schedule?.nextRunAtUtc.toUtc(), DateTime.utc(2026, 2, 28, 8));
   });
 }

@@ -25,6 +25,7 @@ using ArzlyAI.Infrastructure.Configuration;
 using ArzlyAI.Infrastructure.Connectors.LinkedIn;
 using ArzlyAI.Infrastructure.Connectors.Nango;
 using ArzlyAI.Infrastructure.Health;
+using ArzlyAI.Infrastructure.Integrations.Google;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
 using ArzlyAI.Infrastructure.Persistence;
 using ArzlyAI.Infrastructure.Persistence.Interceptors;
@@ -207,6 +208,7 @@ public static class DIContainer
         services.AddSingleton<IWorkflowGraphPlanner, WorkflowGraphPlanner>();
         services.AddSingleton<IWorkflowInputMapper, WorkflowInputMapper>();
         services.AddScoped<IPresetService, PresetService>();
+        services.AddScoped<IGoogleResourceService, GoogleResourceService>();
         services.AddScoped<IProviderCatalogService, ProviderCatalogService>();
         services.AddScoped<IProviderModelCatalogService, ProviderModelCatalogService>();
         services.AddScoped<IWorkflowNodeHandler, AgentWorkflowNodeHandler>();
@@ -214,6 +216,7 @@ public static class DIContainer
         services.AddScoped<IWorkflowNodeHandler, IntegrationWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, OperationWorkflowNodeHandler>();
         services.AddSingleton<IWorkflowOperation, WeightedDecisionScoringOperation>();
+        services.AddSingleton<IWorkflowOperation, ReceiptAnalysisOperation>();
         services.AddSingleton<IWorkflowResultRenderer, ArzlyReportHtmlRenderer>();
         services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
         return services;
@@ -260,7 +263,13 @@ public static class DIContainer
     {
         services.AddHttpClient<ILinkedInPublisher, LinkedInPublisher>(client =>
             client.BaseAddress = new Uri("https://api.linkedin.com/"));
+        services.AddHttpClient<IGoogleSheetsClient, GoogleSheetsClient>();
+        services.AddHttpClient<IGmailClient, GmailClient>();
         services.AddScoped<IIntegrationHandler, LinkedInPostsIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsReadIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsWriteIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsReportIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GmailHtmlIntegrationHandler>();
         return services;
     }
 

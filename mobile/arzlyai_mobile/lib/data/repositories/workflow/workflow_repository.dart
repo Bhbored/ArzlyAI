@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
@@ -264,43 +265,58 @@ class WorkflowRepository {
   }
 
   Future<void> _upsertRun(WorkflowRun run) async {
-    final now = run.updatedAtUtc ?? DateTime.now().toUtc();
+    final persistableRun = _persistableRun(run);
+    final now = persistableRun.updatedAtUtc ?? DateTime.now().toUtc();
     await _db
         .into(_db.workflowRuns)
         .insertOnConflictUpdate(
           WorkflowRunsCompanion.insert(
-            runId: run.runId,
-            localWorkflowId: run.localWorkflowId ?? '',
-            presetKey: run.presetKey,
-            status: run.status.wireValue,
+            runId: persistableRun.runId,
+            localWorkflowId: persistableRun.localWorkflowId ?? '',
+            presetKey: persistableRun.presetKey,
+            status: persistableRun.status.wireValue,
             approvalSnapshotJson: Value(
-              run.approval == null
+              persistableRun.approval == null
                   ? null
                   : jsonEncode({
-                      'originalContent': run.approval!.originalContent,
-                      'currentContent': run.approval!.currentContent,
-                      'wasEdited': run.approval!.wasEdited,
+                      'originalContent':
+                          persistableRun.approval!.originalContent,
+                      'currentContent': persistableRun.approval!.currentContent,
+                      'wasEdited': persistableRun.approval!.wasEdited,
                     }),
             ),
-            finalResponse: Value(run.finalResponse),
+            finalResponse: Value(persistableRun.finalResponse),
             resultDocumentJson: Value(
-              run.report == null ? null : _reportMapper.toJsonString(run.report!),
+              persistableRun.report == null
+                  ? null
+                  : _reportMapper.toJsonString(persistableRun.report!),
             ),
-            resultContractKey: Value(run.resultContract?.key),
-            resultContractVersion: Value(run.resultContract?.version),
-            renderedResultMediaType: Value(run.renderedResult?.mediaType),
-            renderedResultContent: Value(run.renderedResult?.content),
-            createdAtUtc: run.createdAtUtc ?? now,
+            resultContractKey: Value(persistableRun.resultContract?.key),
+            resultContractVersion: Value(
+              persistableRun.resultContract?.version,
+            ),
+            renderedResultMediaType: Value(
+              persistableRun.renderedResult?.mediaType,
+            ),
+            renderedResultContent: Value(
+              persistableRun.renderedResult?.content,
+            ),
+            createdAtUtc: persistableRun.createdAtUtc ?? now,
             updatedAtUtc: now,
-            expiryUtc: Value(run.expiryUtc),
+            expiryUtc: Value(persistableRun.expiryUtc),
           ),
         );
-    for (final node in run.nodes) {
+    if (isReceiptWorkflowKey(persistableRun.presetKey)) {
+      await (_db.delete(
+        _db.workflowNodeRuns,
+      )..where((t) => t.runId.equals(persistableRun.runId))).go();
+    }
+    for (final node in persistableRun.nodes) {
       await _db
           .into(_db.workflowNodeRuns)
           .insertOnConflictUpdate(
             WorkflowNodeRunsCompanion.insert(
-              runId: run.runId,
+              runId: persistableRun.runId,
               nodeId: node.nodeId,
               nodeKey: node.nodeKey,
               displayName: node.displayName,
@@ -315,6 +331,20 @@ class WorkflowRepository {
             ),
           );
     }
+  }
+
+  WorkflowRun _persistableRun(WorkflowRun run) {
+    if (!isReceiptWorkflowKey(run.presetKey)) return run;
+    return run.copyWith(
+      nodes: run.nodes
+          .map((node) => node.copyWith(output: null, error: null))
+          .toList(growable: false),
+      approval: null,
+      finalResponse: null,
+      report: null,
+      renderedResult: null,
+      resultContract: null,
+    );
   }
 
   WorkflowRun _fromRows(WorkflowRunRow row, List<WorkflowNodeRunRow> nodeRows) {
@@ -375,7 +405,10 @@ class WorkflowRepository {
     return RenderedWorkflowResult(mediaType: mediaType, content: content);
   }
 
-  ResultContract? _resultContract(WorkflowRunRow row, ApprovalSnapshot? approval) {
+  ResultContract? _resultContract(
+    WorkflowRunRow row,
+    ApprovalSnapshot? approval,
+  ) {
     if (row.resultContractKey != null && row.resultContractVersion != null) {
       return ResultContract(
         key: row.resultContractKey!,

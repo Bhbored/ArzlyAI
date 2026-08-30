@@ -5,28 +5,47 @@ import 'package:arzlyai_mobile/domain/mappers/connectors/connector_credential_ma
 void main() {
   const mapper = ConnectorCredentialMapper();
 
-  test('linkedInEnvelopeValues maps valid API response', () {
-    final envelope = mapper.linkedInEnvelopeValues({
+  test('localFields maps valid LinkedIn API response', () {
+    final fields = mapper.localFields(ConnectorKeys.linkedin, {
       'linkedin.accessToken': 'token',
       'linkedin.authorUrn': 'urn:li:person:1',
     });
-    expect(envelope, {
-      'linkedin.accessToken': 'token',
-      'linkedin.authorUrn': 'urn:li:person:1',
-    });
-    expect(mapper.linkedInLocalFields(envelope!), {
+    expect(fields, {
       LinkedInConnectorFields.accessToken: 'token',
       LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
     });
   });
 
-  test('linkedInEnvelopeValues rejects partial response', () {
+  test('localFields rejects partial LinkedIn response', () {
     expect(
-      mapper.linkedInEnvelopeValues({'linkedin.accessToken': 'token'}),
+      mapper.localFields(ConnectorKeys.linkedin, {
+        'linkedin.accessToken': 'token',
+      }),
       isNull,
     );
     expect(
-      mapper.linkedInEnvelopeValues({'linkedin.authorUrn': 'urn:li:person:1'}),
+      mapper.localFields(ConnectorKeys.linkedin, {
+        'linkedin.authorUrn': 'urn:li:person:1',
+      }),
+      isNull,
+    );
+  });
+
+  test('localFields maps Google token and optional email', () {
+    expect(
+      mapper.localFields(ConnectorKeys.google, {
+        'google.accessToken': 'google-token',
+        'google.email': 'person@example.com',
+      }),
+      {
+        GoogleConnectorFields.accessToken: 'google-token',
+        GoogleConnectorFields.email: 'person@example.com',
+      },
+    );
+    expect(
+      mapper.localFields(ConnectorKeys.google, {
+        'google.email': 'person@example.com',
+      }),
       isNull,
     );
   });

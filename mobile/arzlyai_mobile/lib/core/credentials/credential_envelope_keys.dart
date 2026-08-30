@@ -5,6 +5,7 @@ String providerCredentialEnvelopeKey(String providerKey) =>
 
 String integrationFieldEnvelopeKey(String integrationKey, String field) {
   final prefix = integrationKey.split('.').first;
+  if (field.startsWith('$prefix.')) return field;
   return '$prefix.$field';
 }
 

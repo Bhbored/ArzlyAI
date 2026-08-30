@@ -14,6 +14,7 @@ namespace ArzlyAI.Api.Controllers.v1;
 [Route("api/v{version:apiVersion}/connectors")]
 public sealed class ConnectorsController(
     IConnectorBroker broker,
+    IGoogleResourceService googleResources,
     ILogger<ConnectorsController> logger) : ControllerBase
 {
     [HttpPost("{connectorKey}/session")]
@@ -69,6 +70,45 @@ public sealed class ConnectorsController(
             ParseDeviceId(deviceId),
             cancellationToken);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpGet("google/resources/spreadsheets")]
+    public async Task<ActionResult<IReadOnlyList<GoogleSpreadsheetResponse>>> ListGoogleSpreadsheets(
+        [FromHeader(Name = "X-Device-Id")] string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        using var operation = Operation.Time("ConnectorsController.ListGoogleSpreadsheets");
+        return Ok(await googleResources.ListSpreadsheetsAsync(
+            ParseDeviceId(deviceId),
+            cancellationToken));
+    }
+
+    [HttpGet("google/resources/spreadsheets/{spreadsheetId}/tabs")]
+    public async Task<ActionResult<IReadOnlyList<GoogleSheetTabResponse>>> ListGoogleTabs(
+        string spreadsheetId,
+        [FromHeader(Name = "X-Device-Id")] string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        using var operation = Operation.Time("ConnectorsController.ListGoogleTabs");
+        return Ok(await googleResources.ListTabsAsync(
+            ParseDeviceId(deviceId),
+            spreadsheetId,
+            cancellationToken));
+    }
+
+    [HttpGet("google/resources/spreadsheets/{spreadsheetId}/tabs/{tabTitle}/headers")]
+    public async Task<ActionResult<GoogleSheetHeadersResponse>> ListGoogleHeaders(
+        string spreadsheetId,
+        string tabTitle,
+        [FromHeader(Name = "X-Device-Id")] string? deviceId,
+        CancellationToken cancellationToken)
+    {
+        using var operation = Operation.Time("ConnectorsController.ListGoogleHeaders");
+        return Ok(await googleResources.ListHeadersAsync(
+            ParseDeviceId(deviceId),
+            spreadsheetId,
+            tabTitle,
+            cancellationToken));
     }
 
     private static Guid ParseDeviceId(string? value) =>

@@ -34,23 +34,29 @@ class CredentialRepository {
     return _store.readValues(envelopeKeys);
   }
 
-  Future<Map<String, String>> readForPreset(
-    PresetDetails preset,
-    CredentialPhase phase,
+  Future<Map<String, String>> readForEnvelopeKeysWithConnectors(
+    List<String> envelopeKeys,
   ) async {
-    final envelopeKeys = preset.envelopeKeysForPhase(phase);
     final values = await readForEnvelopeKeys(envelopeKeys);
-    if (phase == CredentialPhase.approval) {
-      final linkedIn = await _connectors.readEnvelopeValues(
-        ConnectorKeys.linkedin,
+    for (final connectorKey in ConnectorKeys.all) {
+      final connectorValues = await _connectors.readEnvelopeValues(
+        connectorKey,
       );
-      for (final entry in linkedIn.entries) {
-        if (entry.value.trim().isNotEmpty) {
+      for (final entry in connectorValues.entries) {
+        if (envelopeKeys.contains(entry.key) && entry.value.trim().isNotEmpty) {
           values[entry.key] = entry.value;
         }
       }
     }
     return values;
+  }
+
+  Future<Map<String, String>> readForPreset(
+    PresetDetails preset,
+    CredentialPhase phase,
+  ) async {
+    final envelopeKeys = preset.envelopeKeysForPhase(phase);
+    return readForEnvelopeKeysWithConnectors(envelopeKeys);
   }
 
   Future<void> saveDraftValues(Map<String, String> values) {

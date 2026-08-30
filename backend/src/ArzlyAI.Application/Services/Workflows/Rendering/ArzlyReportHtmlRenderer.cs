@@ -15,6 +15,9 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
         var title = Text(document, "title", "Your purchase decision");
         var summary = Text(document, "summary", string.Empty);
         var generatedAt = Text(document, "generatedAtUtc", string.Empty);
+        var financeReport = Text(document, "kind", string.Empty)
+            .Equals("financeReport", StringComparison.Ordinal);
+        var eyebrow = financeReport ? "ArzlyAI · Receipt Intelligence" : "ArzlyAI · Smart Buy";
         var blocks = Blocks(document);
         var recommendation = blocks.FirstOrDefault(block => Type(block) == "recommendation");
         var content = new StringBuilder();
@@ -81,7 +84,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
   </style>
 </head>
 <body><a class="skip" href="#decision">Skip to decision</a><main>
-  <header class="masthead"><div class="eyebrow">ArzlyAI · Smart Buy</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
+  <header class="masthead"><div class="eyebrow">{{{Encode(eyebrow)}}}</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
   <div id="decision">{{{content}}}</div>{{{sources}}}
 </main></body>
 </html>
