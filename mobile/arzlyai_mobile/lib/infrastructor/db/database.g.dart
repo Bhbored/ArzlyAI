@@ -934,6 +934,61 @@ class $WorkflowRunsTable extends WorkflowRuns
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _resultDocumentJsonMeta =
+      const VerificationMeta('resultDocumentJson');
+  @override
+  late final GeneratedColumn<String> resultDocumentJson =
+      GeneratedColumn<String>(
+        'result_document_json',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _resultContractKeyMeta = const VerificationMeta(
+    'resultContractKey',
+  );
+  @override
+  late final GeneratedColumn<String> resultContractKey =
+      GeneratedColumn<String>(
+        'result_contract_key',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _resultContractVersionMeta =
+      const VerificationMeta('resultContractVersion');
+  @override
+  late final GeneratedColumn<int> resultContractVersion = GeneratedColumn<int>(
+    'result_contract_version',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _renderedResultMediaTypeMeta =
+      const VerificationMeta('renderedResultMediaType');
+  @override
+  late final GeneratedColumn<String> renderedResultMediaType =
+      GeneratedColumn<String>(
+        'rendered_result_media_type',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _renderedResultContentMeta =
+      const VerificationMeta('renderedResultContent');
+  @override
+  late final GeneratedColumn<String> renderedResultContent =
+      GeneratedColumn<String>(
+        'rendered_result_content',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtUtcMeta = const VerificationMeta(
     'createdAtUtc',
   );
@@ -975,6 +1030,11 @@ class $WorkflowRunsTable extends WorkflowRuns
     status,
     approvalSnapshotJson,
     finalResponse,
+    resultDocumentJson,
+    resultContractKey,
+    resultContractVersion,
+    renderedResultMediaType,
+    renderedResultContent,
     createdAtUtc,
     updatedAtUtc,
     expiryUtc,
@@ -1044,6 +1104,51 @@ class $WorkflowRunsTable extends WorkflowRuns
         ),
       );
     }
+    if (data.containsKey('result_document_json')) {
+      context.handle(
+        _resultDocumentJsonMeta,
+        resultDocumentJson.isAcceptableOrUnknown(
+          data['result_document_json']!,
+          _resultDocumentJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('result_contract_key')) {
+      context.handle(
+        _resultContractKeyMeta,
+        resultContractKey.isAcceptableOrUnknown(
+          data['result_contract_key']!,
+          _resultContractKeyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('result_contract_version')) {
+      context.handle(
+        _resultContractVersionMeta,
+        resultContractVersion.isAcceptableOrUnknown(
+          data['result_contract_version']!,
+          _resultContractVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rendered_result_media_type')) {
+      context.handle(
+        _renderedResultMediaTypeMeta,
+        renderedResultMediaType.isAcceptableOrUnknown(
+          data['rendered_result_media_type']!,
+          _renderedResultMediaTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rendered_result_content')) {
+      context.handle(
+        _renderedResultContentMeta,
+        renderedResultContent.isAcceptableOrUnknown(
+          data['rendered_result_content']!,
+          _renderedResultContentMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at_utc')) {
       context.handle(
         _createdAtUtcMeta,
@@ -1105,6 +1210,26 @@ class $WorkflowRunsTable extends WorkflowRuns
         DriftSqlType.string,
         data['${effectivePrefix}final_response'],
       ),
+      resultDocumentJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}result_document_json'],
+      ),
+      resultContractKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}result_contract_key'],
+      ),
+      resultContractVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}result_contract_version'],
+      ),
+      renderedResultMediaType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rendered_result_media_type'],
+      ),
+      renderedResultContent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rendered_result_content'],
+      ),
       createdAtUtc: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at_utc'],
@@ -1133,6 +1258,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
   final String status;
   final String? approvalSnapshotJson;
   final String? finalResponse;
+  final String? resultDocumentJson;
+  final String? resultContractKey;
+  final int? resultContractVersion;
+  final String? renderedResultMediaType;
+  final String? renderedResultContent;
   final DateTime createdAtUtc;
   final DateTime updatedAtUtc;
   final DateTime? expiryUtc;
@@ -1143,6 +1273,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
     required this.status,
     this.approvalSnapshotJson,
     this.finalResponse,
+    this.resultDocumentJson,
+    this.resultContractKey,
+    this.resultContractVersion,
+    this.renderedResultMediaType,
+    this.renderedResultContent,
     required this.createdAtUtc,
     required this.updatedAtUtc,
     this.expiryUtc,
@@ -1159,6 +1294,23 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
     }
     if (!nullToAbsent || finalResponse != null) {
       map['final_response'] = Variable<String>(finalResponse);
+    }
+    if (!nullToAbsent || resultDocumentJson != null) {
+      map['result_document_json'] = Variable<String>(resultDocumentJson);
+    }
+    if (!nullToAbsent || resultContractKey != null) {
+      map['result_contract_key'] = Variable<String>(resultContractKey);
+    }
+    if (!nullToAbsent || resultContractVersion != null) {
+      map['result_contract_version'] = Variable<int>(resultContractVersion);
+    }
+    if (!nullToAbsent || renderedResultMediaType != null) {
+      map['rendered_result_media_type'] = Variable<String>(
+        renderedResultMediaType,
+      );
+    }
+    if (!nullToAbsent || renderedResultContent != null) {
+      map['rendered_result_content'] = Variable<String>(renderedResultContent);
     }
     map['created_at_utc'] = Variable<DateTime>(createdAtUtc);
     map['updated_at_utc'] = Variable<DateTime>(updatedAtUtc);
@@ -1180,6 +1332,21 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
       finalResponse: finalResponse == null && nullToAbsent
           ? const Value.absent()
           : Value(finalResponse),
+      resultDocumentJson: resultDocumentJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultDocumentJson),
+      resultContractKey: resultContractKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultContractKey),
+      resultContractVersion: resultContractVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultContractVersion),
+      renderedResultMediaType: renderedResultMediaType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(renderedResultMediaType),
+      renderedResultContent: renderedResultContent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(renderedResultContent),
       createdAtUtc: Value(createdAtUtc),
       updatedAtUtc: Value(updatedAtUtc),
       expiryUtc: expiryUtc == null && nullToAbsent
@@ -1202,6 +1369,21 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
         json['approvalSnapshotJson'],
       ),
       finalResponse: serializer.fromJson<String?>(json['finalResponse']),
+      resultDocumentJson: serializer.fromJson<String?>(
+        json['resultDocumentJson'],
+      ),
+      resultContractKey: serializer.fromJson<String?>(
+        json['resultContractKey'],
+      ),
+      resultContractVersion: serializer.fromJson<int?>(
+        json['resultContractVersion'],
+      ),
+      renderedResultMediaType: serializer.fromJson<String?>(
+        json['renderedResultMediaType'],
+      ),
+      renderedResultContent: serializer.fromJson<String?>(
+        json['renderedResultContent'],
+      ),
       createdAtUtc: serializer.fromJson<DateTime>(json['createdAtUtc']),
       updatedAtUtc: serializer.fromJson<DateTime>(json['updatedAtUtc']),
       expiryUtc: serializer.fromJson<DateTime?>(json['expiryUtc']),
@@ -1217,6 +1399,15 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
       'status': serializer.toJson<String>(status),
       'approvalSnapshotJson': serializer.toJson<String?>(approvalSnapshotJson),
       'finalResponse': serializer.toJson<String?>(finalResponse),
+      'resultDocumentJson': serializer.toJson<String?>(resultDocumentJson),
+      'resultContractKey': serializer.toJson<String?>(resultContractKey),
+      'resultContractVersion': serializer.toJson<int?>(resultContractVersion),
+      'renderedResultMediaType': serializer.toJson<String?>(
+        renderedResultMediaType,
+      ),
+      'renderedResultContent': serializer.toJson<String?>(
+        renderedResultContent,
+      ),
       'createdAtUtc': serializer.toJson<DateTime>(createdAtUtc),
       'updatedAtUtc': serializer.toJson<DateTime>(updatedAtUtc),
       'expiryUtc': serializer.toJson<DateTime?>(expiryUtc),
@@ -1230,6 +1421,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
     String? status,
     Value<String?> approvalSnapshotJson = const Value.absent(),
     Value<String?> finalResponse = const Value.absent(),
+    Value<String?> resultDocumentJson = const Value.absent(),
+    Value<String?> resultContractKey = const Value.absent(),
+    Value<int?> resultContractVersion = const Value.absent(),
+    Value<String?> renderedResultMediaType = const Value.absent(),
+    Value<String?> renderedResultContent = const Value.absent(),
     DateTime? createdAtUtc,
     DateTime? updatedAtUtc,
     Value<DateTime?> expiryUtc = const Value.absent(),
@@ -1244,6 +1440,21 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
     finalResponse: finalResponse.present
         ? finalResponse.value
         : this.finalResponse,
+    resultDocumentJson: resultDocumentJson.present
+        ? resultDocumentJson.value
+        : this.resultDocumentJson,
+    resultContractKey: resultContractKey.present
+        ? resultContractKey.value
+        : this.resultContractKey,
+    resultContractVersion: resultContractVersion.present
+        ? resultContractVersion.value
+        : this.resultContractVersion,
+    renderedResultMediaType: renderedResultMediaType.present
+        ? renderedResultMediaType.value
+        : this.renderedResultMediaType,
+    renderedResultContent: renderedResultContent.present
+        ? renderedResultContent.value
+        : this.renderedResultContent,
     createdAtUtc: createdAtUtc ?? this.createdAtUtc,
     updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
     expiryUtc: expiryUtc.present ? expiryUtc.value : this.expiryUtc,
@@ -1262,6 +1473,21 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
       finalResponse: data.finalResponse.present
           ? data.finalResponse.value
           : this.finalResponse,
+      resultDocumentJson: data.resultDocumentJson.present
+          ? data.resultDocumentJson.value
+          : this.resultDocumentJson,
+      resultContractKey: data.resultContractKey.present
+          ? data.resultContractKey.value
+          : this.resultContractKey,
+      resultContractVersion: data.resultContractVersion.present
+          ? data.resultContractVersion.value
+          : this.resultContractVersion,
+      renderedResultMediaType: data.renderedResultMediaType.present
+          ? data.renderedResultMediaType.value
+          : this.renderedResultMediaType,
+      renderedResultContent: data.renderedResultContent.present
+          ? data.renderedResultContent.value
+          : this.renderedResultContent,
       createdAtUtc: data.createdAtUtc.present
           ? data.createdAtUtc.value
           : this.createdAtUtc,
@@ -1281,6 +1507,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
           ..write('status: $status, ')
           ..write('approvalSnapshotJson: $approvalSnapshotJson, ')
           ..write('finalResponse: $finalResponse, ')
+          ..write('resultDocumentJson: $resultDocumentJson, ')
+          ..write('resultContractKey: $resultContractKey, ')
+          ..write('resultContractVersion: $resultContractVersion, ')
+          ..write('renderedResultMediaType: $renderedResultMediaType, ')
+          ..write('renderedResultContent: $renderedResultContent, ')
           ..write('createdAtUtc: $createdAtUtc, ')
           ..write('updatedAtUtc: $updatedAtUtc, ')
           ..write('expiryUtc: $expiryUtc')
@@ -1296,6 +1527,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
     status,
     approvalSnapshotJson,
     finalResponse,
+    resultDocumentJson,
+    resultContractKey,
+    resultContractVersion,
+    renderedResultMediaType,
+    renderedResultContent,
     createdAtUtc,
     updatedAtUtc,
     expiryUtc,
@@ -1310,6 +1546,11 @@ class WorkflowRunRow extends DataClass implements Insertable<WorkflowRunRow> {
           other.status == this.status &&
           other.approvalSnapshotJson == this.approvalSnapshotJson &&
           other.finalResponse == this.finalResponse &&
+          other.resultDocumentJson == this.resultDocumentJson &&
+          other.resultContractKey == this.resultContractKey &&
+          other.resultContractVersion == this.resultContractVersion &&
+          other.renderedResultMediaType == this.renderedResultMediaType &&
+          other.renderedResultContent == this.renderedResultContent &&
           other.createdAtUtc == this.createdAtUtc &&
           other.updatedAtUtc == this.updatedAtUtc &&
           other.expiryUtc == this.expiryUtc);
@@ -1322,6 +1563,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
   final Value<String> status;
   final Value<String?> approvalSnapshotJson;
   final Value<String?> finalResponse;
+  final Value<String?> resultDocumentJson;
+  final Value<String?> resultContractKey;
+  final Value<int?> resultContractVersion;
+  final Value<String?> renderedResultMediaType;
+  final Value<String?> renderedResultContent;
   final Value<DateTime> createdAtUtc;
   final Value<DateTime> updatedAtUtc;
   final Value<DateTime?> expiryUtc;
@@ -1333,6 +1579,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
     this.status = const Value.absent(),
     this.approvalSnapshotJson = const Value.absent(),
     this.finalResponse = const Value.absent(),
+    this.resultDocumentJson = const Value.absent(),
+    this.resultContractKey = const Value.absent(),
+    this.resultContractVersion = const Value.absent(),
+    this.renderedResultMediaType = const Value.absent(),
+    this.renderedResultContent = const Value.absent(),
     this.createdAtUtc = const Value.absent(),
     this.updatedAtUtc = const Value.absent(),
     this.expiryUtc = const Value.absent(),
@@ -1345,6 +1596,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
     required String status,
     this.approvalSnapshotJson = const Value.absent(),
     this.finalResponse = const Value.absent(),
+    this.resultDocumentJson = const Value.absent(),
+    this.resultContractKey = const Value.absent(),
+    this.resultContractVersion = const Value.absent(),
+    this.renderedResultMediaType = const Value.absent(),
+    this.renderedResultContent = const Value.absent(),
     required DateTime createdAtUtc,
     required DateTime updatedAtUtc,
     this.expiryUtc = const Value.absent(),
@@ -1362,6 +1618,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
     Expression<String>? status,
     Expression<String>? approvalSnapshotJson,
     Expression<String>? finalResponse,
+    Expression<String>? resultDocumentJson,
+    Expression<String>? resultContractKey,
+    Expression<int>? resultContractVersion,
+    Expression<String>? renderedResultMediaType,
+    Expression<String>? renderedResultContent,
     Expression<DateTime>? createdAtUtc,
     Expression<DateTime>? updatedAtUtc,
     Expression<DateTime>? expiryUtc,
@@ -1375,6 +1636,15 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
       if (approvalSnapshotJson != null)
         'approval_snapshot_json': approvalSnapshotJson,
       if (finalResponse != null) 'final_response': finalResponse,
+      if (resultDocumentJson != null)
+        'result_document_json': resultDocumentJson,
+      if (resultContractKey != null) 'result_contract_key': resultContractKey,
+      if (resultContractVersion != null)
+        'result_contract_version': resultContractVersion,
+      if (renderedResultMediaType != null)
+        'rendered_result_media_type': renderedResultMediaType,
+      if (renderedResultContent != null)
+        'rendered_result_content': renderedResultContent,
       if (createdAtUtc != null) 'created_at_utc': createdAtUtc,
       if (updatedAtUtc != null) 'updated_at_utc': updatedAtUtc,
       if (expiryUtc != null) 'expiry_utc': expiryUtc,
@@ -1389,6 +1659,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
     Value<String>? status,
     Value<String?>? approvalSnapshotJson,
     Value<String?>? finalResponse,
+    Value<String?>? resultDocumentJson,
+    Value<String?>? resultContractKey,
+    Value<int?>? resultContractVersion,
+    Value<String?>? renderedResultMediaType,
+    Value<String?>? renderedResultContent,
     Value<DateTime>? createdAtUtc,
     Value<DateTime>? updatedAtUtc,
     Value<DateTime?>? expiryUtc,
@@ -1401,6 +1676,14 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
       status: status ?? this.status,
       approvalSnapshotJson: approvalSnapshotJson ?? this.approvalSnapshotJson,
       finalResponse: finalResponse ?? this.finalResponse,
+      resultDocumentJson: resultDocumentJson ?? this.resultDocumentJson,
+      resultContractKey: resultContractKey ?? this.resultContractKey,
+      resultContractVersion:
+          resultContractVersion ?? this.resultContractVersion,
+      renderedResultMediaType:
+          renderedResultMediaType ?? this.renderedResultMediaType,
+      renderedResultContent:
+          renderedResultContent ?? this.renderedResultContent,
       createdAtUtc: createdAtUtc ?? this.createdAtUtc,
       updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
       expiryUtc: expiryUtc ?? this.expiryUtc,
@@ -1431,6 +1714,27 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
     if (finalResponse.present) {
       map['final_response'] = Variable<String>(finalResponse.value);
     }
+    if (resultDocumentJson.present) {
+      map['result_document_json'] = Variable<String>(resultDocumentJson.value);
+    }
+    if (resultContractKey.present) {
+      map['result_contract_key'] = Variable<String>(resultContractKey.value);
+    }
+    if (resultContractVersion.present) {
+      map['result_contract_version'] = Variable<int>(
+        resultContractVersion.value,
+      );
+    }
+    if (renderedResultMediaType.present) {
+      map['rendered_result_media_type'] = Variable<String>(
+        renderedResultMediaType.value,
+      );
+    }
+    if (renderedResultContent.present) {
+      map['rendered_result_content'] = Variable<String>(
+        renderedResultContent.value,
+      );
+    }
     if (createdAtUtc.present) {
       map['created_at_utc'] = Variable<DateTime>(createdAtUtc.value);
     }
@@ -1455,6 +1759,11 @@ class WorkflowRunsCompanion extends UpdateCompanion<WorkflowRunRow> {
           ..write('status: $status, ')
           ..write('approvalSnapshotJson: $approvalSnapshotJson, ')
           ..write('finalResponse: $finalResponse, ')
+          ..write('resultDocumentJson: $resultDocumentJson, ')
+          ..write('resultContractKey: $resultContractKey, ')
+          ..write('resultContractVersion: $resultContractVersion, ')
+          ..write('renderedResultMediaType: $renderedResultMediaType, ')
+          ..write('renderedResultContent: $renderedResultContent, ')
           ..write('createdAtUtc: $createdAtUtc, ')
           ..write('updatedAtUtc: $updatedAtUtc, ')
           ..write('expiryUtc: $expiryUtc, ')
@@ -1546,6 +1855,40 @@ class $WorkflowNodeRunsTable extends WorkflowNodeRuns
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _effectiveProviderMeta = const VerificationMeta(
+    'effectiveProvider',
+  );
+  @override
+  late final GeneratedColumn<String> effectiveProvider =
+      GeneratedColumn<String>(
+        'effective_provider',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _effectiveModelMeta = const VerificationMeta(
+    'effectiveModel',
+  );
+  @override
+  late final GeneratedColumn<String> effectiveModel = GeneratedColumn<String>(
+    'effective_model',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _effectiveTemperatureMeta =
+      const VerificationMeta('effectiveTemperature');
+  @override
+  late final GeneratedColumn<double> effectiveTemperature =
+      GeneratedColumn<double>(
+        'effective_temperature',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _updatedAtUtcMeta = const VerificationMeta(
     'updatedAtUtc',
   );
@@ -1567,6 +1910,9 @@ class $WorkflowNodeRunsTable extends WorkflowNodeRuns
     status,
     output,
     error,
+    effectiveProvider,
+    effectiveModel,
+    effectiveTemperature,
     updatedAtUtc,
   ];
   @override
@@ -1644,6 +1990,33 @@ class $WorkflowNodeRunsTable extends WorkflowNodeRuns
         error.isAcceptableOrUnknown(data['error']!, _errorMeta),
       );
     }
+    if (data.containsKey('effective_provider')) {
+      context.handle(
+        _effectiveProviderMeta,
+        effectiveProvider.isAcceptableOrUnknown(
+          data['effective_provider']!,
+          _effectiveProviderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('effective_model')) {
+      context.handle(
+        _effectiveModelMeta,
+        effectiveModel.isAcceptableOrUnknown(
+          data['effective_model']!,
+          _effectiveModelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('effective_temperature')) {
+      context.handle(
+        _effectiveTemperatureMeta,
+        effectiveTemperature.isAcceptableOrUnknown(
+          data['effective_temperature']!,
+          _effectiveTemperatureMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at_utc')) {
       context.handle(
         _updatedAtUtcMeta,
@@ -1696,6 +2069,18 @@ class $WorkflowNodeRunsTable extends WorkflowNodeRuns
         DriftSqlType.string,
         data['${effectivePrefix}error'],
       ),
+      effectiveProvider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}effective_provider'],
+      ),
+      effectiveModel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}effective_model'],
+      ),
+      effectiveTemperature: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}effective_temperature'],
+      ),
       updatedAtUtc: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at_utc'],
@@ -1719,6 +2104,9 @@ class WorkflowNodeRunRow extends DataClass
   final String status;
   final String? output;
   final String? error;
+  final String? effectiveProvider;
+  final String? effectiveModel;
+  final double? effectiveTemperature;
   final DateTime updatedAtUtc;
   const WorkflowNodeRunRow({
     required this.runId,
@@ -1729,6 +2117,9 @@ class WorkflowNodeRunRow extends DataClass
     required this.status,
     this.output,
     this.error,
+    this.effectiveProvider,
+    this.effectiveModel,
+    this.effectiveTemperature,
     required this.updatedAtUtc,
   });
   @override
@@ -1745,6 +2136,15 @@ class WorkflowNodeRunRow extends DataClass
     }
     if (!nullToAbsent || error != null) {
       map['error'] = Variable<String>(error);
+    }
+    if (!nullToAbsent || effectiveProvider != null) {
+      map['effective_provider'] = Variable<String>(effectiveProvider);
+    }
+    if (!nullToAbsent || effectiveModel != null) {
+      map['effective_model'] = Variable<String>(effectiveModel);
+    }
+    if (!nullToAbsent || effectiveTemperature != null) {
+      map['effective_temperature'] = Variable<double>(effectiveTemperature);
     }
     map['updated_at_utc'] = Variable<DateTime>(updatedAtUtc);
     return map;
@@ -1764,6 +2164,15 @@ class WorkflowNodeRunRow extends DataClass
       error: error == null && nullToAbsent
           ? const Value.absent()
           : Value(error),
+      effectiveProvider: effectiveProvider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(effectiveProvider),
+      effectiveModel: effectiveModel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(effectiveModel),
+      effectiveTemperature: effectiveTemperature == null && nullToAbsent
+          ? const Value.absent()
+          : Value(effectiveTemperature),
       updatedAtUtc: Value(updatedAtUtc),
     );
   }
@@ -1782,6 +2191,13 @@ class WorkflowNodeRunRow extends DataClass
       status: serializer.fromJson<String>(json['status']),
       output: serializer.fromJson<String?>(json['output']),
       error: serializer.fromJson<String?>(json['error']),
+      effectiveProvider: serializer.fromJson<String?>(
+        json['effectiveProvider'],
+      ),
+      effectiveModel: serializer.fromJson<String?>(json['effectiveModel']),
+      effectiveTemperature: serializer.fromJson<double?>(
+        json['effectiveTemperature'],
+      ),
       updatedAtUtc: serializer.fromJson<DateTime>(json['updatedAtUtc']),
     );
   }
@@ -1797,6 +2213,9 @@ class WorkflowNodeRunRow extends DataClass
       'status': serializer.toJson<String>(status),
       'output': serializer.toJson<String?>(output),
       'error': serializer.toJson<String?>(error),
+      'effectiveProvider': serializer.toJson<String?>(effectiveProvider),
+      'effectiveModel': serializer.toJson<String?>(effectiveModel),
+      'effectiveTemperature': serializer.toJson<double?>(effectiveTemperature),
       'updatedAtUtc': serializer.toJson<DateTime>(updatedAtUtc),
     };
   }
@@ -1810,6 +2229,9 @@ class WorkflowNodeRunRow extends DataClass
     String? status,
     Value<String?> output = const Value.absent(),
     Value<String?> error = const Value.absent(),
+    Value<String?> effectiveProvider = const Value.absent(),
+    Value<String?> effectiveModel = const Value.absent(),
+    Value<double?> effectiveTemperature = const Value.absent(),
     DateTime? updatedAtUtc,
   }) => WorkflowNodeRunRow(
     runId: runId ?? this.runId,
@@ -1820,6 +2242,15 @@ class WorkflowNodeRunRow extends DataClass
     status: status ?? this.status,
     output: output.present ? output.value : this.output,
     error: error.present ? error.value : this.error,
+    effectiveProvider: effectiveProvider.present
+        ? effectiveProvider.value
+        : this.effectiveProvider,
+    effectiveModel: effectiveModel.present
+        ? effectiveModel.value
+        : this.effectiveModel,
+    effectiveTemperature: effectiveTemperature.present
+        ? effectiveTemperature.value
+        : this.effectiveTemperature,
     updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
   );
   WorkflowNodeRunRow copyWithCompanion(WorkflowNodeRunsCompanion data) {
@@ -1834,6 +2265,15 @@ class WorkflowNodeRunRow extends DataClass
       status: data.status.present ? data.status.value : this.status,
       output: data.output.present ? data.output.value : this.output,
       error: data.error.present ? data.error.value : this.error,
+      effectiveProvider: data.effectiveProvider.present
+          ? data.effectiveProvider.value
+          : this.effectiveProvider,
+      effectiveModel: data.effectiveModel.present
+          ? data.effectiveModel.value
+          : this.effectiveModel,
+      effectiveTemperature: data.effectiveTemperature.present
+          ? data.effectiveTemperature.value
+          : this.effectiveTemperature,
       updatedAtUtc: data.updatedAtUtc.present
           ? data.updatedAtUtc.value
           : this.updatedAtUtc,
@@ -1851,6 +2291,9 @@ class WorkflowNodeRunRow extends DataClass
           ..write('status: $status, ')
           ..write('output: $output, ')
           ..write('error: $error, ')
+          ..write('effectiveProvider: $effectiveProvider, ')
+          ..write('effectiveModel: $effectiveModel, ')
+          ..write('effectiveTemperature: $effectiveTemperature, ')
           ..write('updatedAtUtc: $updatedAtUtc')
           ..write(')'))
         .toString();
@@ -1866,6 +2309,9 @@ class WorkflowNodeRunRow extends DataClass
     status,
     output,
     error,
+    effectiveProvider,
+    effectiveModel,
+    effectiveTemperature,
     updatedAtUtc,
   );
   @override
@@ -1880,6 +2326,9 @@ class WorkflowNodeRunRow extends DataClass
           other.status == this.status &&
           other.output == this.output &&
           other.error == this.error &&
+          other.effectiveProvider == this.effectiveProvider &&
+          other.effectiveModel == this.effectiveModel &&
+          other.effectiveTemperature == this.effectiveTemperature &&
           other.updatedAtUtc == this.updatedAtUtc);
 }
 
@@ -1892,6 +2341,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
   final Value<String> status;
   final Value<String?> output;
   final Value<String?> error;
+  final Value<String?> effectiveProvider;
+  final Value<String?> effectiveModel;
+  final Value<double?> effectiveTemperature;
   final Value<DateTime> updatedAtUtc;
   final Value<int> rowid;
   const WorkflowNodeRunsCompanion({
@@ -1903,6 +2355,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
     this.status = const Value.absent(),
     this.output = const Value.absent(),
     this.error = const Value.absent(),
+    this.effectiveProvider = const Value.absent(),
+    this.effectiveModel = const Value.absent(),
+    this.effectiveTemperature = const Value.absent(),
     this.updatedAtUtc = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1915,6 +2370,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
     required String status,
     this.output = const Value.absent(),
     this.error = const Value.absent(),
+    this.effectiveProvider = const Value.absent(),
+    this.effectiveModel = const Value.absent(),
+    this.effectiveTemperature = const Value.absent(),
     required DateTime updatedAtUtc,
     this.rowid = const Value.absent(),
   }) : runId = Value(runId),
@@ -1933,6 +2391,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
     Expression<String>? status,
     Expression<String>? output,
     Expression<String>? error,
+    Expression<String>? effectiveProvider,
+    Expression<String>? effectiveModel,
+    Expression<double>? effectiveTemperature,
     Expression<DateTime>? updatedAtUtc,
     Expression<int>? rowid,
   }) {
@@ -1945,6 +2406,10 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
       if (status != null) 'status': status,
       if (output != null) 'output': output,
       if (error != null) 'error': error,
+      if (effectiveProvider != null) 'effective_provider': effectiveProvider,
+      if (effectiveModel != null) 'effective_model': effectiveModel,
+      if (effectiveTemperature != null)
+        'effective_temperature': effectiveTemperature,
       if (updatedAtUtc != null) 'updated_at_utc': updatedAtUtc,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1959,6 +2424,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
     Value<String>? status,
     Value<String?>? output,
     Value<String?>? error,
+    Value<String?>? effectiveProvider,
+    Value<String?>? effectiveModel,
+    Value<double?>? effectiveTemperature,
     Value<DateTime>? updatedAtUtc,
     Value<int>? rowid,
   }) {
@@ -1971,6 +2439,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
       status: status ?? this.status,
       output: output ?? this.output,
       error: error ?? this.error,
+      effectiveProvider: effectiveProvider ?? this.effectiveProvider,
+      effectiveModel: effectiveModel ?? this.effectiveModel,
+      effectiveTemperature: effectiveTemperature ?? this.effectiveTemperature,
       updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
       rowid: rowid ?? this.rowid,
     );
@@ -2003,6 +2474,17 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
     if (error.present) {
       map['error'] = Variable<String>(error.value);
     }
+    if (effectiveProvider.present) {
+      map['effective_provider'] = Variable<String>(effectiveProvider.value);
+    }
+    if (effectiveModel.present) {
+      map['effective_model'] = Variable<String>(effectiveModel.value);
+    }
+    if (effectiveTemperature.present) {
+      map['effective_temperature'] = Variable<double>(
+        effectiveTemperature.value,
+      );
+    }
     if (updatedAtUtc.present) {
       map['updated_at_utc'] = Variable<DateTime>(updatedAtUtc.value);
     }
@@ -2023,6 +2505,9 @@ class WorkflowNodeRunsCompanion extends UpdateCompanion<WorkflowNodeRunRow> {
           ..write('status: $status, ')
           ..write('output: $output, ')
           ..write('error: $error, ')
+          ..write('effectiveProvider: $effectiveProvider, ')
+          ..write('effectiveModel: $effectiveModel, ')
+          ..write('effectiveTemperature: $effectiveTemperature, ')
           ..write('updatedAtUtc: $updatedAtUtc, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3533,6 +4018,11 @@ typedef $$WorkflowRunsTableCreateCompanionBuilder =
       required String status,
       Value<String?> approvalSnapshotJson,
       Value<String?> finalResponse,
+      Value<String?> resultDocumentJson,
+      Value<String?> resultContractKey,
+      Value<int?> resultContractVersion,
+      Value<String?> renderedResultMediaType,
+      Value<String?> renderedResultContent,
       required DateTime createdAtUtc,
       required DateTime updatedAtUtc,
       Value<DateTime?> expiryUtc,
@@ -3546,6 +4036,11 @@ typedef $$WorkflowRunsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String?> approvalSnapshotJson,
       Value<String?> finalResponse,
+      Value<String?> resultDocumentJson,
+      Value<String?> resultContractKey,
+      Value<int?> resultContractVersion,
+      Value<String?> renderedResultMediaType,
+      Value<String?> renderedResultContent,
       Value<DateTime> createdAtUtc,
       Value<DateTime> updatedAtUtc,
       Value<DateTime?> expiryUtc,
@@ -3588,6 +4083,31 @@ class $$WorkflowRunsTableFilterComposer
 
   ColumnFilters<String> get finalResponse => $composableBuilder(
     column: $table.finalResponse,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resultDocumentJson => $composableBuilder(
+    column: $table.resultDocumentJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resultContractKey => $composableBuilder(
+    column: $table.resultContractKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get resultContractVersion => $composableBuilder(
+    column: $table.resultContractVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get renderedResultMediaType => $composableBuilder(
+    column: $table.renderedResultMediaType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get renderedResultContent => $composableBuilder(
+    column: $table.renderedResultContent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3646,6 +4166,31 @@ class $$WorkflowRunsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get resultDocumentJson => $composableBuilder(
+    column: $table.resultDocumentJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resultContractKey => $composableBuilder(
+    column: $table.resultContractKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get resultContractVersion => $composableBuilder(
+    column: $table.resultContractVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get renderedResultMediaType => $composableBuilder(
+    column: $table.renderedResultMediaType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get renderedResultContent => $composableBuilder(
+    column: $table.renderedResultContent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAtUtc => $composableBuilder(
     column: $table.createdAtUtc,
     builder: (column) => ColumnOrderings(column),
@@ -3692,6 +4237,31 @@ class $$WorkflowRunsTableAnnotationComposer
 
   GeneratedColumn<String> get finalResponse => $composableBuilder(
     column: $table.finalResponse,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get resultDocumentJson => $composableBuilder(
+    column: $table.resultDocumentJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get resultContractKey => $composableBuilder(
+    column: $table.resultContractKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get resultContractVersion => $composableBuilder(
+    column: $table.resultContractVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get renderedResultMediaType => $composableBuilder(
+    column: $table.renderedResultMediaType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get renderedResultContent => $composableBuilder(
+    column: $table.renderedResultContent,
     builder: (column) => column,
   );
 
@@ -3746,6 +4316,11 @@ class $$WorkflowRunsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> approvalSnapshotJson = const Value.absent(),
                 Value<String?> finalResponse = const Value.absent(),
+                Value<String?> resultDocumentJson = const Value.absent(),
+                Value<String?> resultContractKey = const Value.absent(),
+                Value<int?> resultContractVersion = const Value.absent(),
+                Value<String?> renderedResultMediaType = const Value.absent(),
+                Value<String?> renderedResultContent = const Value.absent(),
                 Value<DateTime> createdAtUtc = const Value.absent(),
                 Value<DateTime> updatedAtUtc = const Value.absent(),
                 Value<DateTime?> expiryUtc = const Value.absent(),
@@ -3757,6 +4332,11 @@ class $$WorkflowRunsTableTableManager
                 status: status,
                 approvalSnapshotJson: approvalSnapshotJson,
                 finalResponse: finalResponse,
+                resultDocumentJson: resultDocumentJson,
+                resultContractKey: resultContractKey,
+                resultContractVersion: resultContractVersion,
+                renderedResultMediaType: renderedResultMediaType,
+                renderedResultContent: renderedResultContent,
                 createdAtUtc: createdAtUtc,
                 updatedAtUtc: updatedAtUtc,
                 expiryUtc: expiryUtc,
@@ -3770,6 +4350,11 @@ class $$WorkflowRunsTableTableManager
                 required String status,
                 Value<String?> approvalSnapshotJson = const Value.absent(),
                 Value<String?> finalResponse = const Value.absent(),
+                Value<String?> resultDocumentJson = const Value.absent(),
+                Value<String?> resultContractKey = const Value.absent(),
+                Value<int?> resultContractVersion = const Value.absent(),
+                Value<String?> renderedResultMediaType = const Value.absent(),
+                Value<String?> renderedResultContent = const Value.absent(),
                 required DateTime createdAtUtc,
                 required DateTime updatedAtUtc,
                 Value<DateTime?> expiryUtc = const Value.absent(),
@@ -3781,6 +4366,11 @@ class $$WorkflowRunsTableTableManager
                 status: status,
                 approvalSnapshotJson: approvalSnapshotJson,
                 finalResponse: finalResponse,
+                resultDocumentJson: resultDocumentJson,
+                resultContractKey: resultContractKey,
+                resultContractVersion: resultContractVersion,
+                renderedResultMediaType: renderedResultMediaType,
+                renderedResultContent: renderedResultContent,
                 createdAtUtc: createdAtUtc,
                 updatedAtUtc: updatedAtUtc,
                 expiryUtc: expiryUtc,
@@ -3821,6 +4411,9 @@ typedef $$WorkflowNodeRunsTableCreateCompanionBuilder =
       required String status,
       Value<String?> output,
       Value<String?> error,
+      Value<String?> effectiveProvider,
+      Value<String?> effectiveModel,
+      Value<double?> effectiveTemperature,
       required DateTime updatedAtUtc,
       Value<int> rowid,
     });
@@ -3834,6 +4427,9 @@ typedef $$WorkflowNodeRunsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String?> output,
       Value<String?> error,
+      Value<String?> effectiveProvider,
+      Value<String?> effectiveModel,
+      Value<double?> effectiveTemperature,
       Value<DateTime> updatedAtUtc,
       Value<int> rowid,
     });
@@ -3884,6 +4480,21 @@ class $$WorkflowNodeRunsTableFilterComposer
 
   ColumnFilters<String> get error => $composableBuilder(
     column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get effectiveProvider => $composableBuilder(
+    column: $table.effectiveProvider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get effectiveModel => $composableBuilder(
+    column: $table.effectiveModel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get effectiveTemperature => $composableBuilder(
+    column: $table.effectiveTemperature,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3942,6 +4553,21 @@ class $$WorkflowNodeRunsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get effectiveProvider => $composableBuilder(
+    column: $table.effectiveProvider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get effectiveModel => $composableBuilder(
+    column: $table.effectiveModel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get effectiveTemperature => $composableBuilder(
+    column: $table.effectiveTemperature,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAtUtc => $composableBuilder(
     column: $table.updatedAtUtc,
     builder: (column) => ColumnOrderings(column),
@@ -3982,6 +4608,21 @@ class $$WorkflowNodeRunsTableAnnotationComposer
 
   GeneratedColumn<String> get error =>
       $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<String> get effectiveProvider => $composableBuilder(
+    column: $table.effectiveProvider,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get effectiveModel => $composableBuilder(
+    column: $table.effectiveModel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get effectiveTemperature => $composableBuilder(
+    column: $table.effectiveTemperature,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get updatedAtUtc => $composableBuilder(
     column: $table.updatedAtUtc,
@@ -4034,6 +4675,9 @@ class $$WorkflowNodeRunsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> output = const Value.absent(),
                 Value<String?> error = const Value.absent(),
+                Value<String?> effectiveProvider = const Value.absent(),
+                Value<String?> effectiveModel = const Value.absent(),
+                Value<double?> effectiveTemperature = const Value.absent(),
                 Value<DateTime> updatedAtUtc = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WorkflowNodeRunsCompanion(
@@ -4045,6 +4689,9 @@ class $$WorkflowNodeRunsTableTableManager
                 status: status,
                 output: output,
                 error: error,
+                effectiveProvider: effectiveProvider,
+                effectiveModel: effectiveModel,
+                effectiveTemperature: effectiveTemperature,
                 updatedAtUtc: updatedAtUtc,
                 rowid: rowid,
               ),
@@ -4058,6 +4705,9 @@ class $$WorkflowNodeRunsTableTableManager
                 required String status,
                 Value<String?> output = const Value.absent(),
                 Value<String?> error = const Value.absent(),
+                Value<String?> effectiveProvider = const Value.absent(),
+                Value<String?> effectiveModel = const Value.absent(),
+                Value<double?> effectiveTemperature = const Value.absent(),
                 required DateTime updatedAtUtc,
                 Value<int> rowid = const Value.absent(),
               }) => WorkflowNodeRunsCompanion.insert(
@@ -4069,6 +4719,9 @@ class $$WorkflowNodeRunsTableTableManager
                 status: status,
                 output: output,
                 error: error,
+                effectiveProvider: effectiveProvider,
+                effectiveModel: effectiveModel,
+                effectiveTemperature: effectiveTemperature,
                 updatedAtUtc: updatedAtUtc,
                 rowid: rowid,
               ),

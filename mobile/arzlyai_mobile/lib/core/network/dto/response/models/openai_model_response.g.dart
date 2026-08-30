@@ -13,6 +13,7 @@ _OpenAiModelResponse _$OpenAiModelResponseFromJson(Map<String, dynamic> json) =>
       ownedBy: json['ownedBy'] as String,
       createdAtUtc: DateTime.parse(json['createdAtUtc'] as String),
       supportsTemperature: json['supportsTemperature'] as bool,
+      supportsWebSearch: json['supportsWebSearch'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$OpenAiModelResponseToJson(
@@ -23,4 +24,5 @@ Map<String, dynamic> _$OpenAiModelResponseToJson(
   'ownedBy': instance.ownedBy,
   'createdAtUtc': instance.createdAtUtc.toIso8601String(),
   'supportsTemperature': instance.supportsTemperature,
+  'supportsWebSearch': instance.supportsWebSearch,
 };

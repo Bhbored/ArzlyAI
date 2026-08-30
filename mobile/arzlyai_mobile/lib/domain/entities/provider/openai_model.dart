@@ -10,5 +10,6 @@ sealed class OpenAiModel with _$OpenAiModel {
     required String ownedBy,
     required DateTime createdAtUtc,
     required bool supportsTemperature,
+    required bool supportsWebSearch,
   }) = _OpenAiModel;
 }

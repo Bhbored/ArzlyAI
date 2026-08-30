@@ -73,6 +73,29 @@ void main() {
     expect(run.approval?.wasEdited, isTrue);
   });
 
+  test('smart buy run parses versioned native result document', () {
+    final run = WorkflowRunResponse.fromJson({
+      'runId': '00000000-0000-0000-0000-000000000001',
+      'presetKey': 'smart-purchase-decision',
+      'status': 'Completed',
+      'nodes': <dynamic>[],
+      'finalResponse': '{"schema":"arzly.report"}',
+      'resultDocument': {
+        'schema': 'arzly.report',
+        'version': 1,
+        'kind': 'purchaseDecision',
+        'title': 'Laptop decision',
+        'summary': 'Candidate A wins.',
+        'generatedAtUtc': '2026-08-29T00:00:00Z',
+        'blocks': <dynamic>[],
+        'sources': <dynamic>[],
+      },
+    });
+
+    expect(run.resultDocument?['schema'], 'arzly.report');
+    expect(run.resultDocument?['version'], 1);
+  });
+
   test('approval decisions serialize numerically', () {
     const envelope = CredentialEnvelope(
       keyId: 'k',

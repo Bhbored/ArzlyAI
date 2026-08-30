@@ -8,10 +8,10 @@ import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';

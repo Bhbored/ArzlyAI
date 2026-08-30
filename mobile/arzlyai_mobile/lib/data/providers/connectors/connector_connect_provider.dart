@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/data/providers/connectors/connector_status_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/connectors/connector_repository.dart';
 
 part 'connector_connect_provider.g.dart';
 

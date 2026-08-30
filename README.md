@@ -30,6 +30,7 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 
 - Backend preset catalog in PostgreSQL with idempotent seeding.
 - `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
+- `smart-purchase-decision` preset with hosted research, evidence review, deterministic scoring, and safe responsive HTML reports.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
 - SignalR node-status events, rate limits, health probes, and structured logging.
 - Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
@@ -41,6 +42,9 @@ Flutter SQLite will be the source of truth for user workflow instances, history,
 ## Documentation
 
 - [LinkedIn preset](docs/presets/linkedin-preset.md)
+- [Smart Buy Lab preset](docs/presets/smart-purchase-decision.md)
+- [Flutter Smart Buy Lab HTML report handoff](docs/presets/flutter-smart-purchase-html-report.md)
+- [Flutter workflow timeout and realtime handoff](docs/presets/flutter-workflow-execution-timeout.md)
 - [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
 - [Flutter client scheduling and notifications](docs/presets/flutter-client-scheduling-notifications.md)
 - [Flutter online OpenAI model-catalog prompt](docs/presets/flutter-openai-model-catalog-prompt.md)

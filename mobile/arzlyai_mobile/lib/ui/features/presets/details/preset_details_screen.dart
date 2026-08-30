@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:arzlyai_mobile/core/exceptions/api_exception_extensions.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
@@ -8,16 +9,16 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
+import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
-import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/result_screen.dart';
-import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/review_screen.dart';
 import 'package:arzlyai_mobile/ui/features/settings/settings_screen.dart';
 import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_integration_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_dialog.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_toast.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_live_workflow_graph.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_workflow_node_screen.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_status.dart';
@@ -35,6 +36,14 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
   void initState() {
     super.initState();
     ref.listenManual(activeRunProvider, (previous, next) {
+      next.whenOrNull(
+        error: (error, _) {
+          if (previous?.hasError == true) return;
+          if (isReceiveTimeoutError(error)) return;
+          if (!mounted) return;
+          AppToast.errorFor(context, error);
+        },
+      );
       next.whenData((run) {
         if (run?.status == WorkflowRunStatus.waitingForApproval &&
             previous?.value?.approval?.originalContent !=
@@ -81,10 +90,10 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => runScreen));
   }
 
-  void _openReview() {
+  void _openReview(String presetKey) {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const ReviewScreen()));
+    ).push(MaterialPageRoute(builder: (_) => reviewScreenForPreset(presetKey)));
   }
 
   void _openNodeDetails(WorkflowNode node) {
@@ -93,10 +102,10 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     );
   }
 
-  void _openResult() {
+  void _openResult(String presetKey) {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const ResultScreen()));
+    ).push(MaterialPageRoute(builder: (_) => resultScreenForPreset(presetKey)));
   }
 
   void _onWorkflowNodeTap(
@@ -104,7 +113,10 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     WorkflowNode node,
     WorkflowNodeStatus? status,
   ) {
+    if (ref.read(activeRunProvider).isLoading) return;
+    if (ref.read(workflowTransportProvider).isProcessing) return;
     final run = ref.read(activeRunProvider).value;
+    final transport = ref.read(workflowTransportProvider);
     final writer = preset.configurableWorkflowAgent();
     final writerNode = _writerNode(preset);
 
@@ -119,9 +131,16 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     }
 
     if (node.type == 'HumanApproval') {
-      if (status == WorkflowNodeStatus.waitingForApproval ||
-          status == WorkflowNodeStatus.completed) {
-        _openReview();
+      if (status == WorkflowNodeStatus.waitingForApproval) {
+        if (transport.blocksApproval) return;
+        _openReview(preset.key);
+      } else if (status == WorkflowNodeStatus.completed &&
+          run != null &&
+          _isTerminal(run.status) &&
+          (node.resultContract != null || run.report != null)) {
+        _openResult(preset.key);
+      } else if (status == WorkflowNodeStatus.completed) {
+        _openReview(preset.key);
       }
       return;
     }
@@ -130,13 +149,12 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
         status == WorkflowNodeStatus.completed &&
         run != null &&
         _isTerminal(run.status)) {
-      _openResult();
+      _openResult(preset.key);
       return;
     }
 
     if (status == WorkflowNodeStatus.completed ||
-        status == WorkflowNodeStatus.failed ||
-        status == WorkflowNodeStatus.running) {
+        status == WorkflowNodeStatus.failed) {
       _openNodeDetails(node);
     }
   }
@@ -145,6 +163,7 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
   Widget build(BuildContext context) {
     final details = ref.watch(presetDetailsProvider);
     final activeRunId = ref.watch(selectedRunIdProvider);
+    final transport = ref.watch(workflowTransportProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(
@@ -221,9 +240,19 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
                   ),
                 ),
                 SizedBox(height: context.spaceSmall),
+                if (transport.isProcessing) ...[
+                  Text(
+                    'Still processing',
+                    style: theme.textTheme.p.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  SizedBox(height: context.spaceSmall / 2),
+                ],
                 AppLiveWorkflowGraph(
                   nodes: preset.workflow.nodes,
                   connections: preset.workflow.connections,
+                  startingNodeId: _writerNode(preset)?.id,
                   onNodeTap: (node, status) =>
                       _onWorkflowNodeTap(preset, node, status),
                 ),

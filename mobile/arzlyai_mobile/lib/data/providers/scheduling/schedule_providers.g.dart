@@ -290,7 +290,7 @@ final class InitializeWorkflowSchedulingProvider
         argument: null,
         retry: scheduleRetry,
         name: r'initializeWorkflowSchedulingProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -310,7 +310,7 @@ final class InitializeWorkflowSchedulingProvider
 }
 
 String _$initializeWorkflowSchedulingHash() =>
-    r'a79c8578133725b9e16854d27bff228002401958';
+    r'e66755c1fc7cbbaac1679735141149c3671b6af2';
 
 @ProviderFor(ScheduleController)
 final scheduleControllerProvider = ScheduleControllerFamily._();

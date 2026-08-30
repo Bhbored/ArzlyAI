@@ -31,7 +31,8 @@ public sealed class OpenAiModelCatalogService(
                 ToDisplayName(model.Id),
                 model.OwnedBy,
                 model.CreatedAtUtc,
-                capabilities.SupportsTemperature("openai", model.Id)))
+                capabilities.SupportsTemperature("openai", model.Id),
+                capabilities.SupportsWebSearch("openai", model.Id)))
             .ToList();
         logger.LogInformation("Loaded {ModelCount} usable OpenAI models", response.Count);
         return response;

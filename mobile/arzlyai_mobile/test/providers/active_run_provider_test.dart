@@ -14,10 +14,12 @@ import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
+import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
+import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import '../helpers/fakes.dart';
@@ -403,5 +405,58 @@ void main() {
     final override = workflows.lastStart!.agentOverrides.single;
     expect(override.model, 'gpt-4.1-mini');
     expect(override.temperature, 0.4);
+  });
+
+  test('SubmitApproval_WhenReceiveTimeout_KeepsRunProcessing', () async {
+    final workflows = FakeWorkflowService()..approvalError = receiveTimeout();
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    final runId = container.read(selectedRunIdProvider);
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.accept);
+    expect(container.read(activeRunProvider).hasError, isFalse);
+    expect(container.read(workflowTransportProvider).isProcessing, isTrue);
+    expect(runId, isNotNull);
+  });
+
+  test('SignalRReconnect_WhenRunAlreadyCompleted_UsesSnapshot', () async {
+    final workflows = FakeWorkflowService(getResult: completedRunDto());
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      openAiRepo: openAiRepo,
+    );
+    addTearDown(container.dispose);
+    container
+        .read(runConfigTempProvider.notifier)
+        .update(const RunConfigState(topic: 'AI agents'));
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container.read(activeRunProvider.notifier).recover();
+    expect(hub.reconnectCount, 1);
+    expect(
+      container.read(activeRunProvider).value?.status,
+      WorkflowRunStatus.completed,
+    );
   });
 }

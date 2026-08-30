@@ -1,0 +1,54 @@
+{
+  "runId": "00000000-0000-0000-0001-000000000101",
+  "presetKey": "smart-purchase-decision",
+  "status": "WaitingForApproval",
+  "nodes": [
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000021",
+      "nodeKey": "purchase-brief-architect",
+      "displayName": "Build Purchase Brief",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false,
+      "output": "{\"category\":\"Laptop\"}"
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000022",
+      "nodeKey": "confirm-requirements",
+      "displayName": "Confirm Requirements",
+      "type": "HumanApproval",
+      "status": "WaitingForApproval",
+      "isRunning": false,
+      "output": "Brief text"
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000023",
+      "nodeKey": "market-researcher",
+      "displayName": "Research Candidates",
+      "type": "Agent",
+      "status": "Idle",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000024",
+      "nodeKey": "decision.weighted-score",
+      "displayName": "Score Candidates",
+      "type": "Operation",
+      "status": "Idle",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000025",
+      "nodeKey": "review-recommendation",
+      "displayName": "Review Recommendation",
+      "type": "HumanApproval",
+      "status": "Idle",
+      "isRunning": false
+    }
+  ],
+  "approval": {
+    "originalContent": "Brief text",
+    "currentContent": "Brief text",
+    "wasEdited": false
+  }
+}

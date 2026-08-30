@@ -6,8 +6,9 @@ import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/network/executor/api_executor.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/workflow/workflow_run_mapper.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 void main() {
@@ -18,6 +19,7 @@ void main() {
       db,
       WorkflowService(ApiExecutor(Dio())),
       const WorkflowRunMapper(),
+      const ArzlyReportMapper(),
     );
 
     final instance = await repo.createInstance(

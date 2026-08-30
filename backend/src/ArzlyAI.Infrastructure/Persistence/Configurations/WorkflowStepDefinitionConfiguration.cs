@@ -12,5 +12,7 @@ public sealed class WorkflowStepDefinitionConfiguration : IEntityTypeConfigurati
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => new { x.WorkflowId, x.Position }).IsUnique();
         builder.Property(x => x.Type).HasConversion<string>();
+        builder.Property(x => x.ConfigurationJson).HasColumnType("jsonb");
+        builder.Property(x => x.ResultContractKey).HasMaxLength(100);
     }
 }

@@ -31,6 +31,9 @@ public sealed class AgentWorkflowNodeHandler(
                 input, WorkflowNodeStatus.Completed, $"{context.Step.DisplayName} completed.");
 
         var model = ResolveModel(agent, context.AgentOverride?.Model);
+        if (agent.Harness.WebSearchEnabled &&
+            !capabilities.SupportsWebSearch(agent.Model.Provider.Key, model))
+            throw new ArgumentException($"Model '{model}' does not support hosted web search.");
         var temperature = ResolveTemperature(agent, model, context.AgentOverride?.Temperature);
         var credentialKey = $"{agent.Model.Provider.Key}.apiKey";
         var output = await agentRuntime.ExecuteAsync(
@@ -44,7 +47,10 @@ public sealed class AgentWorkflowNodeHandler(
         return new WorkflowNodeExecutionResult(
             output,
             WorkflowNodeStatus.Completed,
-            $"{context.Step.DisplayName} completed.");
+            $"{context.Step.DisplayName} completed.",
+            EffectiveProvider: agent.Model.Provider.Key,
+            EffectiveModel: model,
+            EffectiveTemperature: temperature);
     }
 
     private static string ComposeInput(IReadOnlyDictionary<string, string> inputs)

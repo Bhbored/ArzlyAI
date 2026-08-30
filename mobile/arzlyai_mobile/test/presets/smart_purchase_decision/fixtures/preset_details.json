@@ -1,0 +1,148 @@
+{
+  "id": "00000000-0000-0000-0001-000000000010",
+  "key": "smart-purchase-decision",
+  "name": "Smart Buy Lab",
+  "description": "Research and compare consumer products.",
+  "version": 1,
+  "inputSchemaJson": "{\"version\":1,\"fields\":[{\"key\":\"purchaseGoal\",\"label\":\"What are you buying?\",\"type\":\"multilineText\",\"required\":true,\"maxLength\":2000},{\"key\":\"countryCode\",\"label\":\"Market\",\"type\":\"country\",\"required\":true},{\"key\":\"currencyCode\",\"label\":\"Currency\",\"type\":\"currency\",\"required\":true},{\"key\":\"candidateSeeds\",\"label\":\"Products or URLs already considered\",\"type\":\"candidateList\",\"required\":false,\"maximumItems\":5}]}",
+  "resultContract": {
+    "key": "arzly.report",
+    "version": 1
+  },
+  "agents": [
+    {
+      "key": "purchase-brief-architect",
+      "name": "Purchase Brief Architect",
+      "systemPrompt": "Build measurable criteria.",
+      "isSystemPromptEditable": false,
+      "modelConfiguration": {
+        "provider": "openai",
+        "selectedModel": "gpt-5-mini",
+        "availableModels": [
+          {
+            "provider": "openai",
+            "model": "gpt-5-mini",
+            "displayName": "GPT-5 mini"
+          }
+        ],
+        "isModelEditable": true,
+        "temperature": 0.2,
+        "minimumTemperature": 0.0,
+        "maximumTemperature": 1.0,
+        "isTemperatureEditable": true
+      },
+      "harness": {
+        "planningEnabled": false,
+        "todoTrackingEnabled": false,
+        "contextCompactionEnabled": true,
+        "requiresToolApproval": false,
+        "maximumIterations": 4,
+        "webSearchEnabled": false
+      }
+    },
+    {
+      "key": "market-researcher",
+      "name": "Market Researcher",
+      "systemPrompt": "Research candidates.",
+      "isSystemPromptEditable": false,
+      "modelConfiguration": {
+        "provider": "openai",
+        "selectedModel": "gpt-5-mini",
+        "availableModels": [
+          {
+            "provider": "openai",
+            "model": "gpt-5-mini",
+            "displayName": "GPT-5 mini"
+          }
+        ],
+        "isModelEditable": true,
+        "temperature": 0.2,
+        "minimumTemperature": 0.0,
+        "maximumTemperature": 1.0,
+        "isTemperatureEditable": true
+      },
+      "harness": {
+        "planningEnabled": true,
+        "todoTrackingEnabled": true,
+        "contextCompactionEnabled": true,
+        "requiresToolApproval": false,
+        "maximumIterations": 8,
+        "webSearchEnabled": true
+      }
+    }
+  ],
+  "workflow": {
+    "key": "research-score-and-recommend",
+    "nodes": [
+      {
+        "id": "00000000-0000-0000-0001-000000000021",
+        "key": "purchase-brief-architect",
+        "displayName": "Build Purchase Brief",
+        "type": "Agent",
+        "position": 1,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000022",
+        "key": "confirm-requirements",
+        "displayName": "Confirm Requirements",
+        "type": "HumanApproval",
+        "position": 2,
+        "requiresHumanApproval": true,
+        "configurationJson": "{\"acceptLabel\":\"Confirm and research\",\"editLabel\":\"Update criteria\",\"rejectLabel\":\"Cancel\"}"
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000023",
+        "key": "market-researcher",
+        "displayName": "Research Candidates",
+        "type": "Agent",
+        "position": 3,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000024",
+        "key": "decision.weighted-score",
+        "displayName": "Score Candidates",
+        "type": "Operation",
+        "position": 4,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000025",
+        "key": "review-recommendation",
+        "displayName": "Review Recommendation",
+        "type": "HumanApproval",
+        "position": 5,
+        "requiresHumanApproval": true,
+        "configurationJson": "{\"acceptLabel\":\"Save decision\",\"editLabel\":\"Revise explanation\",\"rejectLabel\":\"Discard\"}",
+        "resultContract": {
+          "key": "arzly.report",
+          "version": 1
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "00000000-0000-0000-0001-000000000031",
+        "sourceNodeId": "00000000-0000-0000-0001-000000000021",
+        "targetNodeId": "00000000-0000-0000-0001-000000000022"
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000032",
+        "sourceNodeId": "00000000-0000-0000-0001-000000000022",
+        "targetNodeId": "00000000-0000-0000-0001-000000000023"
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000033",
+        "sourceNodeId": "00000000-0000-0000-0001-000000000023",
+        "targetNodeId": "00000000-0000-0000-0001-000000000024"
+      },
+      {
+        "id": "00000000-0000-0000-0001-000000000034",
+        "sourceNodeId": "00000000-0000-0000-0001-000000000024",
+        "targetNodeId": "00000000-0000-0000-0001-000000000025"
+      }
+    ]
+  },
+  "integrations": []
+}

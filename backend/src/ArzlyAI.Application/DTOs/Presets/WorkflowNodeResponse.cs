@@ -5,4 +5,6 @@ public sealed record WorkflowNodeResponse(
     string DisplayName,
     string Type,
     int Position,
-    bool RequiresHumanApproval);
+    bool RequiresHumanApproval,
+    string? ConfigurationJson,
+    ResultContractResponse? ResultContract);

@@ -17,6 +17,9 @@ _WorkflowNodeRunResponse _$WorkflowNodeRunResponseFromJson(
   isRunning: json['isRunning'] as bool,
   output: json['output'] as String?,
   error: json['error'] as String?,
+  effectiveProvider: json['effectiveProvider'] as String?,
+  effectiveModel: json['effectiveModel'] as String?,
+  effectiveTemperature: (json['effectiveTemperature'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$WorkflowNodeRunResponseToJson(
@@ -30,4 +33,7 @@ Map<String, dynamic> _$WorkflowNodeRunResponseToJson(
   'isRunning': instance.isRunning,
   'output': instance.output,
   'error': instance.error,
+  'effectiveProvider': instance.effectiveProvider,
+  'effectiveModel': instance.effectiveModel,
+  'effectiveTemperature': instance.effectiveTemperature,
 };

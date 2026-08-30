@@ -9,4 +9,7 @@ public sealed class WorkflowNodeRun
     public WorkflowNodeStatus Status { get; set; }
     public string? Output { get; set; }
     public string? Error { get; set; }
+    public string? EffectiveProvider { get; set; }
+    public string? EffectiveModel { get; set; }
+    public double? EffectiveTemperature { get; set; }
 }

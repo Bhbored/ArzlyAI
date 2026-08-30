@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WorkflowRunResponse {
 
- String get runId; String get presetKey; String get status; List<WorkflowNodeRunResponse> get nodes; ApprovalSnapshotResponse? get approval; String? get finalResponse;
+ String get runId; String get presetKey; String get status; List<WorkflowNodeRunResponse> get nodes; ApprovalSnapshotResponse? get approval; String? get finalResponse; Map<String, dynamic>? get resultDocument; RenderedWorkflowResultResponse? get renderedResult;
 /// Create a copy of WorkflowRunResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $WorkflowRunResponseCopyWith<WorkflowRunResponse> get copyWith => _$WorkflowRunR
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowRunResponse&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.nodes, nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowRunResponse&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.nodes, nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&const DeepCollectionEquality().equals(other.resultDocument, resultDocument)&&(identical(other.renderedResult, renderedResult) || other.renderedResult == renderedResult));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(nodes),approval,finalResponse);
+int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(nodes),approval,finalResponse,const DeepCollectionEquality().hash(resultDocument),renderedResult);
 
 @override
 String toString() {
-  return 'WorkflowRunResponse(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse)';
+  return 'WorkflowRunResponse(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, resultDocument: $resultDocument, renderedResult: $renderedResult)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $WorkflowRunResponseCopyWith<$Res>  {
   factory $WorkflowRunResponseCopyWith(WorkflowRunResponse value, $Res Function(WorkflowRunResponse) _then) = _$WorkflowRunResponseCopyWithImpl;
 @useResult
 $Res call({
- String runId, String presetKey, String status, List<WorkflowNodeRunResponse> nodes, ApprovalSnapshotResponse? approval, String? finalResponse
+ String runId, String presetKey, String status, List<WorkflowNodeRunResponse> nodes, ApprovalSnapshotResponse? approval, String? finalResponse, Map<String, dynamic>? resultDocument, RenderedWorkflowResultResponse? renderedResult
 });
 
 
-$ApprovalSnapshotResponseCopyWith<$Res>? get approval;
+$ApprovalSnapshotResponseCopyWith<$Res>? get approval;$RenderedWorkflowResultResponseCopyWith<$Res>? get renderedResult;
 
 }
 /// @nodoc
@@ -65,7 +65,7 @@ class _$WorkflowRunResponseCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowRunResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? resultDocument = freezed,Object? renderedResult = freezed,}) {
   return _then(_self.copyWith(
 runId: null == runId ? _self.runId : runId // ignore: cast_nullable_to_non_nullable
 as String,presetKey: null == presetKey ? _self.presetKey : presetKey // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,9 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,nodes: null == nodes ? _self.nodes : nodes // ignore: cast_nullable_to_non_nullable
 as List<WorkflowNodeRunResponse>,approval: freezed == approval ? _self.approval : approval // ignore: cast_nullable_to_non_nullable
 as ApprovalSnapshotResponse?,finalResponse: freezed == finalResponse ? _self.finalResponse : finalResponse // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,resultDocument: freezed == resultDocument ? _self.resultDocument : resultDocument // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,renderedResult: freezed == renderedResult ? _self.renderedResult : renderedResult // ignore: cast_nullable_to_non_nullable
+as RenderedWorkflowResultResponse?,
   ));
 }
 /// Create a copy of WorkflowRunResponse
@@ -87,6 +89,18 @@ $ApprovalSnapshotResponseCopyWith<$Res>? get approval {
 
   return $ApprovalSnapshotResponseCopyWith<$Res>(_self.approval!, (value) {
     return _then(_self.copyWith(approval: value));
+  });
+}/// Create a copy of WorkflowRunResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RenderedWorkflowResultResponseCopyWith<$Res>? get renderedResult {
+    if (_self.renderedResult == null) {
+    return null;
+  }
+
+  return $RenderedWorkflowResultResponseCopyWith<$Res>(_self.renderedResult!, (value) {
+    return _then(_self.copyWith(renderedResult: value));
   });
 }
 }
@@ -167,10 +181,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse,  Map<String, dynamic>? resultDocument,  RenderedWorkflowResultResponse? renderedResult)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkflowRunResponse() when $default != null:
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse);case _:
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.resultDocument,_that.renderedResult);case _:
   return orElse();
 
 }
@@ -188,10 +202,10 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse,  Map<String, dynamic>? resultDocument,  RenderedWorkflowResultResponse? renderedResult)  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowRunResponse():
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse);}
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.resultDocument,_that.renderedResult);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -205,10 +219,10 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String runId,  String presetKey,  String status,  List<WorkflowNodeRunResponse> nodes,  ApprovalSnapshotResponse? approval,  String? finalResponse,  Map<String, dynamic>? resultDocument,  RenderedWorkflowResultResponse? renderedResult)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowRunResponse() when $default != null:
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse);case _:
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.resultDocument,_that.renderedResult);case _:
   return null;
 
 }
@@ -220,7 +234,7 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 @JsonSerializable()
 
 class _WorkflowRunResponse implements WorkflowRunResponse {
-  const _WorkflowRunResponse({required this.runId, required this.presetKey, required this.status, required final  List<WorkflowNodeRunResponse> nodes, this.approval, this.finalResponse}): _nodes = nodes;
+  const _WorkflowRunResponse({required this.runId, required this.presetKey, required this.status, required final  List<WorkflowNodeRunResponse> nodes, this.approval, this.finalResponse, final  Map<String, dynamic>? resultDocument, this.renderedResult}): _nodes = nodes,_resultDocument = resultDocument;
   factory _WorkflowRunResponse.fromJson(Map<String, dynamic> json) => _$WorkflowRunResponseFromJson(json);
 
 @override final  String runId;
@@ -235,6 +249,16 @@ class _WorkflowRunResponse implements WorkflowRunResponse {
 
 @override final  ApprovalSnapshotResponse? approval;
 @override final  String? finalResponse;
+ final  Map<String, dynamic>? _resultDocument;
+@override Map<String, dynamic>? get resultDocument {
+  final value = _resultDocument;
+  if (value == null) return null;
+  if (_resultDocument is EqualUnmodifiableMapView) return _resultDocument;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
+@override final  RenderedWorkflowResultResponse? renderedResult;
 
 /// Create a copy of WorkflowRunResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -249,16 +273,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowRunResponse&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._nodes, _nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowRunResponse&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._nodes, _nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&const DeepCollectionEquality().equals(other._resultDocument, _resultDocument)&&(identical(other.renderedResult, renderedResult) || other.renderedResult == renderedResult));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(_nodes),approval,finalResponse);
+int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(_nodes),approval,finalResponse,const DeepCollectionEquality().hash(_resultDocument),renderedResult);
 
 @override
 String toString() {
-  return 'WorkflowRunResponse(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse)';
+  return 'WorkflowRunResponse(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, resultDocument: $resultDocument, renderedResult: $renderedResult)';
 }
 
 
@@ -269,11 +293,11 @@ abstract mixin class _$WorkflowRunResponseCopyWith<$Res> implements $WorkflowRun
   factory _$WorkflowRunResponseCopyWith(_WorkflowRunResponse value, $Res Function(_WorkflowRunResponse) _then) = __$WorkflowRunResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String runId, String presetKey, String status, List<WorkflowNodeRunResponse> nodes, ApprovalSnapshotResponse? approval, String? finalResponse
+ String runId, String presetKey, String status, List<WorkflowNodeRunResponse> nodes, ApprovalSnapshotResponse? approval, String? finalResponse, Map<String, dynamic>? resultDocument, RenderedWorkflowResultResponse? renderedResult
 });
 
 
-@override $ApprovalSnapshotResponseCopyWith<$Res>? get approval;
+@override $ApprovalSnapshotResponseCopyWith<$Res>? get approval;@override $RenderedWorkflowResultResponseCopyWith<$Res>? get renderedResult;
 
 }
 /// @nodoc
@@ -286,7 +310,7 @@ class __$WorkflowRunResponseCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowRunResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? resultDocument = freezed,Object? renderedResult = freezed,}) {
   return _then(_WorkflowRunResponse(
 runId: null == runId ? _self.runId : runId // ignore: cast_nullable_to_non_nullable
 as String,presetKey: null == presetKey ? _self.presetKey : presetKey // ignore: cast_nullable_to_non_nullable
@@ -294,7 +318,9 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,nodes: null == nodes ? _self._nodes : nodes // ignore: cast_nullable_to_non_nullable
 as List<WorkflowNodeRunResponse>,approval: freezed == approval ? _self.approval : approval // ignore: cast_nullable_to_non_nullable
 as ApprovalSnapshotResponse?,finalResponse: freezed == finalResponse ? _self.finalResponse : finalResponse // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,resultDocument: freezed == resultDocument ? _self._resultDocument : resultDocument // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,renderedResult: freezed == renderedResult ? _self.renderedResult : renderedResult // ignore: cast_nullable_to_non_nullable
+as RenderedWorkflowResultResponse?,
   ));
 }
 
@@ -309,6 +335,18 @@ $ApprovalSnapshotResponseCopyWith<$Res>? get approval {
 
   return $ApprovalSnapshotResponseCopyWith<$Res>(_self.approval!, (value) {
     return _then(_self.copyWith(approval: value));
+  });
+}/// Create a copy of WorkflowRunResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RenderedWorkflowResultResponseCopyWith<$Res>? get renderedResult {
+    if (_self.renderedResult == null) {
+    return null;
+  }
+
+  return $RenderedWorkflowResultResponseCopyWith<$Res>(_self.renderedResult!, (value) {
+    return _then(_self.copyWith(renderedResult: value));
   });
 }
 }

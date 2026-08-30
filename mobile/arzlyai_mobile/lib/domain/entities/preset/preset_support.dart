@@ -1,6 +1,7 @@
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 
 extension PresetDetailsSupport on PresetDetails {
@@ -108,6 +109,16 @@ extension PresetDetailsSupport on PresetDetails {
           providerCredentialEnvelopeKey(writer.modelConfiguration.provider),
         ];
       case CredentialPhase.approval:
+        if (integrations.isEmpty) {
+          return agents
+              .map(
+                (agent) => providerCredentialEnvelopeKey(
+                  agent.modelConfiguration.provider,
+                ),
+              )
+              .toSet()
+              .toList(growable: false);
+        }
         return integrations
             .expand(
               (integration) => envelopeKeysForIntegration(
@@ -117,6 +128,15 @@ extension PresetDetailsSupport on PresetDetails {
             )
             .toList(growable: false);
     }
+  }
+}
+
+extension PresetInputSchemaSupport on PresetInputSchema {
+  String? primaryInputKey() {
+    for (final field in fields) {
+      if (field.required) return field.key;
+    }
+    return fields.firstOrNull?.key;
   }
 }
 

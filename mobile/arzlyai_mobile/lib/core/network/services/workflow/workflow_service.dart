@@ -1,5 +1,5 @@
 import 'package:logger/logger.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';import 'package:arzlyai_mobile/core/network/configs/api_config.dart';
 import 'package:arzlyai_mobile/core/network/client/dio_client.dart';
 import 'package:arzlyai_mobile/core/network/configs/http_methods.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
@@ -31,6 +31,7 @@ class WorkflowService {
         path: 'workflows/runs',
         method: HttpMethod.post,
         data: request.toJson(),
+        options: ApiConfig.workflowOptions(),
       ),
     );
     return response.when(
@@ -70,6 +71,7 @@ class WorkflowService {
         path: 'workflows/runs/$runId/approval',
         method: HttpMethod.post,
         data: request.toJson(),
+        options: ApiConfig.workflowOptions(),
       ),
     );
     return response.when(

@@ -7,4 +7,5 @@ public sealed record AgentModelConfigurationResponse(
     double Temperature,
     double MinimumTemperature,
     double MaximumTemperature,
-    bool IsTemperatureEditable);
+    bool IsTemperatureEditable,
+    bool SupportsWebSearch);

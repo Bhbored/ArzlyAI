@@ -15,6 +15,7 @@ public sealed class AgentDefinition : Base
     public double MaximumTemperature { get; init; }
     public bool AllowModelOverride { get; init; }
     public bool AllowTemperatureOverride { get; init; }
+    public string? OutputSchemaJson { get; init; }
     public PresetDefinition Preset { get; init; } = null!;
     public ModelDefinition Model { get; init; } = null!;
     public AgentHarnessDefinition Harness { get; set; } = null!;

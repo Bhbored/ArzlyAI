@@ -7,6 +7,8 @@ import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/core/exceptions/api_exception_extensions.dart';
+import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/submit_approval_request.dart';
@@ -14,14 +16,18 @@ import 'package:arzlyai_mobile/core/realtime/workflow_hub_client.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
+import 'package:arzlyai_mobile/core/enums/workflow_transport_state.dart';
+import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
 import 'package:arzlyai_mobile/domain/mappers/workflow/workflow_run_mapper.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/ui/validators/app_validators.dart';
@@ -48,6 +54,8 @@ class ActiveRun extends _$ActiveRun {
   Future<void> start(RunConfigState config) async {
     if (_busy) return;
     _busy = true;
+    WorkflowInstance? instance;
+    final expiryUtc = DateTime.now().toUtc().add(const Duration(minutes: 30));
     try {
       final online = ref.read(internetConnectionProvider);
       final offlineMode = await ref.read(offlineModeProvider.future);
@@ -60,35 +68,23 @@ class ActiveRun extends _$ActiveRun {
       }
       final details = await ref.read(presetDetailsProvider.future);
       if (details == null) return;
-      final topicError = AppValidators.requiredNonEmpty(config.topic);
+      final effectiveInputs = config.inputs.isEmpty
+          ? <String, String>{'topic': config.topic.trim()}
+          : Map<String, String>.from(config.inputs);
+      final primaryInput = config.topic.trim().isNotEmpty
+          ? config.topic.trim()
+          : effectiveInputs.values
+              .where((value) => value.trim().isNotEmpty)
+              .firstOrNull ??
+              '';
+      final topicError = AppValidators.requiredNonEmpty(primaryInput);
       if (topicError != null) {
         state = AsyncError(ArgumentError(topicError), StackTrace.current);
         return;
       }
-      final writer = details.configurableWorkflowAgent();
-      final overrides = <AgentOverrideRequest>[];
-      if (writer != null && writer.modelConfiguration.isModelEditable) {
-        final model = config.model ?? writer.modelConfiguration.selectedModel;
-        double? temperature;
-        final supportsTemperature = ref
-            .read(openAiModelRepositoryProvider)
-            .modelSupportsTemperature(model);
-        if (supportsTemperature == true) {
-          temperature = AppValidators.clampTemperature(
-            config.temperature ?? writer.modelConfiguration.temperature,
-            writer.modelConfiguration.minimumTemperature,
-            writer.modelConfiguration.maximumTemperature,
-          );
-        }
-        overrides.add(
-          AgentOverrideRequest(
-            agentKey: writer.key,
-            model: model,
-            temperature: temperature,
-          ),
-        );
-      }
       state = const AsyncLoading<WorkflowRun?>();
+      final writer = details.configurableWorkflowAgent();
+      final overrides = _buildOverrides(config, details, writer);
       final credentialRepo = ref.read(credentialRepositoryProvider);
       final startKeys = details.envelopeKeysForPhase(
         CredentialPhase.workflowStart,
@@ -107,23 +103,26 @@ class ActiveRun extends _$ActiveRun {
       final envelope = await ref
           .read(credentialEnvelopeServiceProvider)
           .encrypt(startCredentials);
-      final instance = await ref
+      instance = await ref
           .read(workflowRepositoryProvider)
           .createInstance(
             presetKey: details.key,
             presetVersion: details.version,
             name: details.name,
-            topic: config.topic.trim(),
+            topic: primaryInput.trim(),
             modelOverridesJson: jsonEncode(
               overrides.map((e) => e.toJson()).toList(),
             ),
           );
+      ref.read(workflowTransportProvider.notifier).setInFlight(
+        pendingLocalWorkflowId: instance.id,
+      );
       final dto = await ref
           .read(workflowServiceProvider)
           .start(
             StartWorkflowRequest(
               presetKey: details.key,
-              inputs: {'topic': config.topic.trim()},
+              inputs: effectiveInputs,
               agentOverrides: overrides,
               credentials: envelope,
             ),
@@ -133,15 +132,24 @@ class ActiveRun extends _$ActiveRun {
           .persistDto(
             dto,
             localWorkflowId: instance.id,
-            expiryUtc: DateTime.now().toUtc().add(const Duration(minutes: 30)),
+            expiryUtc: expiryUtc,
           );
       ref.read(selectedRunIdProvider.notifier).update(run.runId);
       _lastEventAt = DateTime.now().toUtc();
       state = AsyncData(run);
+      ref.read(workflowTransportProvider.notifier).clear();
       try {
         await ref.read(workflowHubClientProvider).subscribeToRun(run.runId);
       } catch (_) {}
     } catch (e, s) {
+      if (isReceiveTimeoutError(e) && instance != null) {
+        ref.read(workflowTransportProvider.notifier).setProcessing();
+        unawaited(
+          _reconcileAfterStartTimeout(instance.id, expiryUtc),
+        );
+        return;
+      }
+      ref.read(workflowTransportProvider.notifier).clear();
       state = AsyncError(e, s);
     } finally {
       _busy = false;
@@ -151,6 +159,7 @@ class ActiveRun extends _$ActiveRun {
   Future<void> reset() async {
     if (_busy) return;
     ref.read(selectedRunIdProvider.notifier).clear();
+    ref.read(workflowTransportProvider.notifier).clear();
     _lastEventAt = null;
     state = const AsyncData(null);
   }
@@ -158,33 +167,36 @@ class ActiveRun extends _$ActiveRun {
   Future<void> recover() async {
     final runId = ref.read(selectedRunIdProvider);
     if (runId == null) return;
-    try {
-      await ref.read(workflowHubClientProvider).reconnect();
-      final dto = await ref.read(workflowRepositoryProvider).fetchRemote(runId);
-      final local = await ref
-          .read(workflowRepositoryProvider)
-          .getLocalRun(runId);
-      final run = await ref
-          .read(workflowRepositoryProvider)
-          .persistDto(
-            dto,
-            localWorkflowId: local?.localWorkflowId ?? '',
-            expiryUtc: local?.expiryUtc,
-          );
-      _lastEventAt = DateTime.now().toUtc();
-      state = AsyncData(run);
-    } on ApiException catch (e, s) {
-      if (e.statusCode == 404) {
-        await ref.read(workflowRepositoryProvider).markExpired(runId);
-        final local = await ref
-            .read(workflowRepositoryProvider)
-            .getLocalRun(runId);
-        if (local != null) {
-          state = AsyncData(local.copyWith(status: WorkflowRunStatus.expired));
-        }
-        return;
+    final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
+    if (local == null) return;
+    await _reconcileRun(
+      runId,
+      local.localWorkflowId ?? '',
+      local.expiryUtc,
+    );
+  }
+
+  Future<void> resumeIfProcessing() async {
+    final transport = ref.read(workflowTransportProvider);
+    if (!transport.isProcessing &&
+        transport.transport != WorkflowTransportState.inFlight) {
+      return;
+    }
+    final runId = ref.read(selectedRunIdProvider);
+    if (runId != null) {
+      final local = await ref.read(workflowRepositoryProvider).getLocalRun(runId);
+      if (local != null) {
+        await _reconcileRun(
+          runId,
+          local.localWorkflowId ?? '',
+          local.expiryUtc,
+        );
       }
-      state = AsyncError(e, s);
+      return;
+    }
+    final localWorkflowId = transport.pendingLocalWorkflowId;
+    if (localWorkflowId != null) {
+      await _reconcileAfterStartTimeout(localWorkflowId, null);
     }
   }
 
@@ -194,6 +206,8 @@ class ActiveRun extends _$ActiveRun {
   }) async {
     if (_busy) return;
     _busy = true;
+    final current = state.value;
+    WorkflowRun? snapshotBeforeOptimistic;
     try {
       final online = ref.read(internetConnectionProvider);
       final offlineMode = await ref.read(offlineModeProvider.future);
@@ -204,7 +218,6 @@ class ActiveRun extends _$ActiveRun {
         );
         return;
       }
-      final current = state.value;
       if (current == null) return;
       if (decision == ApprovalDecision.edit) {
         if (AppValidators.requiredNonEmpty(editedContent ?? '') != null) {
@@ -215,29 +228,22 @@ class ActiveRun extends _$ActiveRun {
           return;
         }
       }
+      snapshotBeforeOptimistic = current;
+      final approvalNodeId = _pendingApprovalNodeId(current);
+      ref.read(workflowTransportProvider.notifier).setInFlight(
+        approval: true,
+        approvalNodeId: approvalNodeId,
+      );
       final optimistic = _optimisticApproval(current, decision);
       await ref.read(workflowRepositoryProvider).persistRun(optimistic);
       state = AsyncData(optimistic);
       final credentialRepo = ref.read(credentialRepositoryProvider);
-      SubmitApprovalRequest request;
-      switch (decision) {
-        case ApprovalDecision.reject:
-          request = SubmitApprovalRequest(decision: decision);
-        case ApprovalDecision.accept:
-          request = await _approvalRequestWithCredentials(
-            decision: decision,
-            phase: CredentialPhase.approval,
-            credentialRepo: credentialRepo,
-            editedContent: null,
-          );
-        case ApprovalDecision.edit:
-          request = await _approvalRequestWithCredentials(
-            decision: decision,
-            phase: CredentialPhase.editRequest,
-            credentialRepo: credentialRepo,
-            editedContent: editedContent,
-          );
-      }
+      final request = await _buildApprovalRequest(
+        decision: decision,
+        current: current,
+        credentialRepo: credentialRepo,
+        editedContent: editedContent,
+      );
       final dto = await ref
           .read(workflowServiceProvider)
           .submitApproval(current.runId, request);
@@ -249,10 +255,128 @@ class ActiveRun extends _$ActiveRun {
             expiryUtc: current.expiryUtc,
           );
       state = AsyncData(run);
+      _applyReconciledRun(run);
     } catch (e, s) {
+      if (isReceiveTimeoutError(e) && current != null) {
+        ref.read(workflowTransportProvider.notifier).setProcessing();
+        unawaited(
+          _reconcileRun(
+            current.runId,
+            current.localWorkflowId ?? '',
+            current.expiryUtc,
+          ),
+        );
+        return;
+      }
+      ref.read(workflowTransportProvider.notifier).clear();
+      if (snapshotBeforeOptimistic != null) {
+        await ref
+            .read(workflowRepositoryProvider)
+            .persistRun(snapshotBeforeOptimistic);
+      }
       state = AsyncError(e, s);
     } finally {
       _busy = false;
+    }
+  }
+
+  List<AgentOverrideRequest> _buildOverrides(
+    RunConfigState config,
+    PresetDetails details,
+    Agent? writer,
+  ) {
+    final overrides = <AgentOverrideRequest>[];
+    if (config.agentOverrides.isNotEmpty) {
+      for (final entry in config.agentOverrides.entries) {
+        final agent = details.agents
+            .where((item) => item.key == entry.key)
+            .firstOrNull;
+        if (agent == null) continue;
+        final model = entry.value.model;
+        if (model == null) continue;
+        double? temperature;
+        if (agent.modelConfiguration.isTemperatureEditable) {
+          final supportsTemperature = ref
+              .read(openAiModelRepositoryProvider)
+              .modelSupportsTemperature(model);
+          if (supportsTemperature == true) {
+            temperature = AppValidators.clampTemperature(
+              entry.value.temperature ?? agent.modelConfiguration.temperature,
+              agent.modelConfiguration.minimumTemperature,
+              agent.modelConfiguration.maximumTemperature,
+            );
+          }
+        }
+        overrides.add(
+          AgentOverrideRequest(
+            agentKey: entry.key,
+            model: model,
+            temperature: temperature,
+          ),
+        );
+      }
+    } else if (writer != null && writer.modelConfiguration.isModelEditable) {
+      final model = config.model ?? writer.modelConfiguration.selectedModel;
+      double? temperature;
+      final supportsTemperature = ref
+          .read(openAiModelRepositoryProvider)
+          .modelSupportsTemperature(model);
+      if (supportsTemperature == true) {
+        temperature = AppValidators.clampTemperature(
+          config.temperature ?? writer.modelConfiguration.temperature,
+          writer.modelConfiguration.minimumTemperature,
+          writer.modelConfiguration.maximumTemperature,
+        );
+      }
+      overrides.add(
+        AgentOverrideRequest(
+          agentKey: writer.key,
+          model: model,
+          temperature: temperature,
+        ),
+      );
+    }
+    return overrides;
+  }
+
+  Future<SubmitApprovalRequest> _buildApprovalRequest({
+    required ApprovalDecision decision,
+    required WorkflowRun current,
+    required CredentialRepository credentialRepo,
+    required String? editedContent,
+  }) async {
+    switch (decision) {
+      case ApprovalDecision.reject:
+        return SubmitApprovalRequest(decision: decision);
+      case ApprovalDecision.accept:
+        final approvalIndex = current.waitingApprovalIndex();
+        if (approvalIndex == null) {
+          return SubmitApprovalRequest(decision: decision);
+        }
+        if (!current.hasRemainingWorkAfterApproval(approvalIndex)) {
+          return SubmitApprovalRequest(decision: decision);
+        }
+        if (current.hasRemainingIntegrationAfterApproval(approvalIndex)) {
+          return _approvalRequestWithCredentials(
+            decision: decision,
+            phase: CredentialPhase.approval,
+            credentialRepo: credentialRepo,
+            editedContent: null,
+          );
+        }
+        return _approvalRequestWithCredentials(
+          decision: decision,
+          phase: CredentialPhase.workflowStart,
+          credentialRepo: credentialRepo,
+          editedContent: null,
+        );
+      case ApprovalDecision.edit:
+        return _approvalRequestWithCredentials(
+          decision: decision,
+          phase: CredentialPhase.editRequest,
+          credentialRepo: credentialRepo,
+          editedContent: editedContent,
+        );
     }
   }
 
@@ -270,10 +394,7 @@ class ActiveRun extends _$ActiveRun {
     final credentials = await credentialRepo.readForPreset(details, phase);
     final missing = credentialRepo.missingEnvelopeKeys(keys, credentials);
     if (missing.isNotEmpty) {
-      final label = phase == CredentialPhase.editRequest
-          ? 'OpenAI API key'
-          : 'LinkedIn credentials';
-      throw StateError('Missing $label: ${missing.join(', ')}');
+      throw StateError('Missing credentials: ${missing.join(', ')}');
     }
     final envelope = await ref
         .read(credentialEnvelopeServiceProvider)
@@ -283,6 +404,95 @@ class ActiveRun extends _$ActiveRun {
       editedContent: editedContent,
       credentials: envelope,
     );
+  }
+
+  Future<void> _reconcileAfterStartTimeout(
+    String localWorkflowId,
+    DateTime? expiryUtc,
+  ) async {
+    if (!ref.mounted) return;
+    ref.read(workflowTransportProvider.notifier).setReconciling();
+    try {
+      await ref.read(workflowHubClientProvider).reconnect();
+    } catch (_) {}
+    final run = await ref
+        .read(workflowRepositoryProvider)
+        .reconcileLatestForWorkflow(
+          localWorkflowId,
+          expiryUtc: expiryUtc,
+        );
+    if (!ref.mounted) return;
+    if (run != null) {
+      _applyReconciledRun(run);
+    } else {
+      ref.read(workflowTransportProvider.notifier).setProcessing();
+    }
+  }
+
+  Future<void> _reconcileRun(
+    String runId,
+    String localWorkflowId,
+    DateTime? expiryUtc,
+  ) async {
+    if (!ref.mounted) return;
+    ref.read(workflowTransportProvider.notifier).setReconciling();
+    try {
+      await ref.read(workflowHubClientProvider).reconnect();
+    } catch (_) {}
+    try {
+      final run = await ref.read(workflowRepositoryProvider).reconcileByRunId(
+        runId,
+        localWorkflowId: localWorkflowId,
+        expiryUtc: expiryUtc,
+      );
+      if (!ref.mounted) return;
+      if (run != null) {
+        _applyReconciledRun(run);
+        return;
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        await ref.read(workflowRepositoryProvider).markExpired(runId);
+        final local = await ref
+            .read(workflowRepositoryProvider)
+            .getLocalRun(runId);
+        if (local != null && ref.mounted) {
+          state = AsyncData(local.copyWith(status: WorkflowRunStatus.expired));
+        }
+        ref.read(workflowTransportProvider.notifier).clear();
+        return;
+      }
+    }
+    if (ref.mounted) {
+      ref.read(workflowTransportProvider.notifier).setProcessing();
+    }
+  }
+
+  void _applyReconciledRun(WorkflowRun run) {
+    ref.read(selectedRunIdProvider.notifier).update(run.runId);
+    _lastEventAt = DateTime.now().toUtc();
+    state = AsyncData(run);
+    if (run.status == WorkflowRunStatus.waitingForApproval) {
+      ref
+          .read(workflowTransportProvider.notifier)
+          .clearLockedApprovalIfWaiting(_pendingApprovalNodeId(run));
+    }
+    if (isReconcileTerminal(run.status)) {
+      ref.read(workflowTransportProvider.notifier).clear();
+    } else {
+      ref.read(workflowTransportProvider.notifier).setProcessing();
+    }
+    unawaited(
+      ref.read(workflowHubClientProvider).subscribeToRun(run.runId).catchError(
+        (_) {},
+      ),
+    );
+  }
+
+  String? _pendingApprovalNodeId(WorkflowRun run) {
+    final index = run.waitingApprovalIndex();
+    if (index == null) return null;
+    return run.nodes[index].nodeId;
   }
 
   WorkflowRun _optimisticApproval(WorkflowRun run, ApprovalDecision decision) {
@@ -340,5 +550,25 @@ class ActiveRun extends _$ActiveRun {
     final merged = const WorkflowRunMapper().mergeEvent(current, event);
     await ref.read(workflowRepositoryProvider).persistRun(merged);
     if (ref.mounted) state = AsyncData(merged);
+    if (shouldRefetchRunSnapshotForNode(merged, event)) {
+      await _refreshRunSnapshot(merged);
+    }
+  }
+
+  Future<void> _refreshRunSnapshot(WorkflowRun run) async {
+    if (!ref.mounted || state.value?.runId != run.runId) return;
+    try {
+      final repo = ref.read(workflowRepositoryProvider);
+      final dto = await repo.fetchRemote(run.runId);
+      if (!ref.mounted || state.value?.runId != run.runId) return;
+      final refreshed = await repo.persistDto(
+        dto,
+        localWorkflowId: run.localWorkflowId ?? run.runId,
+        expiryUtc: run.expiryUtc,
+      );
+      if (!ref.mounted || state.value?.runId != refreshed.runId) return;
+      _lastEventAt = DateTime.now().toUtc();
+      state = AsyncData(refreshed);
+    } catch (_) {}
   }
 }

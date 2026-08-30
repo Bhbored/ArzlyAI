@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_builder.dart';
 import 'package:arzlyai_mobile/core/network/configs/api_config.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
+import 'package:arzlyai_mobile/core/constants/api_errors.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
 import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
@@ -19,7 +20,7 @@ import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_androi
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_catalog_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_store.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
@@ -31,7 +32,7 @@ import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart
 import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 Map<String, dynamic> fixtureJson(String name) {
@@ -315,5 +316,16 @@ ApiException tooManyRequests() {
     statusCode: 429,
     retryAfter: Duration(seconds: 2),
     originalError: 'x',
+  );
+}
+
+ApiException receiveTimeout() {
+  return ApiException(
+    userMessage: ApiErrors.receiveTimeout,
+    error: 'Server took too long to respond.',
+    originalError: DioException(
+      requestOptions: RequestOptions(path: 'workflows/runs'),
+      type: DioExceptionType.receiveTimeout,
+    ),
   );
 }

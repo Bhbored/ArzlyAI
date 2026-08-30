@@ -12,6 +12,8 @@ public sealed class PresetDefinitionConfiguration : IEntityTypeConfiguration<Pre
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => new { x.Key, x.Version }).IsUnique();
         builder.Property(x => x.Key).HasMaxLength(100);
+        builder.Property(x => x.InputSchemaJson).HasColumnType("jsonb");
+        builder.Property(x => x.ResultContractKey).HasMaxLength(100);
         builder.HasOne(x => x.Workflow)
             .WithOne(x => x.Preset)
             .HasForeignKey<WorkflowDefinition>(x => x.PresetId);

@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/approval_configuration.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 
 part 'preset.freezed.dart';
 
@@ -33,6 +35,7 @@ sealed class AgentModelConfiguration with _$AgentModelConfiguration {
     required double minimumTemperature,
     required double maximumTemperature,
     required bool isTemperatureEditable,
+    required bool supportsWebSearch,
   }) = _AgentModelConfiguration;
 }
 
@@ -44,6 +47,7 @@ sealed class AgentHarness with _$AgentHarness {
     required bool contextCompactionEnabled,
     required bool requiresToolApproval,
     required int maximumIterations,
+    required bool webSearchEnabled,
   }) = _AgentHarness;
 }
 
@@ -68,6 +72,9 @@ sealed class WorkflowNode with _$WorkflowNode {
     required String type,
     required int position,
     required bool requiresHumanApproval,
+    String? configurationJson,
+    ApprovalNodeConfiguration? approvalConfiguration,
+    ResultContract? resultContract,
   }) = _WorkflowNode;
 }
 
@@ -100,6 +107,12 @@ sealed class IntegrationRequirement with _$IntegrationRequirement {
 }
 
 @freezed
+sealed class ResultContract with _$ResultContract {
+  const factory ResultContract({required String key, required int version}) =
+      _ResultContract;
+}
+
+@freezed
 sealed class PresetDetails with _$PresetDetails {
   const factory PresetDetails({
     required String id,
@@ -110,5 +123,7 @@ sealed class PresetDetails with _$PresetDetails {
     required List<Agent> agents,
     required WorkflowGraph workflow,
     required List<IntegrationRequirement> integrations,
+    PresetInputSchema? inputSchema,
+    ResultContract? resultContract,
   }) = _PresetDetails;
 }

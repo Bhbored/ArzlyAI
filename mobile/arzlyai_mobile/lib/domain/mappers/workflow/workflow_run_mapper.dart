@@ -4,10 +4,22 @@ import 'package:arzlyai_mobile/core/network/dto/response/workflow/approval_snaps
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_node_changed_event.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_node_run_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
+import 'package:arzlyai_mobile/domain/entities/report/arzly_report.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
+import 'package:arzlyai_mobile/domain/mappers/workflow/rendered_workflow_result_mapper.dart';
 
 class WorkflowRunMapper {
-  const WorkflowRunMapper();
+  const WorkflowRunMapper({
+    ArzlyReportMapper reportMapper = const ArzlyReportMapper(),
+    RenderedWorkflowResultMapper renderedResultMapper =
+        const RenderedWorkflowResultMapper(),
+  })  : _reportMapper = reportMapper,
+        _renderedResultMapper = renderedResultMapper;
+
+  final ArzlyReportMapper _reportMapper;
+  final RenderedWorkflowResultMapper _renderedResultMapper;
 
   WorkflowRun fromDto(
     WorkflowRunResponse dto, {
@@ -23,6 +35,9 @@ class WorkflowRunMapper {
       nodes: dto.nodes.map(_node).toList(),
       approval: dto.approval == null ? null : _approval(dto.approval!),
       finalResponse: dto.finalResponse,
+      report: _reportFromDto(dto),
+      renderedResult: _renderedResultMapper.fromDto(dto.renderedResult),
+      resultContract: _resultContractFromDto(dto),
       localWorkflowId: localWorkflowId,
       createdAtUtc: createdAtUtc,
       updatedAtUtc: updatedAtUtc,
@@ -70,6 +85,9 @@ class WorkflowRunMapper {
       isRunning: dto.isRunning,
       output: dto.output,
       error: dto.error,
+      effectiveProvider: dto.effectiveProvider,
+      effectiveModel: dto.effectiveModel,
+      effectiveTemperature: dto.effectiveTemperature,
     );
   }
 
@@ -79,5 +97,16 @@ class WorkflowRunMapper {
       currentContent: dto.currentContent,
       wasEdited: dto.wasEdited,
     );
+  }
+
+  ArzlyReport? _reportFromDto(WorkflowRunResponse dto) {
+    return _reportMapper.fromMap(dto.resultDocument) ??
+        _reportMapper.fromJsonString(dto.finalResponse);
+  }
+
+  ResultContract? _resultContractFromDto(WorkflowRunResponse dto) {
+    final report = _reportFromDto(dto);
+    if (report == null) return null;
+    return ResultContract(key: report.schema, version: report.version);
   }
 }

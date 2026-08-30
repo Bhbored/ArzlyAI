@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_task_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 

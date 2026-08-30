@@ -7,6 +7,22 @@ namespace ArzlyAI.Tests;
 
 public sealed class WorkflowInputMapperTests
 {
+    [Fact]
+    public void Map_WhenOptionalInputMissing_MapsEmptyValue()
+    {
+        var step = new WorkflowStepDefinition
+        {
+            Id = Guid.NewGuid(), WorkflowId = Guid.NewGuid(), Position = 0,
+            Type = WorkflowNodeType.Agent, ReferenceKey = "agent", DisplayName = "Agent",
+            InputMappingJson = "{\"optional\":\"$.inputs.optional?\"}"
+        };
+        var result = new WorkflowInputMapper().Map(step, [step], new WorkflowRun
+        {
+            Id = Guid.NewGuid(), PresetKey = "test", Inputs = []
+        });
+
+        Assert.Equal(string.Empty, result["optional"]);
+    }
     private readonly WorkflowInputMapper mapper = new();
 
     [Fact]

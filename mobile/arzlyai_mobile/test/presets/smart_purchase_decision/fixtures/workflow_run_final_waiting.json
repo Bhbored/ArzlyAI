@@ -1,0 +1,53 @@
+{
+  "runId": "00000000-0000-0000-0001-000000000102",
+  "presetKey": "smart-purchase-decision",
+  "status": "WaitingForApproval",
+  "nodes": [
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000021",
+      "nodeKey": "purchase-brief-architect",
+      "displayName": "Build Purchase Brief",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000022",
+      "nodeKey": "confirm-requirements",
+      "displayName": "Confirm Requirements",
+      "type": "HumanApproval",
+      "status": "Completed",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000023",
+      "nodeKey": "market-researcher",
+      "displayName": "Research Candidates",
+      "type": "Agent",
+      "status": "Completed",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000024",
+      "nodeKey": "decision.weighted-score",
+      "displayName": "Score Candidates",
+      "type": "Operation",
+      "status": "Completed",
+      "isRunning": false
+    },
+    {
+      "nodeId": "00000000-0000-0000-0001-000000000025",
+      "nodeKey": "review-recommendation",
+      "displayName": "Review Recommendation",
+      "type": "HumanApproval",
+      "status": "WaitingForApproval",
+      "isRunning": false,
+      "output": "Report draft"
+    }
+  ],
+  "approval": {
+    "originalContent": "Report draft",
+    "currentContent": "Report draft",
+    "wasEdited": false
+  }
+}

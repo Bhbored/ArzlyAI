@@ -24,7 +24,11 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
                 step.DisplayName,
                 step.Type.ToString(),
                 step.Position,
-                step.RequiresHumanApproval)).ToList(),
+                step.RequiresHumanApproval,
+                step.ConfigurationJson,
+                step.ResultContractKey is not null && step.ResultContractVersion is not null
+                    ? new ResultContractResponse(step.ResultContractKey, step.ResultContractVersion.Value)
+                    : null)).ToList(),
             preset.Workflow.Connections.Select(connection => new WorkflowConnectionResponse(
                 connection.Id,
                 connection.SourceStepId,
@@ -33,7 +37,11 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
             integration.Integration.Key,
             integration.Integration.DisplayName,
             integration.Integration.Description,
-            integration.Integration.CredentialSchemaJson)).ToList());
+            integration.Integration.CredentialSchemaJson)).ToList(),
+        preset.InputSchemaJson,
+        preset.ResultContractKey is not null && preset.ResultContractVersion is not null
+            ? new ResultContractResponse(preset.ResultContractKey, preset.ResultContractVersion.Value)
+            : null);
 
     private AgentResponse ToAgentResponse(AgentDefinition agent) => new(
         agent.Key,
@@ -53,11 +61,13 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
             agent.MaximumTemperature,
             agent.AllowTemperatureOverride && capabilities.SupportsTemperature(
                 agent.Model.Provider.Key,
-                agent.Model.Key)),
+                agent.Model.Key),
+            capabilities.SupportsWebSearch(agent.Model.Provider.Key, agent.Model.Key)),
         new AgentHarnessResponse(
             agent.Harness.PlanningEnabled,
             agent.Harness.TodoTrackingEnabled,
             agent.Harness.ContextCompactionEnabled,
             agent.Harness.RequireToolApproval,
-            agent.Harness.MaxIterations));
+            agent.Harness.MaxIterations,
+            agent.Harness.WebSearchEnabled));
 }

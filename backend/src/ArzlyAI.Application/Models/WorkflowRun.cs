@@ -19,4 +19,6 @@ public sealed class WorkflowRun
     public string? OriginalContent { get; set; }
     public string? CurrentContent { get; set; }
     public string? FinalResponse { get; set; }
+    public string? ResultContractKey { get; init; }
+    public int? ResultContractVersion { get; init; }
 }

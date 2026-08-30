@@ -17,7 +17,7 @@ No comments in source files. No `print()` — use `logger` or `debugPrint()`. Ge
 | Data | `lib/data/` | Repositories, providers, remote/local sources. |
 | Core | `lib/core/` | Network, enums, theme assembly, utilities. |
 | UI | `lib/ui/` | Presentation. Riverpod for state. |
-| Infrastructor | `lib/infrastructor/` | DB, migrations, seed data. |
+| Infrastructor | `lib/infrastructor/` | DB, seed data. |
 
 | UI subpath | Responsibility |
 |---|---|
@@ -35,13 +35,29 @@ No user authentication. No login/register flows, no session tokens, no auth inte
 
 Work step by step (DTO → entity → mapper → UI) only when told. Smallest correct diff. Do not run codegen unless asked.
 
+### SQLite (dev)
+
+No `onUpgrade` migrations while the app is in active development. When table definitions or `schemaVersion` in `lib/infrastructor/db/database.dart` change, bump the version and tell the user to **uninstall the app and reinstall** (or clear app data) so `onCreate` runs fresh. Do not add Drift migration steps unless explicitly asked.
+
 ## Commands
 
+This project pins Flutter via **FVM** (`.fvmrc` → 3.41.7). Always prefix Flutter/Dart commands with `fvm` — never bare `flutter` or `dart`.
+
+Running global `flutter pub get` writes `.dart_tool/package_config.json` against a different SDK than `fvm dart` uses, which causes compile errors (e.g. `DisplayCornerRadii not found`). If that happens, run `fvm flutter pub get` and restart the Dart analysis server.
+
+IDE SDK path: `.vscode/settings.json` → `"dart.flutterSdkPath": ".fvm/versions/3.41.7"`.
+
 ```bash
-flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter run
-flutter test
+fvm flutter pub get
+fvm dart run build_runner build --delete-conflicting-outputs
+fvm flutter run
+fvm flutter test
+```
+
+User runs codegen watch themselves; agents do not invoke build_runner unless asked:
+
+```bash
+fvm dart run build_runner watch -d
 ```
 
 ## Documentation sources

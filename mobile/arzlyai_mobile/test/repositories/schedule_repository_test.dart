@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 void main() {

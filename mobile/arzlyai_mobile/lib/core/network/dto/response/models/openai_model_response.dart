@@ -11,6 +11,7 @@ sealed class OpenAiModelResponse with _$OpenAiModelResponse {
     required String ownedBy,
     required DateTime createdAtUtc,
     required bool supportsTemperature,
+    @Default(false) bool supportsWebSearch,
   }) = _OpenAiModelResponse;
 
   factory OpenAiModelResponse.fromJson(Map<String, dynamic> json) =>

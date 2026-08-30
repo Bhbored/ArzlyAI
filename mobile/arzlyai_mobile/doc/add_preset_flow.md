@@ -36,16 +36,30 @@ lib/ui/features/presets/
       execution_screen.dart
       review_screen.dart
       result_screen.dart
+    smart_purchase_decision/              # Smart Buy Lab run journey
+      preset_key.dart
+      review_screen.dart
+      result_screen.dart
+      execution_screen.dart               # test-only hub pattern
+  configure/
+    dynamic_preset_configure_screen.dart  # schema-driven configure (Smart Buy)
 
-lib/data/providers/preset/                # catalog + details (generic)
-lib/data/repositories/preset_repository.dart
-lib/core/network/services/preset/preset_service.dart
-lib/domain/entities/preset/               # entities + preset_support.dart
+lib/domain/entities/preset/               # PresetDetails, PresetInputSchema, ApprovalNodeConfiguration
+lib/domain/entities/report/               # ArzlyReport + blocks (Freezed)
+lib/domain/mappers/preset/                # input_schema_mapper, approval_configuration_mapper
+lib/domain/mappers/report/                # arzly_report_mapper
 
 lib/data/providers/workflow/active_run_provider.dart   # start / approval (generic)
-lib/data/repositories/credential_repository.dart         # schema-driven secrets
+lib/data/repositories/
+  repositories.dart                       # barrel export
+  workflow/                               # runs + device schedules
+  preset/                                 # catalog/details cache
+  credentials/                            # secure storage + connector fields
+  connectors/                             # Nango connect/sync
+  provider/                               # OpenAI model catalog
 
-test/presets/daily_linkedin_ai_post/      # tests + fixtures for one preset
+test/presets/daily_linkedin_ai_post/      # tests + fixtures for LinkedIn
+test/presets/smart_purchase_decision/     # tests + fixtures for Smart Buy
 test/fixtures/network/                    # shared DTO fixtures (not preset-specific)
 ```
 
@@ -80,8 +94,10 @@ flowchart LR
 `GET /api/v1/presets/{key}` returns:
 
 - `key`, `name`, `description`, `version`
+- `inputSchemaJson` — optional versioned form schema (`PresetInputSchema` via mapper)
+- `resultContract` — optional `{ key, version }` for typed result documents
 - `agents[]` — model provider, editable flags, harness
-- `workflow` — `nodes[]` (id, key, displayName, type, position), `connections[]`
+- `workflow` — `nodes[]` (id, key, displayName, type, position, `configurationJson` for HumanApproval labels), `connections[]`
 - `integrations[]` — `key`, `name`, `description`, `credentialSchemaJson`
 
 Node `type` values from backend: `Agent`, `HumanApproval`, `Integration`.
@@ -107,9 +123,9 @@ Envelope keys are derived in `lib/core/credentials/credential_envelope_keys.dart
 
 - **Settings** builds fields from `credentialRequirementsProvider` (aggregates cached presets).
 - **Workflow start** encrypts keys from `preset.envelopeKeysForPhase(CredentialPhase.workflowStart)`.
-- **Approval Accept** encrypts integration keys from `preset.envelopeKeysForPhase(CredentialPhase.approval)`.
-- **Approval Edit / Request an edit** creates a fresh envelope containing the upstream agent provider key (`openai.apiKey` for LinkedIn); it must not send LinkedIn credentials because no publish occurs.
-- **Approval Reject** sends no credential envelope.
+- **Approval Accept** — integration envelope when Integration nodes remain after the gate; otherwise OpenAI when Agent/Operation nodes remain; otherwise none
+- **Approval Edit / Request an edit** — fresh OpenAI envelope when upstream agents remain
+- **Approval Reject** — no credential envelope
 
 Backend handlers must expect the same envelope key names.
 
@@ -129,7 +145,8 @@ Create `lib/ui/features/presets/implementations/<folder_name>/`:
 | File | Purpose |
 | --- | --- |
 | `preset_key.dart` | `static const key = '<exact-api-key>';` |
-| `configure_run_screen.dart` | Collect run inputs + call `activeRunProvider.start` |
+| `configure_run_screen.dart` | Preset-specific configure (LinkedIn topic/model) |
+| `dynamic_preset_configure_screen.dart` | Schema-driven configure when `inputSchemaJson` is present |
 | `execution_screen.dart` | Progress UI; navigate on status changes |
 | `review_screen.dart` | Only if workflow has `HumanApproval` |
 | `result_screen.dart` | Completed / failed / cancelled UX |
@@ -156,7 +173,7 @@ Do **not** duplicate workflow HTTP or credential storage.
 - `ref.watch(activeRunProvider)` for run + node status
 - `ref.read(presetDetailsProvider)` for agent overrides and preset metadata
 
-`RunConfigState` today holds `topic`, `model`, `temperature`. Extend only if the new preset needs more inputs and update `start()` inputs map in `active_run_provider.dart` when the API supports it.
+`RunConfigState` holds `topic`, global `model`/`temperature` (LinkedIn), `inputs` map, `candidateSeeds`, and per-agent `agentOverrides`. `active_run_provider.start()` sends `inputs` from schema fields and encodes candidate seeds as JSON in the matching input key.
 
 ### 5. Settings
 
@@ -205,6 +222,32 @@ Screens:
 - **Execution** — node list + auto-navigate to review or result
 - **Review** — Accept publishes; Edit sends feedback and regenerates back through the writer; Reject cancels
 - **Result** — shows integration response id when completed
+
+---
+
+## Smart Buy Lab (`smart-purchase-decision`)
+
+| Item | Value |
+| --- | --- |
+| API key | `smart-purchase-decision` |
+| Mobile folder | `implementations/smart_purchase_decision/` |
+| Configure | `dynamic_preset_configure_screen.dart` (reads `inputSchemaJson`) |
+| Workflow | Agent → HumanApproval → Agent → Operation → Agent → HumanApproval (no Integration) |
+| Start credentials | `openai.apiKey` |
+| Requirements Accept | `openai.apiKey` (agents remain) |
+| Requirements Edit | `openai.apiKey` |
+| Requirements Reject | None |
+| Final Accept / Edit / Reject | None (terminal approval) |
+| Result | Typed `ArzlyReport` (`arzly.report` v1) persisted in SQLite; HTML/PDF export local |
+
+Domain types live under `lib/domain/entities/preset/` and `lib/domain/entities/report/` as Freezed entities with dedicated mappers — UI never parses raw JSON.
+
+Screens:
+
+- **Configure** — schema-driven fields, candidate seeds (max 5, HTTPS URLs), per-agent model/temperature overrides; pops back to details after start
+- **Details hub** — live graph (same as LinkedIn); tap completed terminal HumanApproval with `resultContract`/`report` opens result
+- **Review** — labels from node `configurationJson`; brief panel at requirements gate, report panel at final gate
+- **Result** — native block rendering + share HTML/PDF
 
 ---
 

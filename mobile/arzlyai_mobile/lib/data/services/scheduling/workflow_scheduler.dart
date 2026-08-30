@@ -1,7 +1,7 @@
 import 'package:workmanager/workmanager.dart';
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_task_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/workflow_schedule.dart';
 
 class WorkflowScheduler {

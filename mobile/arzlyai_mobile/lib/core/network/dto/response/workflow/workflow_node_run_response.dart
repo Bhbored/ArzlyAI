@@ -14,6 +14,9 @@ sealed class WorkflowNodeRunResponse with _$WorkflowNodeRunResponse {
     required bool isRunning,
     String? output,
     String? error,
+    String? effectiveProvider,
+    String? effectiveModel,
+    double? effectiveTemperature,
   }) = _WorkflowNodeRunResponse;
 
   factory WorkflowNodeRunResponse.fromJson(Map<String, dynamic> json) =>

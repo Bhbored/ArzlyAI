@@ -4,4 +4,5 @@ public sealed record AgentHarnessResponse(
     bool TodoTrackingEnabled,
     bool ContextCompactionEnabled,
     bool RequiresToolApproval,
-    int MaximumIterations);
+    int MaximumIterations,
+    bool WebSearchEnabled);

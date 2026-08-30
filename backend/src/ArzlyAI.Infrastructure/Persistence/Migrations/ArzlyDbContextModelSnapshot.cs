@@ -166,6 +166,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OutputSchemaJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<Guid>("PresetId")
                         .HasColumnType("uuid");
 
@@ -216,6 +219,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("WebSearchEnabled")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AgentId")
@@ -237,6 +243,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("InputSchemaJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
 
@@ -248,6 +257,13 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("ResultContractKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("ResultContractVersion")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -340,6 +356,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ConfigurationJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -360,6 +379,13 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("RequiresHumanApproval")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("ResultContractKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("ResultContractVersion")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Type")
                         .IsRequired()

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PresetDetailsResponse {
 
- String get id; String get key; String get name; String get description; int get version; List<AgentResponse> get agents; WorkflowGraphResponse get workflow; List<IntegrationRequirementResponse> get integrations;
+ String get id; String get key; String get name; String get description; int get version; List<AgentResponse> get agents; WorkflowGraphResponse get workflow; List<IntegrationRequirementResponse> get integrations; String? get inputSchemaJson; ResultContractResponse? get resultContract;
 /// Create a copy of PresetDetailsResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PresetDetailsResponseCopyWith<PresetDetailsResponse> get copyWith => _$PresetDe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PresetDetailsResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other.agents, agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other.integrations, integrations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PresetDetailsResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other.agents, agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other.integrations, integrations)&&(identical(other.inputSchemaJson, inputSchemaJson) || other.inputSchemaJson == inputSchemaJson)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(agents),workflow,const DeepCollectionEquality().hash(integrations));
+int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(agents),workflow,const DeepCollectionEquality().hash(integrations),inputSchemaJson,resultContract);
 
 @override
 String toString() {
-  return 'PresetDetailsResponse(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations)';
+  return 'PresetDetailsResponse(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations, inputSchemaJson: $inputSchemaJson, resultContract: $resultContract)';
 }
 
 
@@ -48,11 +48,11 @@ abstract mixin class $PresetDetailsResponseCopyWith<$Res>  {
   factory $PresetDetailsResponseCopyWith(PresetDetailsResponse value, $Res Function(PresetDetailsResponse) _then) = _$PresetDetailsResponseCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String name, String description, int version, List<AgentResponse> agents, WorkflowGraphResponse workflow, List<IntegrationRequirementResponse> integrations
+ String id, String key, String name, String description, int version, List<AgentResponse> agents, WorkflowGraphResponse workflow, List<IntegrationRequirementResponse> integrations, String? inputSchemaJson, ResultContractResponse? resultContract
 });
 
 
-$WorkflowGraphResponseCopyWith<$Res> get workflow;
+$WorkflowGraphResponseCopyWith<$Res> get workflow;$ResultContractResponseCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -65,7 +65,7 @@ class _$PresetDetailsResponseCopyWithImpl<$Res>
 
 /// Create a copy of PresetDetailsResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,Object? inputSchemaJson = freezed,Object? resultContract = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,9 @@ as String,version: null == version ? _self.version : version // ignore: cast_nul
 as int,agents: null == agents ? _self.agents : agents // ignore: cast_nullable_to_non_nullable
 as List<AgentResponse>,workflow: null == workflow ? _self.workflow : workflow // ignore: cast_nullable_to_non_nullable
 as WorkflowGraphResponse,integrations: null == integrations ? _self.integrations : integrations // ignore: cast_nullable_to_non_nullable
-as List<IntegrationRequirementResponse>,
+as List<IntegrationRequirementResponse>,inputSchemaJson: freezed == inputSchemaJson ? _self.inputSchemaJson : inputSchemaJson // ignore: cast_nullable_to_non_nullable
+as String?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContractResponse?,
   ));
 }
 /// Create a copy of PresetDetailsResponse
@@ -86,6 +88,18 @@ $WorkflowGraphResponseCopyWith<$Res> get workflow {
   
   return $WorkflowGraphResponseCopyWith<$Res>(_self.workflow, (value) {
     return _then(_self.copyWith(workflow: value));
+  });
+}/// Create a copy of PresetDetailsResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractResponseCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractResponseCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }
@@ -166,10 +180,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations,  String? inputSchemaJson,  ResultContractResponse? resultContract)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PresetDetailsResponse() when $default != null:
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);case _:
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchemaJson,_that.resultContract);case _:
   return orElse();
 
 }
@@ -187,10 +201,10 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations,  String? inputSchemaJson,  ResultContractResponse? resultContract)  $default,) {final _that = this;
 switch (_that) {
 case _PresetDetailsResponse():
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);}
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchemaJson,_that.resultContract);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,10 +218,10 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String name,  String description,  int version,  List<AgentResponse> agents,  WorkflowGraphResponse workflow,  List<IntegrationRequirementResponse> integrations,  String? inputSchemaJson,  ResultContractResponse? resultContract)?  $default,) {final _that = this;
 switch (_that) {
 case _PresetDetailsResponse() when $default != null:
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);case _:
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchemaJson,_that.resultContract);case _:
   return null;
 
 }
@@ -219,7 +233,7 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 @JsonSerializable()
 
 class _PresetDetailsResponse implements PresetDetailsResponse {
-  const _PresetDetailsResponse({required this.id, required this.key, required this.name, required this.description, required this.version, required final  List<AgentResponse> agents, required this.workflow, required final  List<IntegrationRequirementResponse> integrations}): _agents = agents,_integrations = integrations;
+  const _PresetDetailsResponse({required this.id, required this.key, required this.name, required this.description, required this.version, required final  List<AgentResponse> agents, required this.workflow, required final  List<IntegrationRequirementResponse> integrations, this.inputSchemaJson, this.resultContract}): _agents = agents,_integrations = integrations;
   factory _PresetDetailsResponse.fromJson(Map<String, dynamic> json) => _$PresetDetailsResponseFromJson(json);
 
 @override final  String id;
@@ -242,6 +256,8 @@ class _PresetDetailsResponse implements PresetDetailsResponse {
   return EqualUnmodifiableListView(_integrations);
 }
 
+@override final  String? inputSchemaJson;
+@override final  ResultContractResponse? resultContract;
 
 /// Create a copy of PresetDetailsResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -256,16 +272,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PresetDetailsResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other._agents, _agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other._integrations, _integrations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PresetDetailsResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other._agents, _agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other._integrations, _integrations)&&(identical(other.inputSchemaJson, inputSchemaJson) || other.inputSchemaJson == inputSchemaJson)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(_agents),workflow,const DeepCollectionEquality().hash(_integrations));
+int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(_agents),workflow,const DeepCollectionEquality().hash(_integrations),inputSchemaJson,resultContract);
 
 @override
 String toString() {
-  return 'PresetDetailsResponse(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations)';
+  return 'PresetDetailsResponse(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations, inputSchemaJson: $inputSchemaJson, resultContract: $resultContract)';
 }
 
 
@@ -276,11 +292,11 @@ abstract mixin class _$PresetDetailsResponseCopyWith<$Res> implements $PresetDet
   factory _$PresetDetailsResponseCopyWith(_PresetDetailsResponse value, $Res Function(_PresetDetailsResponse) _then) = __$PresetDetailsResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String name, String description, int version, List<AgentResponse> agents, WorkflowGraphResponse workflow, List<IntegrationRequirementResponse> integrations
+ String id, String key, String name, String description, int version, List<AgentResponse> agents, WorkflowGraphResponse workflow, List<IntegrationRequirementResponse> integrations, String? inputSchemaJson, ResultContractResponse? resultContract
 });
 
 
-@override $WorkflowGraphResponseCopyWith<$Res> get workflow;
+@override $WorkflowGraphResponseCopyWith<$Res> get workflow;@override $ResultContractResponseCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -293,7 +309,7 @@ class __$PresetDetailsResponseCopyWithImpl<$Res>
 
 /// Create a copy of PresetDetailsResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,Object? inputSchemaJson = freezed,Object? resultContract = freezed,}) {
   return _then(_PresetDetailsResponse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -303,7 +319,9 @@ as String,version: null == version ? _self.version : version // ignore: cast_nul
 as int,agents: null == agents ? _self._agents : agents // ignore: cast_nullable_to_non_nullable
 as List<AgentResponse>,workflow: null == workflow ? _self.workflow : workflow // ignore: cast_nullable_to_non_nullable
 as WorkflowGraphResponse,integrations: null == integrations ? _self._integrations : integrations // ignore: cast_nullable_to_non_nullable
-as List<IntegrationRequirementResponse>,
+as List<IntegrationRequirementResponse>,inputSchemaJson: freezed == inputSchemaJson ? _self.inputSchemaJson : inputSchemaJson // ignore: cast_nullable_to_non_nullable
+as String?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContractResponse?,
   ));
 }
 
@@ -315,6 +333,18 @@ $WorkflowGraphResponseCopyWith<$Res> get workflow {
   
   return $WorkflowGraphResponseCopyWith<$Res>(_self.workflow, (value) {
     return _then(_self.copyWith(workflow: value));
+  });
+}/// Create a copy of PresetDetailsResponse
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractResponseCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractResponseCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }

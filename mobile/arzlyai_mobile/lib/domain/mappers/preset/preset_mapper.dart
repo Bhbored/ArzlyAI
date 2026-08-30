@@ -8,10 +8,20 @@ import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_r
 import 'package:arzlyai_mobile/core/network/dto/response/preset/workflow_connection_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/workflow_graph_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/workflow_node_response.dart';
+import 'package:arzlyai_mobile/domain/mappers/preset/approval_configuration_mapper.dart';
+import 'package:arzlyai_mobile/domain/mappers/preset/input_schema_mapper.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 
 class PresetMapper {
-  const PresetMapper();
+  const PresetMapper({
+    InputSchemaMapper inputSchemaMapper = const InputSchemaMapper(),
+    ApprovalConfigurationMapper approvalConfigurationMapper =
+        const ApprovalConfigurationMapper(),
+  }) : _inputSchemaMapper = inputSchemaMapper,
+       _approvalConfigurationMapper = approvalConfigurationMapper;
+
+  final InputSchemaMapper _inputSchemaMapper;
+  final ApprovalConfigurationMapper _approvalConfigurationMapper;
 
   PresetSummary summaryFromDto(PresetSummaryResponse dto) {
     return PresetSummary(
@@ -33,6 +43,13 @@ class PresetMapper {
       agents: dto.agents.map(_agent).toList(),
       workflow: _graph(dto.workflow),
       integrations: dto.integrations.map(_integration).toList(),
+      inputSchema: _inputSchemaMapper.fromJsonString(dto.inputSchemaJson),
+      resultContract: dto.resultContract == null
+          ? null
+          : ResultContract(
+              key: dto.resultContract!.key,
+              version: dto.resultContract!.version,
+            ),
     );
   }
 
@@ -57,6 +74,7 @@ class PresetMapper {
       minimumTemperature: dto.minimumTemperature,
       maximumTemperature: dto.maximumTemperature,
       isTemperatureEditable: dto.isTemperatureEditable,
+      supportsWebSearch: dto.supportsWebSearch,
     );
   }
 
@@ -75,6 +93,7 @@ class PresetMapper {
       contextCompactionEnabled: dto.contextCompactionEnabled,
       requiresToolApproval: dto.requiresToolApproval,
       maximumIterations: dto.maximumIterations,
+      webSearchEnabled: dto.webSearchEnabled,
     );
   }
 
@@ -96,6 +115,16 @@ class PresetMapper {
       type: dto.type,
       position: dto.position,
       requiresHumanApproval: dto.requiresHumanApproval,
+      configurationJson: dto.configurationJson,
+      approvalConfiguration: dto.type == 'HumanApproval'
+          ? _approvalConfigurationMapper.fromJsonString(dto.configurationJson)
+          : null,
+      resultContract: dto.resultContract == null
+          ? null
+          : ResultContract(
+              key: dto.resultContract!.key,
+              version: dto.resultContract!.version,
+            ),
     );
   }
 

@@ -5,4 +5,5 @@ public sealed record OpenAiModelResponse(
     string DisplayName,
     string OwnedBy,
     DateTimeOffset CreatedAtUtc,
-    bool SupportsTemperature);
+    bool SupportsTemperature,
+    bool SupportsWebSearch);

@@ -30,6 +30,26 @@ class _Adapter implements HttpClientAdapter {
   }
 }
 
+class _ReceiveTimeoutAdapter implements HttpClientAdapter {
+  var posts = 0;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    posts++;
+    throw DioException(
+      requestOptions: options,
+      type: DioExceptionType.receiveTimeout,
+    );
+  }
+}
+
 void main() {
   test('retry interceptor retries GET only', () async {
     final getAdapter = _Adapter();
@@ -49,6 +69,24 @@ void main() {
     expect(getAdapter.gets, 3);
 
     final postAdapter = _Adapter();
+    final postDio = Dio()..httpClientAdapter = postAdapter;
+    postDio.interceptors.add(
+      RetryInterceptor(
+        dio: postDio,
+        maxRetries: 2,
+        retryBaseDelay: Duration.zero,
+      ),
+    );
+    try {
+      await postDio.post<void>('/workflows/runs');
+    } on DioException {
+      // expected
+    }
+    expect(postAdapter.posts, 1);
+  });
+
+  test('WorkflowRequest_DoesNotAutomaticallyRetryAfterTimeout', () async {
+    final postAdapter = _ReceiveTimeoutAdapter();
     final postDio = Dio()..httpClientAdapter = postAdapter;
     postDio.interceptors.add(
       RetryInterceptor(

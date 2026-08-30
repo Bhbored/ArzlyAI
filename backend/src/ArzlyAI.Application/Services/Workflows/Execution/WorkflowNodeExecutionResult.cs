@@ -6,4 +6,7 @@ public sealed record WorkflowNodeExecutionResult(
     string? Output,
     WorkflowNodeStatus Status,
     string Message,
-    bool PausesWorkflow = false);
+    bool PausesWorkflow = false,
+    string? EffectiveProvider = null,
+    string? EffectiveModel = null,
+    double? EffectiveTemperature = null);

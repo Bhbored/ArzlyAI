@@ -18,6 +18,8 @@ using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows;
 using ArzlyAI.Application.Services.Workflows.Execution;
+using ArzlyAI.Application.Services.Workflows.Operations;
+using ArzlyAI.Application.Services.Workflows.Rendering;
 using ArzlyAI.Infrastructure.Agents;
 using ArzlyAI.Infrastructure.Configuration;
 using ArzlyAI.Infrastructure.Connectors.LinkedIn;
@@ -209,6 +211,9 @@ public static class DIContainer
         services.AddScoped<IWorkflowNodeHandler, AgentWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, HumanApprovalWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, IntegrationWorkflowNodeHandler>();
+        services.AddScoped<IWorkflowNodeHandler, OperationWorkflowNodeHandler>();
+        services.AddSingleton<IWorkflowOperation, WeightedDecisionScoringOperation>();
+        services.AddSingleton<IWorkflowResultRenderer, ArzlyReportHtmlRenderer>();
         services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
         return services;
     }

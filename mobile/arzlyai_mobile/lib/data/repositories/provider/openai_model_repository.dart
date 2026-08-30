@@ -3,7 +3,7 @@ import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/models/list_openai_models_request.dart';
 import 'package:arzlyai_mobile/core/network/services/models/openai_model_service.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 

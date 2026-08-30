@@ -534,7 +534,7 @@ as String,
 /// @nodoc
 mixin _$AgentModelConfiguration {
 
- String get provider; String get selectedModel; List<ModelOption> get availableModels; bool get isModelEditable; double get temperature; double get minimumTemperature; double get maximumTemperature; bool get isTemperatureEditable;
+ String get provider; String get selectedModel; List<ModelOption> get availableModels; bool get isModelEditable; double get temperature; double get minimumTemperature; double get maximumTemperature; bool get isTemperatureEditable; bool get supportsWebSearch;
 /// Create a copy of AgentModelConfiguration
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -545,16 +545,16 @@ $AgentModelConfigurationCopyWith<AgentModelConfiguration> get copyWith => _$Agen
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentModelConfiguration&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other.availableModels, availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentModelConfiguration&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other.availableModels, availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable);
+int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable,supportsWebSearch);
 
 @override
 String toString() {
-  return 'AgentModelConfiguration(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable)';
+  return 'AgentModelConfiguration(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -565,7 +565,7 @@ abstract mixin class $AgentModelConfigurationCopyWith<$Res>  {
   factory $AgentModelConfigurationCopyWith(AgentModelConfiguration value, $Res Function(AgentModelConfiguration) _then) = _$AgentModelConfigurationCopyWithImpl;
 @useResult
 $Res call({
- String provider, String selectedModel, List<ModelOption> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable
+ String provider, String selectedModel, List<ModelOption> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable, bool supportsWebSearch
 });
 
 
@@ -582,7 +582,7 @@ class _$AgentModelConfigurationCopyWithImpl<$Res>
 
 /// Create a copy of AgentModelConfiguration
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,Object? supportsWebSearch = null,}) {
   return _then(_self.copyWith(
 provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,selectedModel: null == selectedModel ? _self.selectedModel : selectedModel // ignore: cast_nullable_to_non_nullable
@@ -592,6 +592,7 @@ as bool,temperature: null == temperature ? _self.temperature : temperature // ig
 as double,minimumTemperature: null == minimumTemperature ? _self.minimumTemperature : minimumTemperature // ignore: cast_nullable_to_non_nullable
 as double,maximumTemperature: null == maximumTemperature ? _self.maximumTemperature : maximumTemperature // ignore: cast_nullable_to_non_nullable
 as double,isTemperatureEditable: null == isTemperatureEditable ? _self.isTemperatureEditable : isTemperatureEditable // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -674,10 +675,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AgentModelConfiguration() when $default != null:
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);case _:
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);case _:
   return orElse();
 
 }
@@ -695,10 +696,10 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)  $default,) {final _that = this;
 switch (_that) {
 case _AgentModelConfiguration():
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);}
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -712,10 +713,10 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String provider,  String selectedModel,  List<ModelOption> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)?  $default,) {final _that = this;
 switch (_that) {
 case _AgentModelConfiguration() when $default != null:
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);case _:
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);case _:
   return null;
 
 }
@@ -727,7 +728,7 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 
 
 class _AgentModelConfiguration implements AgentModelConfiguration {
-  const _AgentModelConfiguration({required this.provider, required this.selectedModel, required final  List<ModelOption> availableModels, required this.isModelEditable, required this.temperature, required this.minimumTemperature, required this.maximumTemperature, required this.isTemperatureEditable}): _availableModels = availableModels;
+  const _AgentModelConfiguration({required this.provider, required this.selectedModel, required final  List<ModelOption> availableModels, required this.isModelEditable, required this.temperature, required this.minimumTemperature, required this.maximumTemperature, required this.isTemperatureEditable, required this.supportsWebSearch}): _availableModels = availableModels;
   
 
 @override final  String provider;
@@ -744,6 +745,7 @@ class _AgentModelConfiguration implements AgentModelConfiguration {
 @override final  double minimumTemperature;
 @override final  double maximumTemperature;
 @override final  bool isTemperatureEditable;
+@override final  bool supportsWebSearch;
 
 /// Create a copy of AgentModelConfiguration
 /// with the given fields replaced by the non-null parameter values.
@@ -755,16 +757,16 @@ _$AgentModelConfigurationCopyWith<_AgentModelConfiguration> get copyWith => __$A
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentModelConfiguration&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other._availableModels, _availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentModelConfiguration&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other._availableModels, _availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(_availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable);
+int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(_availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable,supportsWebSearch);
 
 @override
 String toString() {
-  return 'AgentModelConfiguration(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable)';
+  return 'AgentModelConfiguration(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -775,7 +777,7 @@ abstract mixin class _$AgentModelConfigurationCopyWith<$Res> implements $AgentMo
   factory _$AgentModelConfigurationCopyWith(_AgentModelConfiguration value, $Res Function(_AgentModelConfiguration) _then) = __$AgentModelConfigurationCopyWithImpl;
 @override @useResult
 $Res call({
- String provider, String selectedModel, List<ModelOption> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable
+ String provider, String selectedModel, List<ModelOption> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable, bool supportsWebSearch
 });
 
 
@@ -792,7 +794,7 @@ class __$AgentModelConfigurationCopyWithImpl<$Res>
 
 /// Create a copy of AgentModelConfiguration
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,Object? supportsWebSearch = null,}) {
   return _then(_AgentModelConfiguration(
 provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,selectedModel: null == selectedModel ? _self.selectedModel : selectedModel // ignore: cast_nullable_to_non_nullable
@@ -802,6 +804,7 @@ as bool,temperature: null == temperature ? _self.temperature : temperature // ig
 as double,minimumTemperature: null == minimumTemperature ? _self.minimumTemperature : minimumTemperature // ignore: cast_nullable_to_non_nullable
 as double,maximumTemperature: null == maximumTemperature ? _self.maximumTemperature : maximumTemperature // ignore: cast_nullable_to_non_nullable
 as double,isTemperatureEditable: null == isTemperatureEditable ? _self.isTemperatureEditable : isTemperatureEditable // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -812,7 +815,7 @@ as bool,
 /// @nodoc
 mixin _$AgentHarness {
 
- bool get planningEnabled; bool get todoTrackingEnabled; bool get contextCompactionEnabled; bool get requiresToolApproval; int get maximumIterations;
+ bool get planningEnabled; bool get todoTrackingEnabled; bool get contextCompactionEnabled; bool get requiresToolApproval; int get maximumIterations; bool get webSearchEnabled;
 /// Create a copy of AgentHarness
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -823,16 +826,16 @@ $AgentHarnessCopyWith<AgentHarness> get copyWith => _$AgentHarnessCopyWithImpl<A
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentHarness&&(identical(other.planningEnabled, planningEnabled) || other.planningEnabled == planningEnabled)&&(identical(other.todoTrackingEnabled, todoTrackingEnabled) || other.todoTrackingEnabled == todoTrackingEnabled)&&(identical(other.contextCompactionEnabled, contextCompactionEnabled) || other.contextCompactionEnabled == contextCompactionEnabled)&&(identical(other.requiresToolApproval, requiresToolApproval) || other.requiresToolApproval == requiresToolApproval)&&(identical(other.maximumIterations, maximumIterations) || other.maximumIterations == maximumIterations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentHarness&&(identical(other.planningEnabled, planningEnabled) || other.planningEnabled == planningEnabled)&&(identical(other.todoTrackingEnabled, todoTrackingEnabled) || other.todoTrackingEnabled == todoTrackingEnabled)&&(identical(other.contextCompactionEnabled, contextCompactionEnabled) || other.contextCompactionEnabled == contextCompactionEnabled)&&(identical(other.requiresToolApproval, requiresToolApproval) || other.requiresToolApproval == requiresToolApproval)&&(identical(other.maximumIterations, maximumIterations) || other.maximumIterations == maximumIterations)&&(identical(other.webSearchEnabled, webSearchEnabled) || other.webSearchEnabled == webSearchEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,planningEnabled,todoTrackingEnabled,contextCompactionEnabled,requiresToolApproval,maximumIterations);
+int get hashCode => Object.hash(runtimeType,planningEnabled,todoTrackingEnabled,contextCompactionEnabled,requiresToolApproval,maximumIterations,webSearchEnabled);
 
 @override
 String toString() {
-  return 'AgentHarness(planningEnabled: $planningEnabled, todoTrackingEnabled: $todoTrackingEnabled, contextCompactionEnabled: $contextCompactionEnabled, requiresToolApproval: $requiresToolApproval, maximumIterations: $maximumIterations)';
+  return 'AgentHarness(planningEnabled: $planningEnabled, todoTrackingEnabled: $todoTrackingEnabled, contextCompactionEnabled: $contextCompactionEnabled, requiresToolApproval: $requiresToolApproval, maximumIterations: $maximumIterations, webSearchEnabled: $webSearchEnabled)';
 }
 
 
@@ -843,7 +846,7 @@ abstract mixin class $AgentHarnessCopyWith<$Res>  {
   factory $AgentHarnessCopyWith(AgentHarness value, $Res Function(AgentHarness) _then) = _$AgentHarnessCopyWithImpl;
 @useResult
 $Res call({
- bool planningEnabled, bool todoTrackingEnabled, bool contextCompactionEnabled, bool requiresToolApproval, int maximumIterations
+ bool planningEnabled, bool todoTrackingEnabled, bool contextCompactionEnabled, bool requiresToolApproval, int maximumIterations, bool webSearchEnabled
 });
 
 
@@ -860,14 +863,15 @@ class _$AgentHarnessCopyWithImpl<$Res>
 
 /// Create a copy of AgentHarness
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? planningEnabled = null,Object? todoTrackingEnabled = null,Object? contextCompactionEnabled = null,Object? requiresToolApproval = null,Object? maximumIterations = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? planningEnabled = null,Object? todoTrackingEnabled = null,Object? contextCompactionEnabled = null,Object? requiresToolApproval = null,Object? maximumIterations = null,Object? webSearchEnabled = null,}) {
   return _then(_self.copyWith(
 planningEnabled: null == planningEnabled ? _self.planningEnabled : planningEnabled // ignore: cast_nullable_to_non_nullable
 as bool,todoTrackingEnabled: null == todoTrackingEnabled ? _self.todoTrackingEnabled : todoTrackingEnabled // ignore: cast_nullable_to_non_nullable
 as bool,contextCompactionEnabled: null == contextCompactionEnabled ? _self.contextCompactionEnabled : contextCompactionEnabled // ignore: cast_nullable_to_non_nullable
 as bool,requiresToolApproval: null == requiresToolApproval ? _self.requiresToolApproval : requiresToolApproval // ignore: cast_nullable_to_non_nullable
 as bool,maximumIterations: null == maximumIterations ? _self.maximumIterations : maximumIterations // ignore: cast_nullable_to_non_nullable
-as int,
+as int,webSearchEnabled: null == webSearchEnabled ? _self.webSearchEnabled : webSearchEnabled // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -949,10 +953,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations,  bool webSearchEnabled)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AgentHarness() when $default != null:
-return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations);case _:
+return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations,_that.webSearchEnabled);case _:
   return orElse();
 
 }
@@ -970,10 +974,10 @@ return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCom
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations,  bool webSearchEnabled)  $default,) {final _that = this;
 switch (_that) {
 case _AgentHarness():
-return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations);}
+return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations,_that.webSearchEnabled);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -987,10 +991,10 @@ return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCom
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool planningEnabled,  bool todoTrackingEnabled,  bool contextCompactionEnabled,  bool requiresToolApproval,  int maximumIterations,  bool webSearchEnabled)?  $default,) {final _that = this;
 switch (_that) {
 case _AgentHarness() when $default != null:
-return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations);case _:
+return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCompactionEnabled,_that.requiresToolApproval,_that.maximumIterations,_that.webSearchEnabled);case _:
   return null;
 
 }
@@ -1002,7 +1006,7 @@ return $default(_that.planningEnabled,_that.todoTrackingEnabled,_that.contextCom
 
 
 class _AgentHarness implements AgentHarness {
-  const _AgentHarness({required this.planningEnabled, required this.todoTrackingEnabled, required this.contextCompactionEnabled, required this.requiresToolApproval, required this.maximumIterations});
+  const _AgentHarness({required this.planningEnabled, required this.todoTrackingEnabled, required this.contextCompactionEnabled, required this.requiresToolApproval, required this.maximumIterations, required this.webSearchEnabled});
   
 
 @override final  bool planningEnabled;
@@ -1010,6 +1014,7 @@ class _AgentHarness implements AgentHarness {
 @override final  bool contextCompactionEnabled;
 @override final  bool requiresToolApproval;
 @override final  int maximumIterations;
+@override final  bool webSearchEnabled;
 
 /// Create a copy of AgentHarness
 /// with the given fields replaced by the non-null parameter values.
@@ -1021,16 +1026,16 @@ _$AgentHarnessCopyWith<_AgentHarness> get copyWith => __$AgentHarnessCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentHarness&&(identical(other.planningEnabled, planningEnabled) || other.planningEnabled == planningEnabled)&&(identical(other.todoTrackingEnabled, todoTrackingEnabled) || other.todoTrackingEnabled == todoTrackingEnabled)&&(identical(other.contextCompactionEnabled, contextCompactionEnabled) || other.contextCompactionEnabled == contextCompactionEnabled)&&(identical(other.requiresToolApproval, requiresToolApproval) || other.requiresToolApproval == requiresToolApproval)&&(identical(other.maximumIterations, maximumIterations) || other.maximumIterations == maximumIterations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentHarness&&(identical(other.planningEnabled, planningEnabled) || other.planningEnabled == planningEnabled)&&(identical(other.todoTrackingEnabled, todoTrackingEnabled) || other.todoTrackingEnabled == todoTrackingEnabled)&&(identical(other.contextCompactionEnabled, contextCompactionEnabled) || other.contextCompactionEnabled == contextCompactionEnabled)&&(identical(other.requiresToolApproval, requiresToolApproval) || other.requiresToolApproval == requiresToolApproval)&&(identical(other.maximumIterations, maximumIterations) || other.maximumIterations == maximumIterations)&&(identical(other.webSearchEnabled, webSearchEnabled) || other.webSearchEnabled == webSearchEnabled));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,planningEnabled,todoTrackingEnabled,contextCompactionEnabled,requiresToolApproval,maximumIterations);
+int get hashCode => Object.hash(runtimeType,planningEnabled,todoTrackingEnabled,contextCompactionEnabled,requiresToolApproval,maximumIterations,webSearchEnabled);
 
 @override
 String toString() {
-  return 'AgentHarness(planningEnabled: $planningEnabled, todoTrackingEnabled: $todoTrackingEnabled, contextCompactionEnabled: $contextCompactionEnabled, requiresToolApproval: $requiresToolApproval, maximumIterations: $maximumIterations)';
+  return 'AgentHarness(planningEnabled: $planningEnabled, todoTrackingEnabled: $todoTrackingEnabled, contextCompactionEnabled: $contextCompactionEnabled, requiresToolApproval: $requiresToolApproval, maximumIterations: $maximumIterations, webSearchEnabled: $webSearchEnabled)';
 }
 
 
@@ -1041,7 +1046,7 @@ abstract mixin class _$AgentHarnessCopyWith<$Res> implements $AgentHarnessCopyWi
   factory _$AgentHarnessCopyWith(_AgentHarness value, $Res Function(_AgentHarness) _then) = __$AgentHarnessCopyWithImpl;
 @override @useResult
 $Res call({
- bool planningEnabled, bool todoTrackingEnabled, bool contextCompactionEnabled, bool requiresToolApproval, int maximumIterations
+ bool planningEnabled, bool todoTrackingEnabled, bool contextCompactionEnabled, bool requiresToolApproval, int maximumIterations, bool webSearchEnabled
 });
 
 
@@ -1058,14 +1063,15 @@ class __$AgentHarnessCopyWithImpl<$Res>
 
 /// Create a copy of AgentHarness
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? planningEnabled = null,Object? todoTrackingEnabled = null,Object? contextCompactionEnabled = null,Object? requiresToolApproval = null,Object? maximumIterations = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? planningEnabled = null,Object? todoTrackingEnabled = null,Object? contextCompactionEnabled = null,Object? requiresToolApproval = null,Object? maximumIterations = null,Object? webSearchEnabled = null,}) {
   return _then(_AgentHarness(
 planningEnabled: null == planningEnabled ? _self.planningEnabled : planningEnabled // ignore: cast_nullable_to_non_nullable
 as bool,todoTrackingEnabled: null == todoTrackingEnabled ? _self.todoTrackingEnabled : todoTrackingEnabled // ignore: cast_nullable_to_non_nullable
 as bool,contextCompactionEnabled: null == contextCompactionEnabled ? _self.contextCompactionEnabled : contextCompactionEnabled // ignore: cast_nullable_to_non_nullable
 as bool,requiresToolApproval: null == requiresToolApproval ? _self.requiresToolApproval : requiresToolApproval // ignore: cast_nullable_to_non_nullable
 as bool,maximumIterations: null == maximumIterations ? _self.maximumIterations : maximumIterations // ignore: cast_nullable_to_non_nullable
-as int,
+as int,webSearchEnabled: null == webSearchEnabled ? _self.webSearchEnabled : webSearchEnabled // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1377,7 +1383,7 @@ $AgentHarnessCopyWith<$Res> get harness {
 /// @nodoc
 mixin _$WorkflowNode {
 
- String get id; String get key; String get displayName; String get type; int get position; bool get requiresHumanApproval;
+ String get id; String get key; String get displayName; String get type; int get position; bool get requiresHumanApproval; String? get configurationJson; ApprovalNodeConfiguration? get approvalConfiguration; ResultContract? get resultContract;
 /// Create a copy of WorkflowNode
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1388,16 +1394,16 @@ $WorkflowNodeCopyWith<WorkflowNode> get copyWith => _$WorkflowNodeCopyWithImpl<W
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNode&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.position, position) || other.position == position)&&(identical(other.requiresHumanApproval, requiresHumanApproval) || other.requiresHumanApproval == requiresHumanApproval));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNode&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.position, position) || other.position == position)&&(identical(other.requiresHumanApproval, requiresHumanApproval) || other.requiresHumanApproval == requiresHumanApproval)&&(identical(other.configurationJson, configurationJson) || other.configurationJson == configurationJson)&&(identical(other.approvalConfiguration, approvalConfiguration) || other.approvalConfiguration == approvalConfiguration)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,key,displayName,type,position,requiresHumanApproval);
+int get hashCode => Object.hash(runtimeType,id,key,displayName,type,position,requiresHumanApproval,configurationJson,approvalConfiguration,resultContract);
 
 @override
 String toString() {
-  return 'WorkflowNode(id: $id, key: $key, displayName: $displayName, type: $type, position: $position, requiresHumanApproval: $requiresHumanApproval)';
+  return 'WorkflowNode(id: $id, key: $key, displayName: $displayName, type: $type, position: $position, requiresHumanApproval: $requiresHumanApproval, configurationJson: $configurationJson, approvalConfiguration: $approvalConfiguration, resultContract: $resultContract)';
 }
 
 
@@ -1408,11 +1414,11 @@ abstract mixin class $WorkflowNodeCopyWith<$Res>  {
   factory $WorkflowNodeCopyWith(WorkflowNode value, $Res Function(WorkflowNode) _then) = _$WorkflowNodeCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String displayName, String type, int position, bool requiresHumanApproval
+ String id, String key, String displayName, String type, int position, bool requiresHumanApproval, String? configurationJson, ApprovalNodeConfiguration? approvalConfiguration, ResultContract? resultContract
 });
 
 
-
+$ApprovalNodeConfigurationCopyWith<$Res>? get approvalConfiguration;$ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -1425,7 +1431,7 @@ class _$WorkflowNodeCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNode
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? displayName = null,Object? type = null,Object? position = null,Object? requiresHumanApproval = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? displayName = null,Object? type = null,Object? position = null,Object? requiresHumanApproval = null,Object? configurationJson = freezed,Object? approvalConfiguration = freezed,Object? resultContract = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -1433,10 +1439,37 @@ as String,displayName: null == displayName ? _self.displayName : displayName // 
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,requiresHumanApproval: null == requiresHumanApproval ? _self.requiresHumanApproval : requiresHumanApproval // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,configurationJson: freezed == configurationJson ? _self.configurationJson : configurationJson // ignore: cast_nullable_to_non_nullable
+as String?,approvalConfiguration: freezed == approvalConfiguration ? _self.approvalConfiguration : approvalConfiguration // ignore: cast_nullable_to_non_nullable
+as ApprovalNodeConfiguration?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,
   ));
 }
+/// Create a copy of WorkflowNode
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ApprovalNodeConfigurationCopyWith<$Res>? get approvalConfiguration {
+    if (_self.approvalConfiguration == null) {
+    return null;
+  }
 
+  return $ApprovalNodeConfigurationCopyWith<$Res>(_self.approvalConfiguration!, (value) {
+    return _then(_self.copyWith(approvalConfiguration: value));
+  });
+}/// Create a copy of WorkflowNode
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
+  });
+}
 }
 
 
@@ -1515,10 +1548,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval,  String? configurationJson,  ApprovalNodeConfiguration? approvalConfiguration,  ResultContract? resultContract)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkflowNode() when $default != null:
-return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval);case _:
+return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval,_that.configurationJson,_that.approvalConfiguration,_that.resultContract);case _:
   return orElse();
 
 }
@@ -1536,10 +1569,10 @@ return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval,  String? configurationJson,  ApprovalNodeConfiguration? approvalConfiguration,  ResultContract? resultContract)  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNode():
-return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval);}
+return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval,_that.configurationJson,_that.approvalConfiguration,_that.resultContract);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1553,10 +1586,10 @@ return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String displayName,  String type,  int position,  bool requiresHumanApproval,  String? configurationJson,  ApprovalNodeConfiguration? approvalConfiguration,  ResultContract? resultContract)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNode() when $default != null:
-return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval);case _:
+return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_that.requiresHumanApproval,_that.configurationJson,_that.approvalConfiguration,_that.resultContract);case _:
   return null;
 
 }
@@ -1568,7 +1601,7 @@ return $default(_that.id,_that.key,_that.displayName,_that.type,_that.position,_
 
 
 class _WorkflowNode implements WorkflowNode {
-  const _WorkflowNode({required this.id, required this.key, required this.displayName, required this.type, required this.position, required this.requiresHumanApproval});
+  const _WorkflowNode({required this.id, required this.key, required this.displayName, required this.type, required this.position, required this.requiresHumanApproval, this.configurationJson, this.approvalConfiguration, this.resultContract});
   
 
 @override final  String id;
@@ -1577,6 +1610,9 @@ class _WorkflowNode implements WorkflowNode {
 @override final  String type;
 @override final  int position;
 @override final  bool requiresHumanApproval;
+@override final  String? configurationJson;
+@override final  ApprovalNodeConfiguration? approvalConfiguration;
+@override final  ResultContract? resultContract;
 
 /// Create a copy of WorkflowNode
 /// with the given fields replaced by the non-null parameter values.
@@ -1588,16 +1624,16 @@ _$WorkflowNodeCopyWith<_WorkflowNode> get copyWith => __$WorkflowNodeCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNode&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.position, position) || other.position == position)&&(identical(other.requiresHumanApproval, requiresHumanApproval) || other.requiresHumanApproval == requiresHumanApproval));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNode&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.position, position) || other.position == position)&&(identical(other.requiresHumanApproval, requiresHumanApproval) || other.requiresHumanApproval == requiresHumanApproval)&&(identical(other.configurationJson, configurationJson) || other.configurationJson == configurationJson)&&(identical(other.approvalConfiguration, approvalConfiguration) || other.approvalConfiguration == approvalConfiguration)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,key,displayName,type,position,requiresHumanApproval);
+int get hashCode => Object.hash(runtimeType,id,key,displayName,type,position,requiresHumanApproval,configurationJson,approvalConfiguration,resultContract);
 
 @override
 String toString() {
-  return 'WorkflowNode(id: $id, key: $key, displayName: $displayName, type: $type, position: $position, requiresHumanApproval: $requiresHumanApproval)';
+  return 'WorkflowNode(id: $id, key: $key, displayName: $displayName, type: $type, position: $position, requiresHumanApproval: $requiresHumanApproval, configurationJson: $configurationJson, approvalConfiguration: $approvalConfiguration, resultContract: $resultContract)';
 }
 
 
@@ -1608,11 +1644,11 @@ abstract mixin class _$WorkflowNodeCopyWith<$Res> implements $WorkflowNodeCopyWi
   factory _$WorkflowNodeCopyWith(_WorkflowNode value, $Res Function(_WorkflowNode) _then) = __$WorkflowNodeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String displayName, String type, int position, bool requiresHumanApproval
+ String id, String key, String displayName, String type, int position, bool requiresHumanApproval, String? configurationJson, ApprovalNodeConfiguration? approvalConfiguration, ResultContract? resultContract
 });
 
 
-
+@override $ApprovalNodeConfigurationCopyWith<$Res>? get approvalConfiguration;@override $ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -1625,7 +1661,7 @@ class __$WorkflowNodeCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNode
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? displayName = null,Object? type = null,Object? position = null,Object? requiresHumanApproval = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? displayName = null,Object? type = null,Object? position = null,Object? requiresHumanApproval = null,Object? configurationJson = freezed,Object? approvalConfiguration = freezed,Object? resultContract = freezed,}) {
   return _then(_WorkflowNode(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -1633,11 +1669,38 @@ as String,displayName: null == displayName ? _self.displayName : displayName // 
 as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,requiresHumanApproval: null == requiresHumanApproval ? _self.requiresHumanApproval : requiresHumanApproval // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,configurationJson: freezed == configurationJson ? _self.configurationJson : configurationJson // ignore: cast_nullable_to_non_nullable
+as String?,approvalConfiguration: freezed == approvalConfiguration ? _self.approvalConfiguration : approvalConfiguration // ignore: cast_nullable_to_non_nullable
+as ApprovalNodeConfiguration?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,
   ));
 }
 
+/// Create a copy of WorkflowNode
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ApprovalNodeConfigurationCopyWith<$Res>? get approvalConfiguration {
+    if (_self.approvalConfiguration == null) {
+    return null;
+  }
 
+  return $ApprovalNodeConfigurationCopyWith<$Res>(_self.approvalConfiguration!, (value) {
+    return _then(_self.copyWith(approvalConfiguration: value));
+  });
+}/// Create a copy of WorkflowNode
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
+  });
+}
 }
 
 /// @nodoc
@@ -2427,9 +2490,263 @@ as String,
 }
 
 /// @nodoc
+mixin _$ResultContract {
+
+ String get key; int get version;
+/// Create a copy of ResultContract
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<ResultContract> get copyWith => _$ResultContractCopyWithImpl<ResultContract>(this as ResultContract, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ResultContract&&(identical(other.key, key) || other.key == key)&&(identical(other.version, version) || other.version == version));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,key,version);
+
+@override
+String toString() {
+  return 'ResultContract(key: $key, version: $version)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ResultContractCopyWith<$Res>  {
+  factory $ResultContractCopyWith(ResultContract value, $Res Function(ResultContract) _then) = _$ResultContractCopyWithImpl;
+@useResult
+$Res call({
+ String key, int version
+});
+
+
+
+
+}
+/// @nodoc
+class _$ResultContractCopyWithImpl<$Res>
+    implements $ResultContractCopyWith<$Res> {
+  _$ResultContractCopyWithImpl(this._self, this._then);
+
+  final ResultContract _self;
+  final $Res Function(ResultContract) _then;
+
+/// Create a copy of ResultContract
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? version = null,}) {
+  return _then(_self.copyWith(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ResultContract].
+extension ResultContractPatterns on ResultContract {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ResultContract value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ResultContract() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ResultContract value)  $default,){
+final _that = this;
+switch (_that) {
+case _ResultContract():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ResultContract value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ResultContract() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  int version)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ResultContract() when $default != null:
+return $default(_that.key,_that.version);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  int version)  $default,) {final _that = this;
+switch (_that) {
+case _ResultContract():
+return $default(_that.key,_that.version);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  int version)?  $default,) {final _that = this;
+switch (_that) {
+case _ResultContract() when $default != null:
+return $default(_that.key,_that.version);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _ResultContract implements ResultContract {
+  const _ResultContract({required this.key, required this.version});
+  
+
+@override final  String key;
+@override final  int version;
+
+/// Create a copy of ResultContract
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ResultContractCopyWith<_ResultContract> get copyWith => __$ResultContractCopyWithImpl<_ResultContract>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ResultContract&&(identical(other.key, key) || other.key == key)&&(identical(other.version, version) || other.version == version));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,key,version);
+
+@override
+String toString() {
+  return 'ResultContract(key: $key, version: $version)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ResultContractCopyWith<$Res> implements $ResultContractCopyWith<$Res> {
+  factory _$ResultContractCopyWith(_ResultContract value, $Res Function(_ResultContract) _then) = __$ResultContractCopyWithImpl;
+@override @useResult
+$Res call({
+ String key, int version
+});
+
+
+
+
+}
+/// @nodoc
+class __$ResultContractCopyWithImpl<$Res>
+    implements _$ResultContractCopyWith<$Res> {
+  __$ResultContractCopyWithImpl(this._self, this._then);
+
+  final _ResultContract _self;
+  final $Res Function(_ResultContract) _then;
+
+/// Create a copy of ResultContract
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? version = null,}) {
+  return _then(_ResultContract(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,version: null == version ? _self.version : version // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$PresetDetails {
 
- String get id; String get key; String get name; String get description; int get version; List<Agent> get agents; WorkflowGraph get workflow; List<IntegrationRequirement> get integrations;
+ String get id; String get key; String get name; String get description; int get version; List<Agent> get agents; WorkflowGraph get workflow; List<IntegrationRequirement> get integrations; PresetInputSchema? get inputSchema; ResultContract? get resultContract;
 /// Create a copy of PresetDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2440,16 +2757,16 @@ $PresetDetailsCopyWith<PresetDetails> get copyWith => _$PresetDetailsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PresetDetails&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other.agents, agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other.integrations, integrations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PresetDetails&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other.agents, agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other.integrations, integrations)&&(identical(other.inputSchema, inputSchema) || other.inputSchema == inputSchema)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(agents),workflow,const DeepCollectionEquality().hash(integrations));
+int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(agents),workflow,const DeepCollectionEquality().hash(integrations),inputSchema,resultContract);
 
 @override
 String toString() {
-  return 'PresetDetails(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations)';
+  return 'PresetDetails(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations, inputSchema: $inputSchema, resultContract: $resultContract)';
 }
 
 
@@ -2460,11 +2777,11 @@ abstract mixin class $PresetDetailsCopyWith<$Res>  {
   factory $PresetDetailsCopyWith(PresetDetails value, $Res Function(PresetDetails) _then) = _$PresetDetailsCopyWithImpl;
 @useResult
 $Res call({
- String id, String key, String name, String description, int version, List<Agent> agents, WorkflowGraph workflow, List<IntegrationRequirement> integrations
+ String id, String key, String name, String description, int version, List<Agent> agents, WorkflowGraph workflow, List<IntegrationRequirement> integrations, PresetInputSchema? inputSchema, ResultContract? resultContract
 });
 
 
-$WorkflowGraphCopyWith<$Res> get workflow;
+$WorkflowGraphCopyWith<$Res> get workflow;$PresetInputSchemaCopyWith<$Res>? get inputSchema;$ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -2477,7 +2794,7 @@ class _$PresetDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PresetDetails
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,Object? inputSchema = freezed,Object? resultContract = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -2487,7 +2804,9 @@ as String,version: null == version ? _self.version : version // ignore: cast_nul
 as int,agents: null == agents ? _self.agents : agents // ignore: cast_nullable_to_non_nullable
 as List<Agent>,workflow: null == workflow ? _self.workflow : workflow // ignore: cast_nullable_to_non_nullable
 as WorkflowGraph,integrations: null == integrations ? _self.integrations : integrations // ignore: cast_nullable_to_non_nullable
-as List<IntegrationRequirement>,
+as List<IntegrationRequirement>,inputSchema: freezed == inputSchema ? _self.inputSchema : inputSchema // ignore: cast_nullable_to_non_nullable
+as PresetInputSchema?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,
   ));
 }
 /// Create a copy of PresetDetails
@@ -2498,6 +2817,30 @@ $WorkflowGraphCopyWith<$Res> get workflow {
   
   return $WorkflowGraphCopyWith<$Res>(_self.workflow, (value) {
     return _then(_self.copyWith(workflow: value));
+  });
+}/// Create a copy of PresetDetails
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PresetInputSchemaCopyWith<$Res>? get inputSchema {
+    if (_self.inputSchema == null) {
+    return null;
+  }
+
+  return $PresetInputSchemaCopyWith<$Res>(_self.inputSchema!, (value) {
+    return _then(_self.copyWith(inputSchema: value));
+  });
+}/// Create a copy of PresetDetails
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }
@@ -2578,10 +2921,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations,  PresetInputSchema? inputSchema,  ResultContract? resultContract)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PresetDetails() when $default != null:
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);case _:
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchema,_that.resultContract);case _:
   return orElse();
 
 }
@@ -2599,10 +2942,10 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations,  PresetInputSchema? inputSchema,  ResultContract? resultContract)  $default,) {final _that = this;
 switch (_that) {
 case _PresetDetails():
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);}
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchema,_that.resultContract);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2616,10 +2959,10 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String key,  String name,  String description,  int version,  List<Agent> agents,  WorkflowGraph workflow,  List<IntegrationRequirement> integrations,  PresetInputSchema? inputSchema,  ResultContract? resultContract)?  $default,) {final _that = this;
 switch (_that) {
 case _PresetDetails() when $default != null:
-return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations);case _:
+return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_that.agents,_that.workflow,_that.integrations,_that.inputSchema,_that.resultContract);case _:
   return null;
 
 }
@@ -2631,7 +2974,7 @@ return $default(_that.id,_that.key,_that.name,_that.description,_that.version,_t
 
 
 class _PresetDetails implements PresetDetails {
-  const _PresetDetails({required this.id, required this.key, required this.name, required this.description, required this.version, required final  List<Agent> agents, required this.workflow, required final  List<IntegrationRequirement> integrations}): _agents = agents,_integrations = integrations;
+  const _PresetDetails({required this.id, required this.key, required this.name, required this.description, required this.version, required final  List<Agent> agents, required this.workflow, required final  List<IntegrationRequirement> integrations, this.inputSchema, this.resultContract}): _agents = agents,_integrations = integrations;
   
 
 @override final  String id;
@@ -2654,6 +2997,8 @@ class _PresetDetails implements PresetDetails {
   return EqualUnmodifiableListView(_integrations);
 }
 
+@override final  PresetInputSchema? inputSchema;
+@override final  ResultContract? resultContract;
 
 /// Create a copy of PresetDetails
 /// with the given fields replaced by the non-null parameter values.
@@ -2665,16 +3010,16 @@ _$PresetDetailsCopyWith<_PresetDetails> get copyWith => __$PresetDetailsCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PresetDetails&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other._agents, _agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other._integrations, _integrations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PresetDetails&&(identical(other.id, id) || other.id == id)&&(identical(other.key, key) || other.key == key)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.version, version) || other.version == version)&&const DeepCollectionEquality().equals(other._agents, _agents)&&(identical(other.workflow, workflow) || other.workflow == workflow)&&const DeepCollectionEquality().equals(other._integrations, _integrations)&&(identical(other.inputSchema, inputSchema) || other.inputSchema == inputSchema)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(_agents),workflow,const DeepCollectionEquality().hash(_integrations));
+int get hashCode => Object.hash(runtimeType,id,key,name,description,version,const DeepCollectionEquality().hash(_agents),workflow,const DeepCollectionEquality().hash(_integrations),inputSchema,resultContract);
 
 @override
 String toString() {
-  return 'PresetDetails(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations)';
+  return 'PresetDetails(id: $id, key: $key, name: $name, description: $description, version: $version, agents: $agents, workflow: $workflow, integrations: $integrations, inputSchema: $inputSchema, resultContract: $resultContract)';
 }
 
 
@@ -2685,11 +3030,11 @@ abstract mixin class _$PresetDetailsCopyWith<$Res> implements $PresetDetailsCopy
   factory _$PresetDetailsCopyWith(_PresetDetails value, $Res Function(_PresetDetails) _then) = __$PresetDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String key, String name, String description, int version, List<Agent> agents, WorkflowGraph workflow, List<IntegrationRequirement> integrations
+ String id, String key, String name, String description, int version, List<Agent> agents, WorkflowGraph workflow, List<IntegrationRequirement> integrations, PresetInputSchema? inputSchema, ResultContract? resultContract
 });
 
 
-@override $WorkflowGraphCopyWith<$Res> get workflow;
+@override $WorkflowGraphCopyWith<$Res> get workflow;@override $PresetInputSchemaCopyWith<$Res>? get inputSchema;@override $ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -2702,7 +3047,7 @@ class __$PresetDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PresetDetails
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? key = null,Object? name = null,Object? description = null,Object? version = null,Object? agents = null,Object? workflow = null,Object? integrations = null,Object? inputSchema = freezed,Object? resultContract = freezed,}) {
   return _then(_PresetDetails(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
@@ -2712,7 +3057,9 @@ as String,version: null == version ? _self.version : version // ignore: cast_nul
 as int,agents: null == agents ? _self._agents : agents // ignore: cast_nullable_to_non_nullable
 as List<Agent>,workflow: null == workflow ? _self.workflow : workflow // ignore: cast_nullable_to_non_nullable
 as WorkflowGraph,integrations: null == integrations ? _self._integrations : integrations // ignore: cast_nullable_to_non_nullable
-as List<IntegrationRequirement>,
+as List<IntegrationRequirement>,inputSchema: freezed == inputSchema ? _self.inputSchema : inputSchema // ignore: cast_nullable_to_non_nullable
+as PresetInputSchema?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,
   ));
 }
 
@@ -2724,6 +3071,30 @@ $WorkflowGraphCopyWith<$Res> get workflow {
   
   return $WorkflowGraphCopyWith<$Res>(_self.workflow, (value) {
     return _then(_self.copyWith(workflow: value));
+  });
+}/// Create a copy of PresetDetails
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PresetInputSchemaCopyWith<$Res>? get inputSchema {
+    if (_self.inputSchema == null) {
+    return null;
+  }
+
+  return $PresetInputSchemaCopyWith<$Res>(_self.inputSchema!, (value) {
+    return _then(_self.copyWith(inputSchema: value));
+  });
+}/// Create a copy of PresetDetails
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }

@@ -11,6 +11,7 @@ class OpenAiModelMapper {
       ownedBy: dto.ownedBy,
       createdAtUtc: dto.createdAtUtc,
       supportsTemperature: dto.supportsTemperature,
+      supportsWebSearch: dto.supportsWebSearch,
     );
   }
 }

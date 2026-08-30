@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$OpenAiModelResponse {
 
- String get id; String get displayName; String get ownedBy; DateTime get createdAtUtc; bool get supportsTemperature;
+ String get id; String get displayName; String get ownedBy; DateTime get createdAtUtc; bool get supportsTemperature; bool get supportsWebSearch;
 /// Create a copy of OpenAiModelResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $OpenAiModelResponseCopyWith<OpenAiModelResponse> get copyWith => _$OpenAiModelR
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpenAiModelResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.ownedBy, ownedBy) || other.ownedBy == ownedBy)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.supportsTemperature, supportsTemperature) || other.supportsTemperature == supportsTemperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpenAiModelResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.ownedBy, ownedBy) || other.ownedBy == ownedBy)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.supportsTemperature, supportsTemperature) || other.supportsTemperature == supportsTemperature)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,ownedBy,createdAtUtc,supportsTemperature);
+int get hashCode => Object.hash(runtimeType,id,displayName,ownedBy,createdAtUtc,supportsTemperature,supportsWebSearch);
 
 @override
 String toString() {
-  return 'OpenAiModelResponse(id: $id, displayName: $displayName, ownedBy: $ownedBy, createdAtUtc: $createdAtUtc, supportsTemperature: $supportsTemperature)';
+  return 'OpenAiModelResponse(id: $id, displayName: $displayName, ownedBy: $ownedBy, createdAtUtc: $createdAtUtc, supportsTemperature: $supportsTemperature, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $OpenAiModelResponseCopyWith<$Res>  {
   factory $OpenAiModelResponseCopyWith(OpenAiModelResponse value, $Res Function(OpenAiModelResponse) _then) = _$OpenAiModelResponseCopyWithImpl;
 @useResult
 $Res call({
- String id, String displayName, String ownedBy, DateTime createdAtUtc, bool supportsTemperature
+ String id, String displayName, String ownedBy, DateTime createdAtUtc, bool supportsTemperature, bool supportsWebSearch
 });
 
 
@@ -65,13 +65,14 @@ class _$OpenAiModelResponseCopyWithImpl<$Res>
 
 /// Create a copy of OpenAiModelResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? ownedBy = null,Object? createdAtUtc = null,Object? supportsTemperature = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? ownedBy = null,Object? createdAtUtc = null,Object? supportsTemperature = null,Object? supportsWebSearch = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,ownedBy: null == ownedBy ? _self.ownedBy : ownedBy // ignore: cast_nullable_to_non_nullable
 as String,createdAtUtc: null == createdAtUtc ? _self.createdAtUtc : createdAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime,supportsTemperature: null == supportsTemperature ? _self.supportsTemperature : supportsTemperature // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature,  bool supportsWebSearch)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OpenAiModelResponse() when $default != null:
-return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature);case _:
+return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature,_that.supportsWebSearch);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature,  bool supportsWebSearch)  $default,) {final _that = this;
 switch (_that) {
 case _OpenAiModelResponse():
-return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature);}
+return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature,_that.supportsWebSearch);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -192,10 +193,10 @@ return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String displayName,  String ownedBy,  DateTime createdAtUtc,  bool supportsTemperature,  bool supportsWebSearch)?  $default,) {final _that = this;
 switch (_that) {
 case _OpenAiModelResponse() when $default != null:
-return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature);case _:
+return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_that.supportsTemperature,_that.supportsWebSearch);case _:
   return null;
 
 }
@@ -207,7 +208,7 @@ return $default(_that.id,_that.displayName,_that.ownedBy,_that.createdAtUtc,_tha
 @JsonSerializable()
 
 class _OpenAiModelResponse implements OpenAiModelResponse {
-  const _OpenAiModelResponse({required this.id, required this.displayName, required this.ownedBy, required this.createdAtUtc, required this.supportsTemperature});
+  const _OpenAiModelResponse({required this.id, required this.displayName, required this.ownedBy, required this.createdAtUtc, required this.supportsTemperature, this.supportsWebSearch = false});
   factory _OpenAiModelResponse.fromJson(Map<String, dynamic> json) => _$OpenAiModelResponseFromJson(json);
 
 @override final  String id;
@@ -215,6 +216,7 @@ class _OpenAiModelResponse implements OpenAiModelResponse {
 @override final  String ownedBy;
 @override final  DateTime createdAtUtc;
 @override final  bool supportsTemperature;
+@override@JsonKey() final  bool supportsWebSearch;
 
 /// Create a copy of OpenAiModelResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +231,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpenAiModelResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.ownedBy, ownedBy) || other.ownedBy == ownedBy)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.supportsTemperature, supportsTemperature) || other.supportsTemperature == supportsTemperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpenAiModelResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.ownedBy, ownedBy) || other.ownedBy == ownedBy)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.supportsTemperature, supportsTemperature) || other.supportsTemperature == supportsTemperature)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,ownedBy,createdAtUtc,supportsTemperature);
+int get hashCode => Object.hash(runtimeType,id,displayName,ownedBy,createdAtUtc,supportsTemperature,supportsWebSearch);
 
 @override
 String toString() {
-  return 'OpenAiModelResponse(id: $id, displayName: $displayName, ownedBy: $ownedBy, createdAtUtc: $createdAtUtc, supportsTemperature: $supportsTemperature)';
+  return 'OpenAiModelResponse(id: $id, displayName: $displayName, ownedBy: $ownedBy, createdAtUtc: $createdAtUtc, supportsTemperature: $supportsTemperature, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -249,7 +251,7 @@ abstract mixin class _$OpenAiModelResponseCopyWith<$Res> implements $OpenAiModel
   factory _$OpenAiModelResponseCopyWith(_OpenAiModelResponse value, $Res Function(_OpenAiModelResponse) _then) = __$OpenAiModelResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String displayName, String ownedBy, DateTime createdAtUtc, bool supportsTemperature
+ String id, String displayName, String ownedBy, DateTime createdAtUtc, bool supportsTemperature, bool supportsWebSearch
 });
 
 
@@ -266,13 +268,14 @@ class __$OpenAiModelResponseCopyWithImpl<$Res>
 
 /// Create a copy of OpenAiModelResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = null,Object? ownedBy = null,Object? createdAtUtc = null,Object? supportsTemperature = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = null,Object? ownedBy = null,Object? createdAtUtc = null,Object? supportsTemperature = null,Object? supportsWebSearch = null,}) {
   return _then(_OpenAiModelResponse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,ownedBy: null == ownedBy ? _self.ownedBy : ownedBy // ignore: cast_nullable_to_non_nullable
 as String,createdAtUtc: null == createdAtUtc ? _self.createdAtUtc : createdAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime,supportsTemperature: null == supportsTemperature ? _self.supportsTemperature : supportsTemperature // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

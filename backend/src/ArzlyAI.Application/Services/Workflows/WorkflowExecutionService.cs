@@ -24,6 +24,8 @@ public sealed class WorkflowExecutionService(
     IWorkflowRunMapper mapper,
     ILogger<WorkflowExecutionService> logger) : IWorkflowExecutionService
 {
+    private static readonly TimeSpan WorkflowExecutionTimeout = TimeSpan.FromMinutes(10);
+
     public async Task<WorkflowRunResponse> StartAsync(
         StartWorkflowRequest request,
         CancellationToken cancellationToken)
@@ -38,7 +40,11 @@ public sealed class WorkflowExecutionService(
         var run = CreateRun(preset, request);
         await runs.AddAsync(run, cancellationToken);
 
-        await ExecutePlanAsync(preset, plan, run, credentials, 0, cancellationToken);
+        // Workflow execution must outlive the mobile HTTP request. A client can
+        // time out while the AI provider is still processing; tying this token to
+        // RequestAborted would cancel the provider call and leave the run failed.
+        using var executionTimeout = new CancellationTokenSource(WorkflowExecutionTimeout);
+        await ExecutePlanAsync(preset, plan, run, credentials, 0, executionTimeout.Token);
         return mapper.ToResponse(run);
     }
 
@@ -67,13 +73,15 @@ public sealed class WorkflowExecutionService(
         var plan = graphPlanner.Plan(preset.Workflow);
         var approvalIndex = FindStepIndex(plan, run.PendingApprovalNodeId.Value);
         var approvalNode = run.Nodes.Single(node => node.NodeId == run.PendingApprovalNodeId.Value);
+        using var executionTimeout = new CancellationTokenSource(WorkflowExecutionTimeout);
+        var executionCancellationToken = executionTimeout.Token;
 
         if (request.Decision == ApprovalDecision.Reject)
         {
             run.PendingApprovalNodeId = null;
             run.Status = WorkflowRunStatus.Cancelled;
             await SetStatusAsync(
-                run, approvalNode, WorkflowNodeStatus.Completed, "Content rejected.", cancellationToken);
+                run, approvalNode, WorkflowNodeStatus.Completed, "Content rejected.", executionCancellationToken);
             logger.LogWarning("Workflow run {RunId} was rejected", run.Id);
             return mapper.ToResponse(run);
         }
@@ -94,9 +102,9 @@ public sealed class WorkflowExecutionService(
             run.Status = WorkflowRunStatus.Running;
             run.FinalResponse = null;
             await ResetForRegenerationAsync(
-                run, plan, writerIndex, cancellationToken);
+                run, plan, writerIndex, executionCancellationToken);
             await ExecutePlanAsync(
-                preset, plan, run, regenerationCredentials, writerIndex, cancellationToken);
+                preset, plan, run, regenerationCredentials, writerIndex, executionCancellationToken);
             return mapper.ToResponse(run);
         }
 
@@ -106,7 +114,7 @@ public sealed class WorkflowExecutionService(
         run.ApprovedOutputs[approvalNode.NodeId] = approvedContent;
         run.PendingApprovalNodeId = null;
         await SetStatusAsync(
-            run, approvalNode, WorkflowNodeStatus.Completed, "Content approved.", cancellationToken);
+            run, approvalNode, WorkflowNodeStatus.Completed, "Content approved.", executionCancellationToken);
 
         IReadOnlyDictionary<string, string> credentials = new Dictionary<string, string>();
         if (approvalIndex + 1 < plan.Count)
@@ -118,7 +126,7 @@ public sealed class WorkflowExecutionService(
 
         run.Status = WorkflowRunStatus.Running;
         await ExecutePlanAsync(
-            preset, plan, run, credentials, approvalIndex + 1, cancellationToken);
+            preset, plan, run, credentials, approvalIndex + 1, executionCancellationToken);
         return mapper.ToResponse(run);
     }
 
@@ -149,6 +157,9 @@ public sealed class WorkflowExecutionService(
             {
                 var result = await handler.ExecuteAsync(context, cancellationToken);
                 node.Output = result.Output;
+                if (result.EffectiveProvider is not null) node.EffectiveProvider = result.EffectiveProvider;
+                if (result.EffectiveModel is not null) node.EffectiveModel = result.EffectiveModel;
+                node.EffectiveTemperature = result.EffectiveTemperature;
                 if (result.PausesWorkflow)
                 {
                     run.Status = WorkflowRunStatus.WaitingForApproval;
@@ -188,17 +199,29 @@ public sealed class WorkflowExecutionService(
     {
         Id = Guid.NewGuid(),
         PresetKey = preset.Key,
+        ResultContractKey = preset.ResultContractKey,
+        ResultContractVersion = preset.ResultContractVersion,
         Status = WorkflowRunStatus.Running,
         ExpiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(30),
         Inputs = new Dictionary<string, string>(request.Inputs, StringComparer.Ordinal),
         AgentOverrides = request.AgentOverrides.ToList(),
-        Nodes = preset.Workflow.Steps.OrderBy(step => step.Position).Select(step => new WorkflowNodeRun
+        Nodes = preset.Workflow.Steps.OrderBy(step => step.Position).Select(step =>
         {
-            NodeId = step.Id,
-            NodeKey = step.ReferenceKey,
-            DisplayName = step.DisplayName,
-            Type = step.Type,
-            Status = WorkflowNodeStatus.Idle
+            var agent = step.Type == WorkflowNodeType.Agent
+                ? preset.Agents.SingleOrDefault(candidate => candidate.Key == step.ReferenceKey)
+                : null;
+            var agentOverride = request.AgentOverrides.SingleOrDefault(
+                candidate => candidate.AgentKey == step.ReferenceKey);
+            return new WorkflowNodeRun
+            {
+                NodeId = step.Id,
+                NodeKey = step.ReferenceKey,
+                DisplayName = step.DisplayName,
+                Type = step.Type,
+                Status = WorkflowNodeStatus.Idle,
+                EffectiveProvider = agent?.Model.Provider.Key,
+                EffectiveModel = agentOverride?.Model ?? agent?.Model.Key
+            };
         }).ToList()
     };
 

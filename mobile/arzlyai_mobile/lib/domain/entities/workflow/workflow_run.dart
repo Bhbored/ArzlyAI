@@ -1,8 +1,18 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
+import 'package:arzlyai_mobile/domain/entities/report/arzly_report.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 
 part 'workflow_run.freezed.dart';
+
+@freezed
+sealed class RenderedWorkflowResult with _$RenderedWorkflowResult {
+  const factory RenderedWorkflowResult({
+    required String mediaType,
+    required String content,
+  }) = _RenderedWorkflowResult;
+}
 
 @freezed
 sealed class ApprovalSnapshot with _$ApprovalSnapshot {
@@ -24,6 +34,9 @@ sealed class WorkflowNodeRun with _$WorkflowNodeRun {
     required bool isRunning,
     String? output,
     String? error,
+    String? effectiveProvider,
+    String? effectiveModel,
+    double? effectiveTemperature,
     DateTime? updatedAtUtc,
   }) = _WorkflowNodeRun;
 }
@@ -37,6 +50,9 @@ sealed class WorkflowRun with _$WorkflowRun {
     required List<WorkflowNodeRun> nodes,
     ApprovalSnapshot? approval,
     String? finalResponse,
+    ArzlyReport? report,
+    RenderedWorkflowResult? renderedResult,
+    ResultContract? resultContract,
     String? localWorkflowId,
     DateTime? createdAtUtc,
     DateTime? updatedAtUtc,

@@ -15,9 +15,9 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import 'package:arzlyai_mobile/ui/features/presets/catalog/preset_catalog_screen.dart';

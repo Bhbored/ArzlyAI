@@ -10,23 +10,23 @@ import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/network/executor/api_executor.dart';
-import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/core/notifications/notification_payload.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/scheduled_workflow_executor.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/workflow/workflow_run_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/network/services/preset/preset_service.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/workflow_schedule.dart';
 import '../helpers/fakes.dart';
 
@@ -56,6 +56,7 @@ void main() {
       db,
       workflowService,
       const WorkflowRunMapper(),
+      const ArzlyReportMapper(),
     );
     presetRepository = PresetRepository(
       db,

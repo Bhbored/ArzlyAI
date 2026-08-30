@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 

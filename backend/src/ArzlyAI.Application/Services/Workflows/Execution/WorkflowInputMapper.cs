@@ -44,6 +44,11 @@ public sealed partial class WorkflowInputMapper : IWorkflowInputMapper
         if (path.StartsWith(inputPrefix, StringComparison.Ordinal))
         {
             var key = path[inputPrefix.Length..];
+            if (key.EndsWith("?", StringComparison.Ordinal))
+            {
+                key = key[..^1];
+                return run.Inputs.GetValueOrDefault(key) ?? string.Empty;
+            }
             return Required(run.Inputs, key, path);
         }
 

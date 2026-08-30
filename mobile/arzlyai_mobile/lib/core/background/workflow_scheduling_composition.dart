@@ -13,15 +13,16 @@ import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.d
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_android.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_store.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/scheduled_workflow_executor.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/workflow/workflow_run_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
@@ -91,6 +92,7 @@ class WorkflowSchedulingComposition {
       db,
       workflowService,
       const WorkflowRunMapper(),
+      const ArzlyReportMapper(),
     );
     final presetRepository = PresetRepository(
       db,

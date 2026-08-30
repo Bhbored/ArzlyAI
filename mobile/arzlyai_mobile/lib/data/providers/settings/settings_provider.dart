@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/data/providers/credentials/credential_requirements_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/settings_credentials_temp.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 
 part 'settings_provider.g.dart';
 

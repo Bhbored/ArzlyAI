@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_android.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_store.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';

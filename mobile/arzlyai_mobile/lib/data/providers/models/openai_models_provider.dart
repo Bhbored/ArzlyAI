@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/openai_model_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
 
 part 'openai_models_provider.g.dart';

@@ -10,11 +10,32 @@ class AppModelSelect extends ConsumerWidget {
   const AppModelSelect({
     required this.enabled,
     required this.onRetry,
+    this.agentKey,
+    this.defaultModelId,
+    this.requiresWebSearch = false,
     super.key,
   });
 
+  factory AppModelSelect.forAgent({
+    required String agentKey,
+    required String defaultModelId,
+    required bool requiresWebSearch,
+    required bool enabled,
+    required VoidCallback onRetry,
+  }) =>
+      AppModelSelect(
+        enabled: enabled,
+        onRetry: onRetry,
+        agentKey: agentKey,
+        defaultModelId: defaultModelId,
+        requiresWebSearch: requiresWebSearch,
+      );
+
   final bool enabled;
   final VoidCallback onRetry;
+  final String? agentKey;
+  final String? defaultModelId;
+  final bool requiresWebSearch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -41,57 +62,93 @@ class AppModelSelect extends ConsumerWidget {
             ],
           );
         }
-        final selectedId = _selectedId(config.model, models);
+        final selectedId = _selectedId(config, models);
         final labelFor = {
           for (final model in models) model.id: model.displayName,
         };
-        return ShadSelect<String>(
-          key: ValueKey(selectedId),
-          enabled: enabled,
-          initialValue: selectedId,
-          placeholder: const Text('Select a model'),
-          selectedOptionBuilder: (context, value) =>
-              Text(labelFor[value] ?? value, style: theme.textTheme.p),
-          onChanged: (value) {
-            if (value == null) return;
-            _applyModel(ref, value, models);
-          },
-          options: models
-              .map(
-                (model) => ShadOption(
-                  value: model.id,
-                  child: Text(model.displayName, style: theme.textTheme.p),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (requiresWebSearch)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'This agent requires hosted web search.',
+                  style: theme.textTheme.muted.copyWith(
+                    color: theme.colorScheme.mutedForeground,
+                  ),
                 ),
-              )
-              .toList(),
+              ),
+            ShadSelect<String>(
+              key: ValueKey(selectedId),
+              enabled: enabled,
+              initialValue: selectedId,
+              placeholder: const Text('Select a model'),
+              selectedOptionBuilder: (context, value) =>
+                  Text(labelFor[value] ?? value, style: theme.textTheme.p),
+              onChanged: (value) {
+                if (value == null) return;
+                _applyModel(ref, value, models);
+              },
+              options: models
+                  .where(
+                    (model) =>
+                        !requiresWebSearch || model.supportsWebSearch,
+                  )
+                  .map(
+                    (model) => ShadOption(
+                      value: model.id,
+                      child: Text(model.displayName, style: theme.textTheme.p),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
         );
       },
     );
   }
 
-  String _selectedId(String? configModel, List<OpenAiModel> models) {
-    if (configModel != null && models.any((model) => model.id == configModel)) {
-      return configModel;
+  String _selectedId(RunConfigState config, List<OpenAiModel> models) {
+    final configured = agentKey == null
+        ? config.model
+        : config.agentOverrides[agentKey!]?.model;
+    final fallback = defaultModelId ?? configured;
+    if (fallback != null && models.any((model) => model.id == fallback)) {
+      return fallback;
+    }
+    if (configured != null && models.any((model) => model.id == configured)) {
+      return configured;
     }
     return models.first.id;
   }
 
   void _applyModel(WidgetRef ref, String modelId, List<OpenAiModel> models) {
+    final model = models.where((item) => item.id == modelId).firstOrNull;
+    if (model == null) return;
+    if (requiresWebSearch && !model.supportsWebSearch) return;
     final current = ref.read(runConfigTempProvider);
-    if (modelId == current.model) return;
-    final supports =
-        models
-            .where((model) => model.id == modelId)
-            .firstOrNull
-            ?.supportsTemperature ??
-        false;
-    ref
-        .read(runConfigTempProvider.notifier)
-        .update(
-          current.copyWith(
-            model: modelId,
-            temperature: supports ? current.temperature : null,
-          ),
-        );
+    if (agentKey == null) {
+      if (modelId == current.model) return;
+      ref.read(runConfigTempProvider.notifier).update(
+        current.copyWith(
+          model: modelId,
+          temperature: model.supportsTemperature ? current.temperature : null,
+        ),
+      );
+      return;
+    }
+    final existing = current.agentOverrides[agentKey!];
+    if (existing?.model == modelId) return;
+    final overrides = Map<String, AgentOverrideDraft>.from(
+      current.agentOverrides,
+    );
+    overrides[agentKey!] = (existing ?? const AgentOverrideDraft()).copyWith(
+      model: modelId,
+      temperature: model.supportsTemperature ? existing?.temperature : null,
+    );
+    ref.read(runConfigTempProvider.notifier).update(
+      current.copyWith(agentOverrides: overrides),
+    );
   }
 }

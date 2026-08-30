@@ -7,4 +7,7 @@ public sealed record WorkflowNodeRunResponse(
     string Status,
     bool IsRunning,
     string? Output,
-    string? Error);
+    string? Error,
+    string? EffectiveProvider,
+    string? EffectiveModel,
+    double? EffectiveTemperature);

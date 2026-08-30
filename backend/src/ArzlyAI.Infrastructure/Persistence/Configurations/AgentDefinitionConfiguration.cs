@@ -12,6 +12,7 @@ public sealed class AgentDefinitionConfiguration : IEntityTypeConfiguration<Agen
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => new { x.PresetId, x.Key }).IsUnique();
         builder.Property(x => x.RuntimeType).HasConversion<string>();
+        builder.Property(x => x.OutputSchemaJson).HasColumnType("jsonb");
         builder.HasOne(x => x.Harness)
             .WithOne(x => x.Agent)
             .HasForeignKey<AgentHarnessDefinition>(x => x.AgentId);

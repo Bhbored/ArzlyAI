@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AgentModelConfigurationResponse {
 
- String get provider; String get selectedModel; List<ModelOptionResponse> get availableModels; bool get isModelEditable; double get temperature; double get minimumTemperature; double get maximumTemperature; bool get isTemperatureEditable;
+ String get provider; String get selectedModel; List<ModelOptionResponse> get availableModels; bool get isModelEditable; double get temperature; double get minimumTemperature; double get maximumTemperature; bool get isTemperatureEditable; bool get supportsWebSearch;
 /// Create a copy of AgentModelConfigurationResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AgentModelConfigurationResponseCopyWith<AgentModelConfigurationResponse> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentModelConfigurationResponse&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other.availableModels, availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentModelConfigurationResponse&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other.availableModels, availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable);
+int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable,supportsWebSearch);
 
 @override
 String toString() {
-  return 'AgentModelConfigurationResponse(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable)';
+  return 'AgentModelConfigurationResponse(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AgentModelConfigurationResponseCopyWith<$Res>  {
   factory $AgentModelConfigurationResponseCopyWith(AgentModelConfigurationResponse value, $Res Function(AgentModelConfigurationResponse) _then) = _$AgentModelConfigurationResponseCopyWithImpl;
 @useResult
 $Res call({
- String provider, String selectedModel, List<ModelOptionResponse> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable
+ String provider, String selectedModel, List<ModelOptionResponse> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable, bool supportsWebSearch
 });
 
 
@@ -65,7 +65,7 @@ class _$AgentModelConfigurationResponseCopyWithImpl<$Res>
 
 /// Create a copy of AgentModelConfigurationResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,Object? supportsWebSearch = null,}) {
   return _then(_self.copyWith(
 provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,selectedModel: null == selectedModel ? _self.selectedModel : selectedModel // ignore: cast_nullable_to_non_nullable
@@ -75,6 +75,7 @@ as bool,temperature: null == temperature ? _self.temperature : temperature // ig
 as double,minimumTemperature: null == minimumTemperature ? _self.minimumTemperature : minimumTemperature // ignore: cast_nullable_to_non_nullable
 as double,maximumTemperature: null == maximumTemperature ? _self.maximumTemperature : maximumTemperature // ignore: cast_nullable_to_non_nullable
 as double,isTemperatureEditable: null == isTemperatureEditable ? _self.isTemperatureEditable : isTemperatureEditable // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AgentModelConfigurationResponse() when $default != null:
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);case _:
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)  $default,) {final _that = this;
 switch (_that) {
 case _AgentModelConfigurationResponse():
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);}
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -195,10 +196,10 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String provider,  String selectedModel,  List<ModelOptionResponse> availableModels,  bool isModelEditable,  double temperature,  double minimumTemperature,  double maximumTemperature,  bool isTemperatureEditable,  bool supportsWebSearch)?  $default,) {final _that = this;
 switch (_that) {
 case _AgentModelConfigurationResponse() when $default != null:
-return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable);case _:
+return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.isModelEditable,_that.temperature,_that.minimumTemperature,_that.maximumTemperature,_that.isTemperatureEditable,_that.supportsWebSearch);case _:
   return null;
 
 }
@@ -210,7 +211,7 @@ return $default(_that.provider,_that.selectedModel,_that.availableModels,_that.i
 @JsonSerializable()
 
 class _AgentModelConfigurationResponse implements AgentModelConfigurationResponse {
-  const _AgentModelConfigurationResponse({required this.provider, required this.selectedModel, required final  List<ModelOptionResponse> availableModels, required this.isModelEditable, required this.temperature, required this.minimumTemperature, required this.maximumTemperature, required this.isTemperatureEditable}): _availableModels = availableModels;
+  const _AgentModelConfigurationResponse({required this.provider, required this.selectedModel, required final  List<ModelOptionResponse> availableModels, required this.isModelEditable, required this.temperature, required this.minimumTemperature, required this.maximumTemperature, required this.isTemperatureEditable, this.supportsWebSearch = false}): _availableModels = availableModels;
   factory _AgentModelConfigurationResponse.fromJson(Map<String, dynamic> json) => _$AgentModelConfigurationResponseFromJson(json);
 
 @override final  String provider;
@@ -227,6 +228,7 @@ class _AgentModelConfigurationResponse implements AgentModelConfigurationRespons
 @override final  double minimumTemperature;
 @override final  double maximumTemperature;
 @override final  bool isTemperatureEditable;
+@override@JsonKey() final  bool supportsWebSearch;
 
 /// Create a copy of AgentModelConfigurationResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentModelConfigurationResponse&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other._availableModels, _availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentModelConfigurationResponse&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.selectedModel, selectedModel) || other.selectedModel == selectedModel)&&const DeepCollectionEquality().equals(other._availableModels, _availableModels)&&(identical(other.isModelEditable, isModelEditable) || other.isModelEditable == isModelEditable)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.minimumTemperature, minimumTemperature) || other.minimumTemperature == minimumTemperature)&&(identical(other.maximumTemperature, maximumTemperature) || other.maximumTemperature == maximumTemperature)&&(identical(other.isTemperatureEditable, isTemperatureEditable) || other.isTemperatureEditable == isTemperatureEditable)&&(identical(other.supportsWebSearch, supportsWebSearch) || other.supportsWebSearch == supportsWebSearch));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(_availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable);
+int get hashCode => Object.hash(runtimeType,provider,selectedModel,const DeepCollectionEquality().hash(_availableModels),isModelEditable,temperature,minimumTemperature,maximumTemperature,isTemperatureEditable,supportsWebSearch);
 
 @override
 String toString() {
-  return 'AgentModelConfigurationResponse(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable)';
+  return 'AgentModelConfigurationResponse(provider: $provider, selectedModel: $selectedModel, availableModels: $availableModels, isModelEditable: $isModelEditable, temperature: $temperature, minimumTemperature: $minimumTemperature, maximumTemperature: $maximumTemperature, isTemperatureEditable: $isTemperatureEditable, supportsWebSearch: $supportsWebSearch)';
 }
 
 
@@ -261,7 +263,7 @@ abstract mixin class _$AgentModelConfigurationResponseCopyWith<$Res> implements 
   factory _$AgentModelConfigurationResponseCopyWith(_AgentModelConfigurationResponse value, $Res Function(_AgentModelConfigurationResponse) _then) = __$AgentModelConfigurationResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String provider, String selectedModel, List<ModelOptionResponse> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable
+ String provider, String selectedModel, List<ModelOptionResponse> availableModels, bool isModelEditable, double temperature, double minimumTemperature, double maximumTemperature, bool isTemperatureEditable, bool supportsWebSearch
 });
 
 
@@ -278,7 +280,7 @@ class __$AgentModelConfigurationResponseCopyWithImpl<$Res>
 
 /// Create a copy of AgentModelConfigurationResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? provider = null,Object? selectedModel = null,Object? availableModels = null,Object? isModelEditable = null,Object? temperature = null,Object? minimumTemperature = null,Object? maximumTemperature = null,Object? isTemperatureEditable = null,Object? supportsWebSearch = null,}) {
   return _then(_AgentModelConfigurationResponse(
 provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,selectedModel: null == selectedModel ? _self.selectedModel : selectedModel // ignore: cast_nullable_to_non_nullable
@@ -288,6 +290,7 @@ as bool,temperature: null == temperature ? _self.temperature : temperature // ig
 as double,minimumTemperature: null == minimumTemperature ? _self.minimumTemperature : minimumTemperature // ignore: cast_nullable_to_non_nullable
 as double,maximumTemperature: null == maximumTemperature ? _self.maximumTemperature : maximumTemperature // ignore: cast_nullable_to_non_nullable
 as double,isTemperatureEditable: null == isTemperatureEditable ? _self.isTemperatureEditable : isTemperatureEditable // ignore: cast_nullable_to_non_nullable
+as bool,supportsWebSearch: null == supportsWebSearch ? _self.supportsWebSearch : supportsWebSearch // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

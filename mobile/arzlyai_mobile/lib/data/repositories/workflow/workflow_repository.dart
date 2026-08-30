@@ -5,9 +5,14 @@ import 'package:uuid/uuid.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
+import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
+import 'package:arzlyai_mobile/domain/entities/report/arzly_report.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/domain/mappers/workflow/workflow_run_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
@@ -21,15 +26,17 @@ WorkflowRepository workflowRepository(Ref ref) {
     ref.read(appDatabaseProvider),
     ref.read(workflowServiceProvider),
     const WorkflowRunMapper(),
+    const ArzlyReportMapper(),
   );
 }
 
 class WorkflowRepository {
-  WorkflowRepository(this._db, this._service, this._mapper);
+  WorkflowRepository(this._db, this._service, this._mapper, this._reportMapper);
 
   final AppDatabase _db;
   final WorkflowService _service;
   final WorkflowRunMapper _mapper;
+  final ArzlyReportMapper _reportMapper;
   final _uuid = const Uuid();
 
   Future<WorkflowInstance> createInstance({
@@ -68,9 +75,9 @@ class WorkflowRepository {
   }
 
   Future<WorkflowInstance?> getInstance(String id) async {
-    final row = await (_db.select(_db.workflowInstances)
-          ..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.workflowInstances,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (row == null) return null;
     return WorkflowInstance(
       id: row.id,
@@ -90,7 +97,9 @@ class WorkflowRepository {
     String? modelOverridesJson,
   }) async {
     final now = DateTime.now().toUtc();
-    await (_db.update(_db.workflowInstances)..where((t) => t.id.equals(id))).write(
+    await (_db.update(
+      _db.workflowInstances,
+    )..where((t) => t.id.equals(id))).write(
       WorkflowInstancesCompanion(
         topic: Value(topic),
         modelOverridesJson: Value(modelOverridesJson),
@@ -100,27 +109,101 @@ class WorkflowRepository {
   }
 
   Future<bool> hasPendingApproval(String localWorkflowId) async {
-    final rows = await (_db.select(_db.workflowRuns)
-          ..where(
-            (t) =>
-                t.localWorkflowId.equals(localWorkflowId) &
-                t.status.equals(WorkflowRunStatus.waitingForApproval.wireValue),
-          ))
-        .get();
+    final rows =
+        await (_db.select(_db.workflowRuns)..where(
+              (t) =>
+                  t.localWorkflowId.equals(localWorkflowId) &
+                  t.status.equals(
+                    WorkflowRunStatus.waitingForApproval.wireValue,
+                  ),
+            ))
+            .get();
     return rows.isNotEmpty;
   }
 
   Future<WorkflowRun?> latestRunForWorkflow(String localWorkflowId) async {
-    final rows = await (_db.select(_db.workflowRuns)
-          ..where((t) => t.localWorkflowId.equals(localWorkflowId))
-          ..orderBy([(t) => OrderingTerm.desc(t.updatedAtUtc)]))
-        .get();
+    final rows =
+        await (_db.select(_db.workflowRuns)
+              ..where((t) => t.localWorkflowId.equals(localWorkflowId))
+              ..orderBy([(t) => OrderingTerm.desc(t.updatedAtUtc)]))
+            .get();
     if (rows.isEmpty) return null;
     return getLocalRun(rows.first.runId);
   }
 
   Future<WorkflowRunResponse> fetchRemote(String runId) =>
       _service.getRun(runId);
+
+  Future<WorkflowRun?> reconcileByRunId(
+    String runId, {
+    required String localWorkflowId,
+    DateTime? expiryUtc,
+    Future<void> Function(Duration delay)? wait,
+  }) async {
+    final pause = wait ?? Future<void>.delayed;
+    WorkflowRun? latest;
+
+    Future<WorkflowRun> fetchAndPersist() async {
+      final dto = await fetchRemote(runId);
+      return persistDto(
+        dto,
+        localWorkflowId: localWorkflowId,
+        expiryUtc: expiryUtc,
+      );
+    }
+
+    try {
+      latest = await fetchAndPersist();
+      if (isReconcileTerminal(latest.status)) return latest;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) rethrow;
+    } on Object catch (_) {
+      // Transient failure; continue to backoff polling.
+    }
+
+    for (final seconds in reconcileBackoffSeconds) {
+      await pause(Duration(seconds: seconds));
+      try {
+        latest = await fetchAndPersist();
+        if (isReconcileTerminal(latest.status)) return latest;
+      } on ApiException catch (e) {
+        if (e.statusCode == 404) rethrow;
+      } on Object {
+        continue;
+      }
+    }
+    try {
+      return await fetchAndPersist();
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) rethrow;
+      return latest;
+    } on Object {
+      return latest;
+    }
+  }
+
+  Future<WorkflowRun?> reconcileLatestForWorkflow(
+    String localWorkflowId, {
+    DateTime? expiryUtc,
+    Future<void> Function(Duration delay)? wait,
+  }) async {
+    final pause = wait ?? Future<void>.delayed;
+    WorkflowRun? latest;
+    for (final seconds in reconcileBackoffSeconds) {
+      await pause(Duration(seconds: seconds));
+      latest = await latestRunForWorkflow(localWorkflowId);
+      final runId = latest?.runId;
+      if (runId == null) continue;
+      final reconciled = await reconcileByRunId(
+        runId,
+        localWorkflowId: localWorkflowId,
+        expiryUtc: expiryUtc ?? latest?.expiryUtc,
+        wait: (_) async {},
+      );
+      if (reconciled != null) return reconciled;
+    }
+    return latest;
+  }
 
   Future<void> persistRun(WorkflowRun run) async {
     await _db.transaction(() async {
@@ -200,6 +283,13 @@ class WorkflowRepository {
                     }),
             ),
             finalResponse: Value(run.finalResponse),
+            resultDocumentJson: Value(
+              run.report == null ? null : _reportMapper.toJsonString(run.report!),
+            ),
+            resultContractKey: Value(run.resultContract?.key),
+            resultContractVersion: Value(run.resultContract?.version),
+            renderedResultMediaType: Value(run.renderedResult?.mediaType),
+            renderedResultContent: Value(run.renderedResult?.content),
             createdAtUtc: run.createdAtUtc ?? now,
             updatedAtUtc: now,
             expiryUtc: Value(run.expiryUtc),
@@ -218,6 +308,9 @@ class WorkflowRepository {
               status: node.status.wireValue,
               output: Value(node.output),
               error: Value(node.error),
+              effectiveProvider: Value(node.effectiveProvider),
+              effectiveModel: Value(node.effectiveModel),
+              effectiveTemperature: Value(node.effectiveTemperature),
               updatedAtUtc: node.updatedAtUtc ?? now,
             ),
           );
@@ -250,16 +343,48 @@ class WorkflowRepository {
               isRunning: n.status == WorkflowNodeStatus.running.wireValue,
               output: n.output,
               error: n.error,
+              effectiveProvider: n.effectiveProvider,
+              effectiveModel: n.effectiveModel,
+              effectiveTemperature: n.effectiveTemperature,
               updatedAtUtc: n.updatedAtUtc,
             ),
           )
           .toList(),
       approval: approval,
       finalResponse: row.finalResponse,
+      report: _report(row),
+      renderedResult: _renderedResult(row),
+      resultContract: _resultContract(row),
       localWorkflowId: row.localWorkflowId,
       createdAtUtc: row.createdAtUtc,
       updatedAtUtc: row.updatedAtUtc,
       expiryUtc: row.expiryUtc,
     );
+  }
+
+  ArzlyReport? _report(WorkflowRunRow row) {
+    if (row.resultDocumentJson != null) {
+      return _reportMapper.fromJsonString(row.resultDocumentJson);
+    }
+    return _reportMapper.fromJsonString(row.finalResponse);
+  }
+
+  RenderedWorkflowResult? _renderedResult(WorkflowRunRow row) {
+    final mediaType = row.renderedResultMediaType;
+    final content = row.renderedResultContent;
+    if (mediaType == null || content == null || content.isEmpty) return null;
+    return RenderedWorkflowResult(mediaType: mediaType, content: content);
+  }
+
+  ResultContract? _resultContract(WorkflowRunRow row) {
+    if (row.resultContractKey != null && row.resultContractVersion != null) {
+      return ResultContract(
+        key: row.resultContractKey!,
+        version: row.resultContractVersion!,
+      );
+    }
+    final report = _report(row);
+    if (report == null) return null;
+    return ResultContract(key: report.schema, version: report.version);
   }
 }

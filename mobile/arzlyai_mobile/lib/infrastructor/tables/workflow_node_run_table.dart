@@ -10,6 +10,9 @@ class WorkflowNodeRuns extends Table {
   TextColumn get status => text()();
   TextColumn get output => text().nullable()();
   TextColumn get error => text().nullable()();
+  TextColumn get effectiveProvider => text().nullable()();
+  TextColumn get effectiveModel => text().nullable()();
+  RealColumn get effectiveTemperature => real().nullable()();
   DateTimeColumn get updatedAtUtc => dateTime()();
 
   @override

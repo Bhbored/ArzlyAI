@@ -19,6 +19,7 @@ _AgentModelConfigurationResponse _$AgentModelConfigurationResponseFromJson(
   minimumTemperature: (json['minimumTemperature'] as num).toDouble(),
   maximumTemperature: (json['maximumTemperature'] as num).toDouble(),
   isTemperatureEditable: json['isTemperatureEditable'] as bool,
+  supportsWebSearch: json['supportsWebSearch'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$AgentModelConfigurationResponseToJson(
@@ -32,4 +33,5 @@ Map<String, dynamic> _$AgentModelConfigurationResponseToJson(
   'minimumTemperature': instance.minimumTemperature,
   'maximumTemperature': instance.maximumTemperature,
   'isTemperatureEditable': instance.isTemperatureEditable,
+  'supportsWebSearch': instance.supportsWebSearch,
 };

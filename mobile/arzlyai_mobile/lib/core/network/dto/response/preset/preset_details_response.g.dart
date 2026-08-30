@@ -26,6 +26,12 @@ _PresetDetailsResponse _$PresetDetailsResponseFromJson(
             IntegrationRequirementResponse.fromJson(e as Map<String, dynamic>),
       )
       .toList(),
+  inputSchemaJson: json['inputSchemaJson'] as String?,
+  resultContract: json['resultContract'] == null
+      ? null
+      : ResultContractResponse.fromJson(
+          json['resultContract'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$PresetDetailsResponseToJson(
@@ -39,4 +45,6 @@ Map<String, dynamic> _$PresetDetailsResponseToJson(
   'agents': instance.agents.map((e) => e.toJson()).toList(),
   'workflow': instance.workflow.toJson(),
   'integrations': instance.integrations.map((e) => e.toJson()).toList(),
+  'inputSchemaJson': instance.inputSchemaJson,
+  'resultContract': instance.resultContract?.toJson(),
 };

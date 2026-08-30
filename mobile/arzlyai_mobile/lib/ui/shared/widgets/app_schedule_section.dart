@@ -9,8 +9,8 @@ import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
 import 'package:arzlyai_mobile/data/providers/scheduling/schedule_providers.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';

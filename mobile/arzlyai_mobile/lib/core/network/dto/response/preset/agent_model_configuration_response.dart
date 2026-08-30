@@ -16,6 +16,7 @@ sealed class AgentModelConfigurationResponse
     required double minimumTemperature,
     required double maximumTemperature,
     required bool isTemperatureEditable,
+    @Default(false) bool supportsWebSearch,
   }) = _AgentModelConfigurationResponse;
 
   factory AgentModelConfigurationResponse.fromJson(Map<String, dynamic> json) =>

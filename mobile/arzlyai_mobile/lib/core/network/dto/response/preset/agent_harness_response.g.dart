@@ -14,6 +14,7 @@ _AgentHarnessResponse _$AgentHarnessResponseFromJson(
   contextCompactionEnabled: json['contextCompactionEnabled'] as bool,
   requiresToolApproval: json['requiresToolApproval'] as bool,
   maximumIterations: (json['maximumIterations'] as num).toInt(),
+  webSearchEnabled: json['webSearchEnabled'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$AgentHarnessResponseToJson(
@@ -24,4 +25,5 @@ Map<String, dynamic> _$AgentHarnessResponseToJson(
   'contextCompactionEnabled': instance.contextCompactionEnabled,
   'requiresToolApproval': instance.requiresToolApproval,
   'maximumIterations': instance.maximumIterations,
+  'webSearchEnabled': instance.webSearchEnabled,
 };

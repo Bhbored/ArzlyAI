@@ -23,6 +23,12 @@ public sealed class OpenAiModelCapabilityPolicy : IModelCapabilityPolicy
                model.StartsWith("gpt-3.5", StringComparison.OrdinalIgnoreCase);
     }
 
+    public bool SupportsWebSearch(string provider, string model) =>
+        IsUsable(provider, model) &&
+        (model.StartsWith("gpt-4", StringComparison.OrdinalIgnoreCase) ||
+         model.StartsWith("gpt-5", StringComparison.OrdinalIgnoreCase) ||
+         IsReasoningModel(model));
+
     private static bool IsReasoningModel(string model) =>
         model.Length >= 2 &&
         model[0] == 'o' &&

@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/connectors/connector_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/connectors/connector_status.dart';
 
 part 'connector_status_provider.g.dart';

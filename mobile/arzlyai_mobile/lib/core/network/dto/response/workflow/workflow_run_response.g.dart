@@ -22,6 +22,12 @@ _WorkflowRunResponse _$WorkflowRunResponseFromJson(Map<String, dynamic> json) =>
               json['approval'] as Map<String, dynamic>,
             ),
       finalResponse: json['finalResponse'] as String?,
+      resultDocument: json['resultDocument'] as Map<String, dynamic>?,
+      renderedResult: json['renderedResult'] == null
+          ? null
+          : RenderedWorkflowResultResponse.fromJson(
+              json['renderedResult'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$WorkflowRunResponseToJson(
@@ -33,4 +39,6 @@ Map<String, dynamic> _$WorkflowRunResponseToJson(
   'nodes': instance.nodes.map((e) => e.toJson()).toList(),
   'approval': instance.approval?.toJson(),
   'finalResponse': instance.finalResponse,
+  'resultDocument': instance.resultDocument,
+  'renderedResult': instance.renderedResult?.toJson(),
 };

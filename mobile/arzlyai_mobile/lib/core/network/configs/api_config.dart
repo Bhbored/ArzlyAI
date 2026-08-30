@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 abstract final class ApiConfig {
@@ -13,6 +14,13 @@ abstract final class ApiConfig {
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 60);
   static const Duration sendTimeout = Duration(seconds: 15);
+  static const Duration workflowSendTimeout = Duration(minutes: 1);
+  static const Duration workflowReceiveTimeout = Duration(minutes: 11);
+
+  static Options workflowOptions() => Options(
+    sendTimeout: workflowSendTimeout,
+    receiveTimeout: workflowReceiveTimeout,
+  );
 
   static Uri api(String path) {
     final origin = parseOrigin(defaultOrigin);

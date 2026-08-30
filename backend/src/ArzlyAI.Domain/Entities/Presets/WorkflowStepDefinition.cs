@@ -10,5 +10,8 @@ public sealed class WorkflowStepDefinition : Base
     public required string DisplayName { get; init; }
     public required string InputMappingJson { get; init; }
     public bool RequiresHumanApproval { get; init; }
+    public string? ConfigurationJson { get; init; }
+    public string? ResultContractKey { get; init; }
+    public int? ResultContractVersion { get; init; }
     public WorkflowDefinition Workflow { get; init; } = null!;
 }

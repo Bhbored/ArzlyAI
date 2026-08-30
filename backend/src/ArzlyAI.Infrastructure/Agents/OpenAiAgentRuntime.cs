@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ArzlyAI.Application.Services.Agents;
 using ArzlyAI.Domain.Presets;
 using Microsoft.Agents.AI;
@@ -36,10 +37,26 @@ public sealed class OpenAiAgentRuntime(
             DisableToolAutoApproval = definition.Harness.RequireToolApproval,
             MaximumIterationsPerRequest = definition.Harness.MaxIterations,
             DisableFileMemory = true,
-            DisableWebSearch = true,
+            DisableWebSearch = !definition.Harness.WebSearchEnabled,
             DisableAgentSkillsProvider = true
         });
-        var response = await agent.RunAsync(input, cancellationToken: cancellationToken);
+        AgentRunOptions? runOptions = null;
+        if (!string.IsNullOrWhiteSpace(definition.OutputSchemaJson))
+        {
+            using var schemaDocument = JsonDocument.Parse(definition.OutputSchemaJson);
+            runOptions = new AgentRunOptions
+            {
+                ResponseFormat = ChatResponseFormat.ForJsonSchema(
+                    schemaDocument.RootElement.Clone(),
+                    $"{definition.Key}-output",
+                    $"Structured output for {definition.Name}")
+            };
+        }
+
+        var response = await agent.RunAsync(
+            input,
+            options: runOptions,
+            cancellationToken: cancellationToken);
         var output = string.IsNullOrWhiteSpace(response.Text)
             ? throw new InvalidOperationException($"Agent '{definition.Key}' returned no output.")
             : response.Text.Trim();

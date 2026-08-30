@@ -2,7 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 void main() {

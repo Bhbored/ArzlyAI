@@ -15,6 +15,12 @@ _WorkflowNodeResponse _$WorkflowNodeResponseFromJson(
   type: json['type'] as String,
   position: (json['position'] as num).toInt(),
   requiresHumanApproval: json['requiresHumanApproval'] as bool,
+  configurationJson: json['configurationJson'] as String?,
+  resultContract: json['resultContract'] == null
+      ? null
+      : ResultContractResponse.fromJson(
+          json['resultContract'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$WorkflowNodeResponseToJson(
@@ -26,4 +32,6 @@ Map<String, dynamic> _$WorkflowNodeResponseToJson(
   'type': instance.type,
   'position': instance.position,
   'requiresHumanApproval': instance.requiresHumanApproval,
+  'configurationJson': instance.configurationJson,
+  'resultContract': instance.resultContract?.toJson(),
 };

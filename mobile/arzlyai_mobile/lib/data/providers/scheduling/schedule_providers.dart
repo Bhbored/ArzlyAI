@@ -5,12 +5,12 @@ import 'package:arzlyai_mobile/core/background/workflow_scheduling_composition.d
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
-import 'package:arzlyai_mobile/data/repositories/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/schedule_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/scheduled_workflow_executor.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 
 part 'schedule_providers.g.dart';
 
@@ -70,11 +70,14 @@ Future<String?> scheduledWorkflowIdForPreset(Ref ref, String presetKey) async {
   return null;
 }
 
-@Riverpod(retry: scheduleRetry)
+@Riverpod(keepAlive: true, retry: scheduleRetry)
 Future<void> initializeWorkflowScheduling(Ref ref) async {
   await WorkflowSchedulingComposition.initializeTimeZone();
+  if (!ref.mounted) return;
   await Workmanager().initialize(workflowBackgroundDispatcher);
+  if (!ref.mounted) return;
   final scheduler = await ref.read(workflowSchedulerProvider.future);
+  if (!ref.mounted) return;
   await scheduler.reconcileEnabledSchedules();
 }
 

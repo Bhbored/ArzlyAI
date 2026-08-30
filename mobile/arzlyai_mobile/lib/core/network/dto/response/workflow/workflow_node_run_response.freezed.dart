@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WorkflowNodeRunResponse {
 
- String get nodeId; String get nodeKey; String get displayName; String get type; String get status; bool get isRunning; String? get output; String? get error;
+ String get nodeId; String get nodeKey; String get displayName; String get type; String get status; bool get isRunning; String? get output; String? get error; String? get effectiveProvider; String? get effectiveModel; double? get effectiveTemperature;
 /// Create a copy of WorkflowNodeRunResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $WorkflowNodeRunResponseCopyWith<WorkflowNodeRunResponse> get copyWith => _$Work
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNodeRunResponse&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNodeRunResponse&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.effectiveProvider, effectiveProvider) || other.effectiveProvider == effectiveProvider)&&(identical(other.effectiveModel, effectiveModel) || other.effectiveModel == effectiveModel)&&(identical(other.effectiveTemperature, effectiveTemperature) || other.effectiveTemperature == effectiveTemperature));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error);
+int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,effectiveProvider,effectiveModel,effectiveTemperature);
 
 @override
 String toString() {
-  return 'WorkflowNodeRunResponse(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error)';
+  return 'WorkflowNodeRunResponse(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, effectiveProvider: $effectiveProvider, effectiveModel: $effectiveModel, effectiveTemperature: $effectiveTemperature)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $WorkflowNodeRunResponseCopyWith<$Res>  {
   factory $WorkflowNodeRunResponseCopyWith(WorkflowNodeRunResponse value, $Res Function(WorkflowNodeRunResponse) _then) = _$WorkflowNodeRunResponseCopyWithImpl;
 @useResult
 $Res call({
- String nodeId, String nodeKey, String displayName, String type, String status, bool isRunning, String? output, String? error
+ String nodeId, String nodeKey, String displayName, String type, String status, bool isRunning, String? output, String? error, String? effectiveProvider, String? effectiveModel, double? effectiveTemperature
 });
 
 
@@ -65,7 +65,7 @@ class _$WorkflowNodeRunResponseCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNodeRunResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? effectiveProvider = freezed,Object? effectiveModel = freezed,Object? effectiveTemperature = freezed,}) {
   return _then(_self.copyWith(
 nodeId: null == nodeId ? _self.nodeId : nodeId // ignore: cast_nullable_to_non_nullable
 as String,nodeKey: null == nodeKey ? _self.nodeKey : nodeKey // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,isRunning: null == isRunning ? _self.isRunning : isRunning // ignore: cast_nullable_to_non_nullable
 as bool,output: freezed == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,effectiveProvider: freezed == effectiveProvider ? _self.effectiveProvider : effectiveProvider // ignore: cast_nullable_to_non_nullable
+as String?,effectiveModel: freezed == effectiveModel ? _self.effectiveModel : effectiveModel // ignore: cast_nullable_to_non_nullable
+as String?,effectiveTemperature: freezed == effectiveTemperature ? _self.effectiveTemperature : effectiveTemperature // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 
@@ -157,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRunResponse() when $default != null:
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error);case _:
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature);case _:
   return orElse();
 
 }
@@ -178,10 +181,10 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature)  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRunResponse():
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error);}
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -195,10 +198,10 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nodeId,  String nodeKey,  String displayName,  String type,  String status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRunResponse() when $default != null:
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error);case _:
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature);case _:
   return null;
 
 }
@@ -210,7 +213,7 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 @JsonSerializable()
 
 class _WorkflowNodeRunResponse implements WorkflowNodeRunResponse {
-  const _WorkflowNodeRunResponse({required this.nodeId, required this.nodeKey, required this.displayName, required this.type, required this.status, required this.isRunning, this.output, this.error});
+  const _WorkflowNodeRunResponse({required this.nodeId, required this.nodeKey, required this.displayName, required this.type, required this.status, required this.isRunning, this.output, this.error, this.effectiveProvider, this.effectiveModel, this.effectiveTemperature});
   factory _WorkflowNodeRunResponse.fromJson(Map<String, dynamic> json) => _$WorkflowNodeRunResponseFromJson(json);
 
 @override final  String nodeId;
@@ -221,6 +224,9 @@ class _WorkflowNodeRunResponse implements WorkflowNodeRunResponse {
 @override final  bool isRunning;
 @override final  String? output;
 @override final  String? error;
+@override final  String? effectiveProvider;
+@override final  String? effectiveModel;
+@override final  double? effectiveTemperature;
 
 /// Create a copy of WorkflowNodeRunResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNodeRunResponse&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNodeRunResponse&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.effectiveProvider, effectiveProvider) || other.effectiveProvider == effectiveProvider)&&(identical(other.effectiveModel, effectiveModel) || other.effectiveModel == effectiveModel)&&(identical(other.effectiveTemperature, effectiveTemperature) || other.effectiveTemperature == effectiveTemperature));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error);
+int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,effectiveProvider,effectiveModel,effectiveTemperature);
 
 @override
 String toString() {
-  return 'WorkflowNodeRunResponse(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error)';
+  return 'WorkflowNodeRunResponse(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, effectiveProvider: $effectiveProvider, effectiveModel: $effectiveModel, effectiveTemperature: $effectiveTemperature)';
 }
 
 
@@ -255,7 +261,7 @@ abstract mixin class _$WorkflowNodeRunResponseCopyWith<$Res> implements $Workflo
   factory _$WorkflowNodeRunResponseCopyWith(_WorkflowNodeRunResponse value, $Res Function(_WorkflowNodeRunResponse) _then) = __$WorkflowNodeRunResponseCopyWithImpl;
 @override @useResult
 $Res call({
- String nodeId, String nodeKey, String displayName, String type, String status, bool isRunning, String? output, String? error
+ String nodeId, String nodeKey, String displayName, String type, String status, bool isRunning, String? output, String? error, String? effectiveProvider, String? effectiveModel, double? effectiveTemperature
 });
 
 
@@ -272,7 +278,7 @@ class __$WorkflowNodeRunResponseCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNodeRunResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? effectiveProvider = freezed,Object? effectiveModel = freezed,Object? effectiveTemperature = freezed,}) {
   return _then(_WorkflowNodeRunResponse(
 nodeId: null == nodeId ? _self.nodeId : nodeId // ignore: cast_nullable_to_non_nullable
 as String,nodeKey: null == nodeKey ? _self.nodeKey : nodeKey // ignore: cast_nullable_to_non_nullable
@@ -282,7 +288,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as String,isRunning: null == isRunning ? _self.isRunning : isRunning // ignore: cast_nullable_to_non_nullable
 as bool,output: freezed == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,effectiveProvider: freezed == effectiveProvider ? _self.effectiveProvider : effectiveProvider // ignore: cast_nullable_to_non_nullable
+as String?,effectiveModel: freezed == effectiveModel ? _self.effectiveModel : effectiveModel // ignore: cast_nullable_to_non_nullable
+as String?,effectiveTemperature: freezed == effectiveTemperature ? _self.effectiveTemperature : effectiveTemperature // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 

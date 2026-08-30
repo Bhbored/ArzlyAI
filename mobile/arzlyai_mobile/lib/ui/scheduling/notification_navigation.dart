@@ -7,9 +7,10 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/scheduling/schedule_providers.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_preset_key_provider.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
+import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/ui/features/presets/details/preset_details_screen.dart';
-import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/review_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -29,8 +30,11 @@ class _AppSchedulingShellState extends ConsumerState<AppSchedulingShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       await ref.read(initializeWorkflowSchedulingProvider.future);
+      if (!mounted) return;
       final notifications = await ref.read(localNotificationServiceProvider.future);
+      if (!mounted) return;
       notifications.setTapHandler((_) => _handlePendingNotification());
       await _handlePendingNotification();
     });
@@ -48,12 +52,15 @@ class _AppSchedulingShellState extends ConsumerState<AppSchedulingShell>
       ref.read(workflowSchedulerProvider.future).then(
         (scheduler) => scheduler.reconcileEnabledSchedules(),
       );
+      ref.read(activeRunProvider.notifier).resumeIfProcessing();
       _handlePendingNotification();
     }
   }
 
   Future<void> _handlePendingNotification() async {
+    if (!mounted) return;
     final notifications = await ref.read(localNotificationServiceProvider.future);
+    if (!mounted) return;
     final payload = notifications.consumePendingTap();
     if (payload == null) return;
     await _navigateForPayload(payload);
@@ -84,8 +91,14 @@ class _AppSchedulingShellState extends ConsumerState<AppSchedulingShell>
     );
 
     if (payload.action == NotificationActions.review && payload.runId != null) {
+      final presetKey = ref.read(selectedPresetKeyProvider);
+      if (presetKey == null) return;
       unawaited(
-        navigator.push(MaterialPageRoute(builder: (_) => const ReviewScreen())),
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => reviewScreenForPreset(presetKey),
+          ),
+        ),
       );
     }
   }

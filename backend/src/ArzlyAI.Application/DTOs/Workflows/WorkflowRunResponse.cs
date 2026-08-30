@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace ArzlyAI.Application.DTOs.Workflows;
 public sealed record WorkflowRunResponse(
     Guid RunId,
@@ -5,4 +7,6 @@ public sealed record WorkflowRunResponse(
     string Status,
     IReadOnlyList<WorkflowNodeRunResponse> Nodes,
     ApprovalSnapshotResponse? Approval,
-    string? FinalResponse);
+    string? FinalResponse,
+    JsonElement? ResultDocument,
+    RenderedWorkflowResultResponse? RenderedResult);

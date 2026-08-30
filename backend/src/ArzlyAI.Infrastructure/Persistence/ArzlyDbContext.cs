@@ -23,6 +23,7 @@ public sealed class ArzlyDbContext(DbContextOptions<ArzlyDbContext> options) : D
         using var operation = Operation.Time("ArzlyDbContext.Initialize");
         await Database.MigrateAsync(cancellationToken);
         await LinkedInPresetSeed.SeedAsync(this, cancellationToken);
+        await SmartPurchaseDecisionPresetSeed.SeedAsync(this, cancellationToken);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

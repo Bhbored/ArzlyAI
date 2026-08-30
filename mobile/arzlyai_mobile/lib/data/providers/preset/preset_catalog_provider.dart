@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/data/providers/network/backend_url_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/preset_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 
 part 'preset_catalog_provider.g.dart';

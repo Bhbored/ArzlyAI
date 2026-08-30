@@ -9,5 +9,6 @@ public sealed class AgentHarnessDefinition : Base
     public bool ContextCompactionEnabled { get; init; }
     public bool RequireToolApproval { get; init; }
     public int MaxIterations { get; init; }
+    public bool WebSearchEnabled { get; init; }
     public AgentDefinition Agent { get; init; } = null!;
 }

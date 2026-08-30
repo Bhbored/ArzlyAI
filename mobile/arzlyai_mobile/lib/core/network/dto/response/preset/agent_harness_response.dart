@@ -11,6 +11,7 @@ sealed class AgentHarnessResponse with _$AgentHarnessResponse {
     required bool contextCompactionEnabled,
     required bool requiresToolApproval,
     required int maximumIterations,
+    @Default(false) bool webSearchEnabled,
   }) = _AgentHarnessResponse;
 
   factory AgentHarnessResponse.fromJson(Map<String, dynamic> json) =>

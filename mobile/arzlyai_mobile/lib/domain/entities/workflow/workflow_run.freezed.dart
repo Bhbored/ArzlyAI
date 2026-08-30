@@ -12,6 +12,260 @@ part of 'workflow_run.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$RenderedWorkflowResult {
+
+ String get mediaType; String get content;
+/// Create a copy of RenderedWorkflowResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$RenderedWorkflowResultCopyWith<RenderedWorkflowResult> get copyWith => _$RenderedWorkflowResultCopyWithImpl<RenderedWorkflowResult>(this as RenderedWorkflowResult, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RenderedWorkflowResult&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.content, content) || other.content == content));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,mediaType,content);
+
+@override
+String toString() {
+  return 'RenderedWorkflowResult(mediaType: $mediaType, content: $content)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $RenderedWorkflowResultCopyWith<$Res>  {
+  factory $RenderedWorkflowResultCopyWith(RenderedWorkflowResult value, $Res Function(RenderedWorkflowResult) _then) = _$RenderedWorkflowResultCopyWithImpl;
+@useResult
+$Res call({
+ String mediaType, String content
+});
+
+
+
+
+}
+/// @nodoc
+class _$RenderedWorkflowResultCopyWithImpl<$Res>
+    implements $RenderedWorkflowResultCopyWith<$Res> {
+  _$RenderedWorkflowResultCopyWithImpl(this._self, this._then);
+
+  final RenderedWorkflowResult _self;
+  final $Res Function(RenderedWorkflowResult) _then;
+
+/// Create a copy of RenderedWorkflowResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? mediaType = null,Object? content = null,}) {
+  return _then(_self.copyWith(
+mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [RenderedWorkflowResult].
+extension RenderedWorkflowResultPatterns on RenderedWorkflowResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _RenderedWorkflowResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _RenderedWorkflowResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _RenderedWorkflowResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mediaType,  String content)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult() when $default != null:
+return $default(_that.mediaType,_that.content);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mediaType,  String content)  $default,) {final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult():
+return $default(_that.mediaType,_that.content);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mediaType,  String content)?  $default,) {final _that = this;
+switch (_that) {
+case _RenderedWorkflowResult() when $default != null:
+return $default(_that.mediaType,_that.content);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _RenderedWorkflowResult implements RenderedWorkflowResult {
+  const _RenderedWorkflowResult({required this.mediaType, required this.content});
+  
+
+@override final  String mediaType;
+@override final  String content;
+
+/// Create a copy of RenderedWorkflowResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$RenderedWorkflowResultCopyWith<_RenderedWorkflowResult> get copyWith => __$RenderedWorkflowResultCopyWithImpl<_RenderedWorkflowResult>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RenderedWorkflowResult&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.content, content) || other.content == content));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,mediaType,content);
+
+@override
+String toString() {
+  return 'RenderedWorkflowResult(mediaType: $mediaType, content: $content)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$RenderedWorkflowResultCopyWith<$Res> implements $RenderedWorkflowResultCopyWith<$Res> {
+  factory _$RenderedWorkflowResultCopyWith(_RenderedWorkflowResult value, $Res Function(_RenderedWorkflowResult) _then) = __$RenderedWorkflowResultCopyWithImpl;
+@override @useResult
+$Res call({
+ String mediaType, String content
+});
+
+
+
+
+}
+/// @nodoc
+class __$RenderedWorkflowResultCopyWithImpl<$Res>
+    implements _$RenderedWorkflowResultCopyWith<$Res> {
+  __$RenderedWorkflowResultCopyWithImpl(this._self, this._then);
+
+  final _RenderedWorkflowResult _self;
+  final $Res Function(_RenderedWorkflowResult) _then;
+
+/// Create a copy of RenderedWorkflowResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? mediaType = null,Object? content = null,}) {
+  return _then(_RenderedWorkflowResult(
+mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$ApprovalSnapshot {
 
  String get originalContent; String get currentContent; bool get wasEdited;
@@ -271,7 +525,7 @@ as bool,
 /// @nodoc
 mixin _$WorkflowNodeRun {
 
- String get nodeId; String get nodeKey; String get displayName; String get type; WorkflowNodeStatus get status; bool get isRunning; String? get output; String? get error; DateTime? get updatedAtUtc;
+ String get nodeId; String get nodeKey; String get displayName; String get type; WorkflowNodeStatus get status; bool get isRunning; String? get output; String? get error; String? get effectiveProvider; String? get effectiveModel; double? get effectiveTemperature; DateTime? get updatedAtUtc;
 /// Create a copy of WorkflowNodeRun
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -282,16 +536,16 @@ $WorkflowNodeRunCopyWith<WorkflowNodeRun> get copyWith => _$WorkflowNodeRunCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNodeRun&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowNodeRun&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.effectiveProvider, effectiveProvider) || other.effectiveProvider == effectiveProvider)&&(identical(other.effectiveModel, effectiveModel) || other.effectiveModel == effectiveModel)&&(identical(other.effectiveTemperature, effectiveTemperature) || other.effectiveTemperature == effectiveTemperature)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,updatedAtUtc);
+int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,effectiveProvider,effectiveModel,effectiveTemperature,updatedAtUtc);
 
 @override
 String toString() {
-  return 'WorkflowNodeRun(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, updatedAtUtc: $updatedAtUtc)';
+  return 'WorkflowNodeRun(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, effectiveProvider: $effectiveProvider, effectiveModel: $effectiveModel, effectiveTemperature: $effectiveTemperature, updatedAtUtc: $updatedAtUtc)';
 }
 
 
@@ -302,7 +556,7 @@ abstract mixin class $WorkflowNodeRunCopyWith<$Res>  {
   factory $WorkflowNodeRunCopyWith(WorkflowNodeRun value, $Res Function(WorkflowNodeRun) _then) = _$WorkflowNodeRunCopyWithImpl;
 @useResult
 $Res call({
- String nodeId, String nodeKey, String displayName, String type, WorkflowNodeStatus status, bool isRunning, String? output, String? error, DateTime? updatedAtUtc
+ String nodeId, String nodeKey, String displayName, String type, WorkflowNodeStatus status, bool isRunning, String? output, String? error, String? effectiveProvider, String? effectiveModel, double? effectiveTemperature, DateTime? updatedAtUtc
 });
 
 
@@ -319,7 +573,7 @@ class _$WorkflowNodeRunCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNodeRun
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? updatedAtUtc = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? effectiveProvider = freezed,Object? effectiveModel = freezed,Object? effectiveTemperature = freezed,Object? updatedAtUtc = freezed,}) {
   return _then(_self.copyWith(
 nodeId: null == nodeId ? _self.nodeId : nodeId // ignore: cast_nullable_to_non_nullable
 as String,nodeKey: null == nodeKey ? _self.nodeKey : nodeKey // ignore: cast_nullable_to_non_nullable
@@ -329,7 +583,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as WorkflowNodeStatus,isRunning: null == isRunning ? _self.isRunning : isRunning // ignore: cast_nullable_to_non_nullable
 as bool,output: freezed == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
+as String?,effectiveProvider: freezed == effectiveProvider ? _self.effectiveProvider : effectiveProvider // ignore: cast_nullable_to_non_nullable
+as String?,effectiveModel: freezed == effectiveModel ? _self.effectiveModel : effectiveModel // ignore: cast_nullable_to_non_nullable
+as String?,effectiveTemperature: freezed == effectiveTemperature ? _self.effectiveTemperature : effectiveTemperature // ignore: cast_nullable_to_non_nullable
+as double?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -412,10 +669,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  DateTime? updatedAtUtc)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature,  DateTime? updatedAtUtc)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRun() when $default != null:
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.updatedAtUtc);case _:
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature,_that.updatedAtUtc);case _:
   return orElse();
 
 }
@@ -433,10 +690,10 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  DateTime? updatedAtUtc)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature,  DateTime? updatedAtUtc)  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRun():
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.updatedAtUtc);}
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature,_that.updatedAtUtc);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -450,10 +707,10 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  DateTime? updatedAtUtc)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String nodeId,  String nodeKey,  String displayName,  String type,  WorkflowNodeStatus status,  bool isRunning,  String? output,  String? error,  String? effectiveProvider,  String? effectiveModel,  double? effectiveTemperature,  DateTime? updatedAtUtc)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowNodeRun() when $default != null:
-return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.updatedAtUtc);case _:
+return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.status,_that.isRunning,_that.output,_that.error,_that.effectiveProvider,_that.effectiveModel,_that.effectiveTemperature,_that.updatedAtUtc);case _:
   return null;
 
 }
@@ -465,7 +722,7 @@ return $default(_that.nodeId,_that.nodeKey,_that.displayName,_that.type,_that.st
 
 
 class _WorkflowNodeRun implements WorkflowNodeRun {
-  const _WorkflowNodeRun({required this.nodeId, required this.nodeKey, required this.displayName, required this.type, required this.status, required this.isRunning, this.output, this.error, this.updatedAtUtc});
+  const _WorkflowNodeRun({required this.nodeId, required this.nodeKey, required this.displayName, required this.type, required this.status, required this.isRunning, this.output, this.error, this.effectiveProvider, this.effectiveModel, this.effectiveTemperature, this.updatedAtUtc});
   
 
 @override final  String nodeId;
@@ -476,6 +733,9 @@ class _WorkflowNodeRun implements WorkflowNodeRun {
 @override final  bool isRunning;
 @override final  String? output;
 @override final  String? error;
+@override final  String? effectiveProvider;
+@override final  String? effectiveModel;
+@override final  double? effectiveTemperature;
 @override final  DateTime? updatedAtUtc;
 
 /// Create a copy of WorkflowNodeRun
@@ -488,16 +748,16 @@ _$WorkflowNodeRunCopyWith<_WorkflowNodeRun> get copyWith => __$WorkflowNodeRunCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNodeRun&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowNodeRun&&(identical(other.nodeId, nodeId) || other.nodeId == nodeId)&&(identical(other.nodeKey, nodeKey) || other.nodeKey == nodeKey)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.type, type) || other.type == type)&&(identical(other.status, status) || other.status == status)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.output, output) || other.output == output)&&(identical(other.error, error) || other.error == error)&&(identical(other.effectiveProvider, effectiveProvider) || other.effectiveProvider == effectiveProvider)&&(identical(other.effectiveModel, effectiveModel) || other.effectiveModel == effectiveModel)&&(identical(other.effectiveTemperature, effectiveTemperature) || other.effectiveTemperature == effectiveTemperature)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,updatedAtUtc);
+int get hashCode => Object.hash(runtimeType,nodeId,nodeKey,displayName,type,status,isRunning,output,error,effectiveProvider,effectiveModel,effectiveTemperature,updatedAtUtc);
 
 @override
 String toString() {
-  return 'WorkflowNodeRun(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, updatedAtUtc: $updatedAtUtc)';
+  return 'WorkflowNodeRun(nodeId: $nodeId, nodeKey: $nodeKey, displayName: $displayName, type: $type, status: $status, isRunning: $isRunning, output: $output, error: $error, effectiveProvider: $effectiveProvider, effectiveModel: $effectiveModel, effectiveTemperature: $effectiveTemperature, updatedAtUtc: $updatedAtUtc)';
 }
 
 
@@ -508,7 +768,7 @@ abstract mixin class _$WorkflowNodeRunCopyWith<$Res> implements $WorkflowNodeRun
   factory _$WorkflowNodeRunCopyWith(_WorkflowNodeRun value, $Res Function(_WorkflowNodeRun) _then) = __$WorkflowNodeRunCopyWithImpl;
 @override @useResult
 $Res call({
- String nodeId, String nodeKey, String displayName, String type, WorkflowNodeStatus status, bool isRunning, String? output, String? error, DateTime? updatedAtUtc
+ String nodeId, String nodeKey, String displayName, String type, WorkflowNodeStatus status, bool isRunning, String? output, String? error, String? effectiveProvider, String? effectiveModel, double? effectiveTemperature, DateTime? updatedAtUtc
 });
 
 
@@ -525,7 +785,7 @@ class __$WorkflowNodeRunCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowNodeRun
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? updatedAtUtc = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? nodeId = null,Object? nodeKey = null,Object? displayName = null,Object? type = null,Object? status = null,Object? isRunning = null,Object? output = freezed,Object? error = freezed,Object? effectiveProvider = freezed,Object? effectiveModel = freezed,Object? effectiveTemperature = freezed,Object? updatedAtUtc = freezed,}) {
   return _then(_WorkflowNodeRun(
 nodeId: null == nodeId ? _self.nodeId : nodeId // ignore: cast_nullable_to_non_nullable
 as String,nodeKey: null == nodeKey ? _self.nodeKey : nodeKey // ignore: cast_nullable_to_non_nullable
@@ -535,7 +795,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as WorkflowNodeStatus,isRunning: null == isRunning ? _self.isRunning : isRunning // ignore: cast_nullable_to_non_nullable
 as bool,output: freezed == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
 as String?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as String?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
+as String?,effectiveProvider: freezed == effectiveProvider ? _self.effectiveProvider : effectiveProvider // ignore: cast_nullable_to_non_nullable
+as String?,effectiveModel: freezed == effectiveModel ? _self.effectiveModel : effectiveModel // ignore: cast_nullable_to_non_nullable
+as String?,effectiveTemperature: freezed == effectiveTemperature ? _self.effectiveTemperature : effectiveTemperature // ignore: cast_nullable_to_non_nullable
+as double?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));
 }
@@ -546,7 +809,7 @@ as DateTime?,
 /// @nodoc
 mixin _$WorkflowRun {
 
- String get runId; String get presetKey; WorkflowRunStatus get status; List<WorkflowNodeRun> get nodes; ApprovalSnapshot? get approval; String? get finalResponse; String? get localWorkflowId; DateTime? get createdAtUtc; DateTime? get updatedAtUtc; DateTime? get expiryUtc;
+ String get runId; String get presetKey; WorkflowRunStatus get status; List<WorkflowNodeRun> get nodes; ApprovalSnapshot? get approval; String? get finalResponse; ArzlyReport? get report; RenderedWorkflowResult? get renderedResult; ResultContract? get resultContract; String? get localWorkflowId; DateTime? get createdAtUtc; DateTime? get updatedAtUtc; DateTime? get expiryUtc;
 /// Create a copy of WorkflowRun
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -557,16 +820,16 @@ $WorkflowRunCopyWith<WorkflowRun> get copyWith => _$WorkflowRunCopyWithImpl<Work
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowRun&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.nodes, nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&(identical(other.localWorkflowId, localWorkflowId) || other.localWorkflowId == localWorkflowId)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc)&&(identical(other.expiryUtc, expiryUtc) || other.expiryUtc == expiryUtc));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkflowRun&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.nodes, nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&(identical(other.report, report) || other.report == report)&&(identical(other.renderedResult, renderedResult) || other.renderedResult == renderedResult)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract)&&(identical(other.localWorkflowId, localWorkflowId) || other.localWorkflowId == localWorkflowId)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc)&&(identical(other.expiryUtc, expiryUtc) || other.expiryUtc == expiryUtc));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(nodes),approval,finalResponse,localWorkflowId,createdAtUtc,updatedAtUtc,expiryUtc);
+int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(nodes),approval,finalResponse,report,renderedResult,resultContract,localWorkflowId,createdAtUtc,updatedAtUtc,expiryUtc);
 
 @override
 String toString() {
-  return 'WorkflowRun(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, localWorkflowId: $localWorkflowId, createdAtUtc: $createdAtUtc, updatedAtUtc: $updatedAtUtc, expiryUtc: $expiryUtc)';
+  return 'WorkflowRun(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, report: $report, renderedResult: $renderedResult, resultContract: $resultContract, localWorkflowId: $localWorkflowId, createdAtUtc: $createdAtUtc, updatedAtUtc: $updatedAtUtc, expiryUtc: $expiryUtc)';
 }
 
 
@@ -577,11 +840,11 @@ abstract mixin class $WorkflowRunCopyWith<$Res>  {
   factory $WorkflowRunCopyWith(WorkflowRun value, $Res Function(WorkflowRun) _then) = _$WorkflowRunCopyWithImpl;
 @useResult
 $Res call({
- String runId, String presetKey, WorkflowRunStatus status, List<WorkflowNodeRun> nodes, ApprovalSnapshot? approval, String? finalResponse, String? localWorkflowId, DateTime? createdAtUtc, DateTime? updatedAtUtc, DateTime? expiryUtc
+ String runId, String presetKey, WorkflowRunStatus status, List<WorkflowNodeRun> nodes, ApprovalSnapshot? approval, String? finalResponse, ArzlyReport? report, RenderedWorkflowResult? renderedResult, ResultContract? resultContract, String? localWorkflowId, DateTime? createdAtUtc, DateTime? updatedAtUtc, DateTime? expiryUtc
 });
 
 
-$ApprovalSnapshotCopyWith<$Res>? get approval;
+$ApprovalSnapshotCopyWith<$Res>? get approval;$ArzlyReportCopyWith<$Res>? get report;$RenderedWorkflowResultCopyWith<$Res>? get renderedResult;$ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -594,7 +857,7 @@ class _$WorkflowRunCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowRun
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? localWorkflowId = freezed,Object? createdAtUtc = freezed,Object? updatedAtUtc = freezed,Object? expiryUtc = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? report = freezed,Object? renderedResult = freezed,Object? resultContract = freezed,Object? localWorkflowId = freezed,Object? createdAtUtc = freezed,Object? updatedAtUtc = freezed,Object? expiryUtc = freezed,}) {
   return _then(_self.copyWith(
 runId: null == runId ? _self.runId : runId // ignore: cast_nullable_to_non_nullable
 as String,presetKey: null == presetKey ? _self.presetKey : presetKey // ignore: cast_nullable_to_non_nullable
@@ -602,7 +865,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as WorkflowRunStatus,nodes: null == nodes ? _self.nodes : nodes // ignore: cast_nullable_to_non_nullable
 as List<WorkflowNodeRun>,approval: freezed == approval ? _self.approval : approval // ignore: cast_nullable_to_non_nullable
 as ApprovalSnapshot?,finalResponse: freezed == finalResponse ? _self.finalResponse : finalResponse // ignore: cast_nullable_to_non_nullable
-as String?,localWorkflowId: freezed == localWorkflowId ? _self.localWorkflowId : localWorkflowId // ignore: cast_nullable_to_non_nullable
+as String?,report: freezed == report ? _self.report : report // ignore: cast_nullable_to_non_nullable
+as ArzlyReport?,renderedResult: freezed == renderedResult ? _self.renderedResult : renderedResult // ignore: cast_nullable_to_non_nullable
+as RenderedWorkflowResult?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,localWorkflowId: freezed == localWorkflowId ? _self.localWorkflowId : localWorkflowId // ignore: cast_nullable_to_non_nullable
 as String?,createdAtUtc: freezed == createdAtUtc ? _self.createdAtUtc : createdAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,expiryUtc: freezed == expiryUtc ? _self.expiryUtc : expiryUtc // ignore: cast_nullable_to_non_nullable
@@ -620,6 +886,42 @@ $ApprovalSnapshotCopyWith<$Res>? get approval {
 
   return $ApprovalSnapshotCopyWith<$Res>(_self.approval!, (value) {
     return _then(_self.copyWith(approval: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ArzlyReportCopyWith<$Res>? get report {
+    if (_self.report == null) {
+    return null;
+  }
+
+  return $ArzlyReportCopyWith<$Res>(_self.report!, (value) {
+    return _then(_self.copyWith(report: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RenderedWorkflowResultCopyWith<$Res>? get renderedResult {
+    if (_self.renderedResult == null) {
+    return null;
+  }
+
+  return $RenderedWorkflowResultCopyWith<$Res>(_self.renderedResult!, (value) {
+    return _then(_self.copyWith(renderedResult: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }
@@ -700,10 +1002,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  ArzlyReport? report,  RenderedWorkflowResult? renderedResult,  ResultContract? resultContract,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkflowRun() when $default != null:
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);case _:
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.report,_that.renderedResult,_that.resultContract,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);case _:
   return orElse();
 
 }
@@ -721,10 +1023,10 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  ArzlyReport? report,  RenderedWorkflowResult? renderedResult,  ResultContract? resultContract,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowRun():
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);}
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.report,_that.renderedResult,_that.resultContract,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -738,10 +1040,10 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String runId,  String presetKey,  WorkflowRunStatus status,  List<WorkflowNodeRun> nodes,  ApprovalSnapshot? approval,  String? finalResponse,  ArzlyReport? report,  RenderedWorkflowResult? renderedResult,  ResultContract? resultContract,  String? localWorkflowId,  DateTime? createdAtUtc,  DateTime? updatedAtUtc,  DateTime? expiryUtc)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkflowRun() when $default != null:
-return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);case _:
+return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.approval,_that.finalResponse,_that.report,_that.renderedResult,_that.resultContract,_that.localWorkflowId,_that.createdAtUtc,_that.updatedAtUtc,_that.expiryUtc);case _:
   return null;
 
 }
@@ -753,7 +1055,7 @@ return $default(_that.runId,_that.presetKey,_that.status,_that.nodes,_that.appro
 
 
 class _WorkflowRun implements WorkflowRun {
-  const _WorkflowRun({required this.runId, required this.presetKey, required this.status, required final  List<WorkflowNodeRun> nodes, this.approval, this.finalResponse, this.localWorkflowId, this.createdAtUtc, this.updatedAtUtc, this.expiryUtc}): _nodes = nodes;
+  const _WorkflowRun({required this.runId, required this.presetKey, required this.status, required final  List<WorkflowNodeRun> nodes, this.approval, this.finalResponse, this.report, this.renderedResult, this.resultContract, this.localWorkflowId, this.createdAtUtc, this.updatedAtUtc, this.expiryUtc}): _nodes = nodes;
   
 
 @override final  String runId;
@@ -768,6 +1070,9 @@ class _WorkflowRun implements WorkflowRun {
 
 @override final  ApprovalSnapshot? approval;
 @override final  String? finalResponse;
+@override final  ArzlyReport? report;
+@override final  RenderedWorkflowResult? renderedResult;
+@override final  ResultContract? resultContract;
 @override final  String? localWorkflowId;
 @override final  DateTime? createdAtUtc;
 @override final  DateTime? updatedAtUtc;
@@ -783,16 +1088,16 @@ _$WorkflowRunCopyWith<_WorkflowRun> get copyWith => __$WorkflowRunCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowRun&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._nodes, _nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&(identical(other.localWorkflowId, localWorkflowId) || other.localWorkflowId == localWorkflowId)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc)&&(identical(other.expiryUtc, expiryUtc) || other.expiryUtc == expiryUtc));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkflowRun&&(identical(other.runId, runId) || other.runId == runId)&&(identical(other.presetKey, presetKey) || other.presetKey == presetKey)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._nodes, _nodes)&&(identical(other.approval, approval) || other.approval == approval)&&(identical(other.finalResponse, finalResponse) || other.finalResponse == finalResponse)&&(identical(other.report, report) || other.report == report)&&(identical(other.renderedResult, renderedResult) || other.renderedResult == renderedResult)&&(identical(other.resultContract, resultContract) || other.resultContract == resultContract)&&(identical(other.localWorkflowId, localWorkflowId) || other.localWorkflowId == localWorkflowId)&&(identical(other.createdAtUtc, createdAtUtc) || other.createdAtUtc == createdAtUtc)&&(identical(other.updatedAtUtc, updatedAtUtc) || other.updatedAtUtc == updatedAtUtc)&&(identical(other.expiryUtc, expiryUtc) || other.expiryUtc == expiryUtc));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(_nodes),approval,finalResponse,localWorkflowId,createdAtUtc,updatedAtUtc,expiryUtc);
+int get hashCode => Object.hash(runtimeType,runId,presetKey,status,const DeepCollectionEquality().hash(_nodes),approval,finalResponse,report,renderedResult,resultContract,localWorkflowId,createdAtUtc,updatedAtUtc,expiryUtc);
 
 @override
 String toString() {
-  return 'WorkflowRun(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, localWorkflowId: $localWorkflowId, createdAtUtc: $createdAtUtc, updatedAtUtc: $updatedAtUtc, expiryUtc: $expiryUtc)';
+  return 'WorkflowRun(runId: $runId, presetKey: $presetKey, status: $status, nodes: $nodes, approval: $approval, finalResponse: $finalResponse, report: $report, renderedResult: $renderedResult, resultContract: $resultContract, localWorkflowId: $localWorkflowId, createdAtUtc: $createdAtUtc, updatedAtUtc: $updatedAtUtc, expiryUtc: $expiryUtc)';
 }
 
 
@@ -803,11 +1108,11 @@ abstract mixin class _$WorkflowRunCopyWith<$Res> implements $WorkflowRunCopyWith
   factory _$WorkflowRunCopyWith(_WorkflowRun value, $Res Function(_WorkflowRun) _then) = __$WorkflowRunCopyWithImpl;
 @override @useResult
 $Res call({
- String runId, String presetKey, WorkflowRunStatus status, List<WorkflowNodeRun> nodes, ApprovalSnapshot? approval, String? finalResponse, String? localWorkflowId, DateTime? createdAtUtc, DateTime? updatedAtUtc, DateTime? expiryUtc
+ String runId, String presetKey, WorkflowRunStatus status, List<WorkflowNodeRun> nodes, ApprovalSnapshot? approval, String? finalResponse, ArzlyReport? report, RenderedWorkflowResult? renderedResult, ResultContract? resultContract, String? localWorkflowId, DateTime? createdAtUtc, DateTime? updatedAtUtc, DateTime? expiryUtc
 });
 
 
-@override $ApprovalSnapshotCopyWith<$Res>? get approval;
+@override $ApprovalSnapshotCopyWith<$Res>? get approval;@override $ArzlyReportCopyWith<$Res>? get report;@override $RenderedWorkflowResultCopyWith<$Res>? get renderedResult;@override $ResultContractCopyWith<$Res>? get resultContract;
 
 }
 /// @nodoc
@@ -820,7 +1125,7 @@ class __$WorkflowRunCopyWithImpl<$Res>
 
 /// Create a copy of WorkflowRun
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? localWorkflowId = freezed,Object? createdAtUtc = freezed,Object? updatedAtUtc = freezed,Object? expiryUtc = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? runId = null,Object? presetKey = null,Object? status = null,Object? nodes = null,Object? approval = freezed,Object? finalResponse = freezed,Object? report = freezed,Object? renderedResult = freezed,Object? resultContract = freezed,Object? localWorkflowId = freezed,Object? createdAtUtc = freezed,Object? updatedAtUtc = freezed,Object? expiryUtc = freezed,}) {
   return _then(_WorkflowRun(
 runId: null == runId ? _self.runId : runId // ignore: cast_nullable_to_non_nullable
 as String,presetKey: null == presetKey ? _self.presetKey : presetKey // ignore: cast_nullable_to_non_nullable
@@ -828,7 +1133,10 @@ as String,status: null == status ? _self.status : status // ignore: cast_nullabl
 as WorkflowRunStatus,nodes: null == nodes ? _self._nodes : nodes // ignore: cast_nullable_to_non_nullable
 as List<WorkflowNodeRun>,approval: freezed == approval ? _self.approval : approval // ignore: cast_nullable_to_non_nullable
 as ApprovalSnapshot?,finalResponse: freezed == finalResponse ? _self.finalResponse : finalResponse // ignore: cast_nullable_to_non_nullable
-as String?,localWorkflowId: freezed == localWorkflowId ? _self.localWorkflowId : localWorkflowId // ignore: cast_nullable_to_non_nullable
+as String?,report: freezed == report ? _self.report : report // ignore: cast_nullable_to_non_nullable
+as ArzlyReport?,renderedResult: freezed == renderedResult ? _self.renderedResult : renderedResult // ignore: cast_nullable_to_non_nullable
+as RenderedWorkflowResult?,resultContract: freezed == resultContract ? _self.resultContract : resultContract // ignore: cast_nullable_to_non_nullable
+as ResultContract?,localWorkflowId: freezed == localWorkflowId ? _self.localWorkflowId : localWorkflowId // ignore: cast_nullable_to_non_nullable
 as String?,createdAtUtc: freezed == createdAtUtc ? _self.createdAtUtc : createdAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAtUtc: freezed == updatedAtUtc ? _self.updatedAtUtc : updatedAtUtc // ignore: cast_nullable_to_non_nullable
 as DateTime?,expiryUtc: freezed == expiryUtc ? _self.expiryUtc : expiryUtc // ignore: cast_nullable_to_non_nullable
@@ -847,6 +1155,42 @@ $ApprovalSnapshotCopyWith<$Res>? get approval {
 
   return $ApprovalSnapshotCopyWith<$Res>(_self.approval!, (value) {
     return _then(_self.copyWith(approval: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ArzlyReportCopyWith<$Res>? get report {
+    if (_self.report == null) {
+    return null;
+  }
+
+  return $ArzlyReportCopyWith<$Res>(_self.report!, (value) {
+    return _then(_self.copyWith(report: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RenderedWorkflowResultCopyWith<$Res>? get renderedResult {
+    if (_self.renderedResult == null) {
+    return null;
+  }
+
+  return $RenderedWorkflowResultCopyWith<$Res>(_self.renderedResult!, (value) {
+    return _then(_self.copyWith(renderedResult: value));
+  });
+}/// Create a copy of WorkflowRun
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ResultContractCopyWith<$Res>? get resultContract {
+    if (_self.resultContract == null) {
+    return null;
+  }
+
+  return $ResultContractCopyWith<$Res>(_self.resultContract!, (value) {
+    return _then(_self.copyWith(resultContract: value));
   });
 }
 }
