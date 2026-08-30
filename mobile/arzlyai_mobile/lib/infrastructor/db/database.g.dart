@@ -3520,6 +3520,552 @@ class ConnectorCredentialsCompanion
   }
 }
 
+class $AiSettingsTable extends AiSettings
+    with TableInfo<$AiSettingsTable, AiSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AiSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _defaultProviderMeta = const VerificationMeta(
+    'defaultProvider',
+  );
+  @override
+  late final GeneratedColumn<String> defaultProvider = GeneratedColumn<String>(
+    'default_provider',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _defaultModelIdMeta = const VerificationMeta(
+    'defaultModelId',
+  );
+  @override
+  late final GeneratedColumn<String> defaultModelId = GeneratedColumn<String>(
+    'default_model_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, defaultProvider, defaultModelId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ai_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AiSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('default_provider')) {
+      context.handle(
+        _defaultProviderMeta,
+        defaultProvider.isAcceptableOrUnknown(
+          data['default_provider']!,
+          _defaultProviderMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_model_id')) {
+      context.handle(
+        _defaultModelIdMeta,
+        defaultModelId.isAcceptableOrUnknown(
+          data['default_model_id']!,
+          _defaultModelIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AiSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AiSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      defaultProvider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_provider'],
+      ),
+      defaultModelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_model_id'],
+      ),
+    );
+  }
+
+  @override
+  $AiSettingsTable createAlias(String alias) {
+    return $AiSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AiSetting extends DataClass implements Insertable<AiSetting> {
+  final int id;
+  final String? defaultProvider;
+  final String? defaultModelId;
+  const AiSetting({
+    required this.id,
+    this.defaultProvider,
+    this.defaultModelId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || defaultProvider != null) {
+      map['default_provider'] = Variable<String>(defaultProvider);
+    }
+    if (!nullToAbsent || defaultModelId != null) {
+      map['default_model_id'] = Variable<String>(defaultModelId);
+    }
+    return map;
+  }
+
+  AiSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AiSettingsCompanion(
+      id: Value(id),
+      defaultProvider: defaultProvider == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultProvider),
+      defaultModelId: defaultModelId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultModelId),
+    );
+  }
+
+  factory AiSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AiSetting(
+      id: serializer.fromJson<int>(json['id']),
+      defaultProvider: serializer.fromJson<String?>(json['defaultProvider']),
+      defaultModelId: serializer.fromJson<String?>(json['defaultModelId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'defaultProvider': serializer.toJson<String?>(defaultProvider),
+      'defaultModelId': serializer.toJson<String?>(defaultModelId),
+    };
+  }
+
+  AiSetting copyWith({
+    int? id,
+    Value<String?> defaultProvider = const Value.absent(),
+    Value<String?> defaultModelId = const Value.absent(),
+  }) => AiSetting(
+    id: id ?? this.id,
+    defaultProvider: defaultProvider.present
+        ? defaultProvider.value
+        : this.defaultProvider,
+    defaultModelId: defaultModelId.present
+        ? defaultModelId.value
+        : this.defaultModelId,
+  );
+  AiSetting copyWithCompanion(AiSettingsCompanion data) {
+    return AiSetting(
+      id: data.id.present ? data.id.value : this.id,
+      defaultProvider: data.defaultProvider.present
+          ? data.defaultProvider.value
+          : this.defaultProvider,
+      defaultModelId: data.defaultModelId.present
+          ? data.defaultModelId.value
+          : this.defaultModelId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiSetting(')
+          ..write('id: $id, ')
+          ..write('defaultProvider: $defaultProvider, ')
+          ..write('defaultModelId: $defaultModelId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, defaultProvider, defaultModelId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AiSetting &&
+          other.id == this.id &&
+          other.defaultProvider == this.defaultProvider &&
+          other.defaultModelId == this.defaultModelId);
+}
+
+class AiSettingsCompanion extends UpdateCompanion<AiSetting> {
+  final Value<int> id;
+  final Value<String?> defaultProvider;
+  final Value<String?> defaultModelId;
+  const AiSettingsCompanion({
+    this.id = const Value.absent(),
+    this.defaultProvider = const Value.absent(),
+    this.defaultModelId = const Value.absent(),
+  });
+  AiSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.defaultProvider = const Value.absent(),
+    this.defaultModelId = const Value.absent(),
+  });
+  static Insertable<AiSetting> custom({
+    Expression<int>? id,
+    Expression<String>? defaultProvider,
+    Expression<String>? defaultModelId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (defaultProvider != null) 'default_provider': defaultProvider,
+      if (defaultModelId != null) 'default_model_id': defaultModelId,
+    });
+  }
+
+  AiSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String?>? defaultProvider,
+    Value<String?>? defaultModelId,
+  }) {
+    return AiSettingsCompanion(
+      id: id ?? this.id,
+      defaultProvider: defaultProvider ?? this.defaultProvider,
+      defaultModelId: defaultModelId ?? this.defaultModelId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (defaultProvider.present) {
+      map['default_provider'] = Variable<String>(defaultProvider.value);
+    }
+    if (defaultModelId.present) {
+      map['default_model_id'] = Variable<String>(defaultModelId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AiSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('defaultProvider: $defaultProvider, ')
+          ..write('defaultModelId: $defaultModelId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProviderModelCacheTable extends ProviderModelCache
+    with TableInfo<$ProviderModelCacheTable, ProviderModelCacheData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProviderModelCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  @override
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _modelsJsonMeta = const VerificationMeta(
+    'modelsJson',
+  );
+  @override
+  late final GeneratedColumn<String> modelsJson = GeneratedColumn<String>(
+    'models_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtUtcMeta = const VerificationMeta(
+    'fetchedAtUtc',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAtUtc = GeneratedColumn<DateTime>(
+    'fetched_at_utc',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [provider, modelsJson, fetchedAtUtc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'provider_model_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProviderModelCacheData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('models_json')) {
+      context.handle(
+        _modelsJsonMeta,
+        modelsJson.isAcceptableOrUnknown(data['models_json']!, _modelsJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_modelsJsonMeta);
+    }
+    if (data.containsKey('fetched_at_utc')) {
+      context.handle(
+        _fetchedAtUtcMeta,
+        fetchedAtUtc.isAcceptableOrUnknown(
+          data['fetched_at_utc']!,
+          _fetchedAtUtcMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtUtcMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {provider};
+  @override
+  ProviderModelCacheData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProviderModelCacheData(
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      modelsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}models_json'],
+      )!,
+      fetchedAtUtc: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at_utc'],
+      )!,
+    );
+  }
+
+  @override
+  $ProviderModelCacheTable createAlias(String alias) {
+    return $ProviderModelCacheTable(attachedDatabase, alias);
+  }
+}
+
+class ProviderModelCacheData extends DataClass
+    implements Insertable<ProviderModelCacheData> {
+  final String provider;
+  final String modelsJson;
+  final DateTime fetchedAtUtc;
+  const ProviderModelCacheData({
+    required this.provider,
+    required this.modelsJson,
+    required this.fetchedAtUtc,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['provider'] = Variable<String>(provider);
+    map['models_json'] = Variable<String>(modelsJson);
+    map['fetched_at_utc'] = Variable<DateTime>(fetchedAtUtc);
+    return map;
+  }
+
+  ProviderModelCacheCompanion toCompanion(bool nullToAbsent) {
+    return ProviderModelCacheCompanion(
+      provider: Value(provider),
+      modelsJson: Value(modelsJson),
+      fetchedAtUtc: Value(fetchedAtUtc),
+    );
+  }
+
+  factory ProviderModelCacheData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProviderModelCacheData(
+      provider: serializer.fromJson<String>(json['provider']),
+      modelsJson: serializer.fromJson<String>(json['modelsJson']),
+      fetchedAtUtc: serializer.fromJson<DateTime>(json['fetchedAtUtc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'provider': serializer.toJson<String>(provider),
+      'modelsJson': serializer.toJson<String>(modelsJson),
+      'fetchedAtUtc': serializer.toJson<DateTime>(fetchedAtUtc),
+    };
+  }
+
+  ProviderModelCacheData copyWith({
+    String? provider,
+    String? modelsJson,
+    DateTime? fetchedAtUtc,
+  }) => ProviderModelCacheData(
+    provider: provider ?? this.provider,
+    modelsJson: modelsJson ?? this.modelsJson,
+    fetchedAtUtc: fetchedAtUtc ?? this.fetchedAtUtc,
+  );
+  ProviderModelCacheData copyWithCompanion(ProviderModelCacheCompanion data) {
+    return ProviderModelCacheData(
+      provider: data.provider.present ? data.provider.value : this.provider,
+      modelsJson: data.modelsJson.present
+          ? data.modelsJson.value
+          : this.modelsJson,
+      fetchedAtUtc: data.fetchedAtUtc.present
+          ? data.fetchedAtUtc.value
+          : this.fetchedAtUtc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProviderModelCacheData(')
+          ..write('provider: $provider, ')
+          ..write('modelsJson: $modelsJson, ')
+          ..write('fetchedAtUtc: $fetchedAtUtc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(provider, modelsJson, fetchedAtUtc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProviderModelCacheData &&
+          other.provider == this.provider &&
+          other.modelsJson == this.modelsJson &&
+          other.fetchedAtUtc == this.fetchedAtUtc);
+}
+
+class ProviderModelCacheCompanion
+    extends UpdateCompanion<ProviderModelCacheData> {
+  final Value<String> provider;
+  final Value<String> modelsJson;
+  final Value<DateTime> fetchedAtUtc;
+  final Value<int> rowid;
+  const ProviderModelCacheCompanion({
+    this.provider = const Value.absent(),
+    this.modelsJson = const Value.absent(),
+    this.fetchedAtUtc = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProviderModelCacheCompanion.insert({
+    required String provider,
+    required String modelsJson,
+    required DateTime fetchedAtUtc,
+    this.rowid = const Value.absent(),
+  }) : provider = Value(provider),
+       modelsJson = Value(modelsJson),
+       fetchedAtUtc = Value(fetchedAtUtc);
+  static Insertable<ProviderModelCacheData> custom({
+    Expression<String>? provider,
+    Expression<String>? modelsJson,
+    Expression<DateTime>? fetchedAtUtc,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (provider != null) 'provider': provider,
+      if (modelsJson != null) 'models_json': modelsJson,
+      if (fetchedAtUtc != null) 'fetched_at_utc': fetchedAtUtc,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProviderModelCacheCompanion copyWith({
+    Value<String>? provider,
+    Value<String>? modelsJson,
+    Value<DateTime>? fetchedAtUtc,
+    Value<int>? rowid,
+  }) {
+    return ProviderModelCacheCompanion(
+      provider: provider ?? this.provider,
+      modelsJson: modelsJson ?? this.modelsJson,
+      fetchedAtUtc: fetchedAtUtc ?? this.fetchedAtUtc,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (modelsJson.present) {
+      map['models_json'] = Variable<String>(modelsJson.value);
+    }
+    if (fetchedAtUtc.present) {
+      map['fetched_at_utc'] = Variable<DateTime>(fetchedAtUtc.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProviderModelCacheCompanion(')
+          ..write('provider: $provider, ')
+          ..write('modelsJson: $modelsJson, ')
+          ..write('fetchedAtUtc: $fetchedAtUtc, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3533,6 +4079,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SchedulesTable schedules = $SchedulesTable(this);
   late final $ConnectorCredentialsTable connectorCredentials =
       $ConnectorCredentialsTable(this);
+  late final $AiSettingsTable aiSettings = $AiSettingsTable(this);
+  late final $ProviderModelCacheTable providerModelCache =
+      $ProviderModelCacheTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3544,6 +4093,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workflowNodeRuns,
     schedules,
     connectorCredentials,
+    aiSettings,
+    providerModelCache,
   ];
 }
 
@@ -5260,6 +5811,342 @@ typedef $$ConnectorCredentialsTableProcessedTableManager =
       ConnectorCredential,
       PrefetchHooks Function()
     >;
+typedef $$AiSettingsTableCreateCompanionBuilder =
+    AiSettingsCompanion Function({
+      Value<int> id,
+      Value<String?> defaultProvider,
+      Value<String?> defaultModelId,
+    });
+typedef $$AiSettingsTableUpdateCompanionBuilder =
+    AiSettingsCompanion Function({
+      Value<int> id,
+      Value<String?> defaultProvider,
+      Value<String?> defaultModelId,
+    });
+
+class $$AiSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultProvider => $composableBuilder(
+    column: $table.defaultProvider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultModelId => $composableBuilder(
+    column: $table.defaultModelId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AiSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultProvider => $composableBuilder(
+    column: $table.defaultProvider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultModelId => $composableBuilder(
+    column: $table.defaultModelId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AiSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AiSettingsTable> {
+  $$AiSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get defaultProvider => $composableBuilder(
+    column: $table.defaultProvider,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultModelId => $composableBuilder(
+    column: $table.defaultModelId,
+    builder: (column) => column,
+  );
+}
+
+class $$AiSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AiSettingsTable,
+          AiSetting,
+          $$AiSettingsTableFilterComposer,
+          $$AiSettingsTableOrderingComposer,
+          $$AiSettingsTableAnnotationComposer,
+          $$AiSettingsTableCreateCompanionBuilder,
+          $$AiSettingsTableUpdateCompanionBuilder,
+          (
+            AiSetting,
+            BaseReferences<_$AppDatabase, $AiSettingsTable, AiSetting>,
+          ),
+          AiSetting,
+          PrefetchHooks Function()
+        > {
+  $$AiSettingsTableTableManager(_$AppDatabase db, $AiSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AiSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AiSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AiSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> defaultProvider = const Value.absent(),
+                Value<String?> defaultModelId = const Value.absent(),
+              }) => AiSettingsCompanion(
+                id: id,
+                defaultProvider: defaultProvider,
+                defaultModelId: defaultModelId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String?> defaultProvider = const Value.absent(),
+                Value<String?> defaultModelId = const Value.absent(),
+              }) => AiSettingsCompanion.insert(
+                id: id,
+                defaultProvider: defaultProvider,
+                defaultModelId: defaultModelId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AiSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AiSettingsTable,
+      AiSetting,
+      $$AiSettingsTableFilterComposer,
+      $$AiSettingsTableOrderingComposer,
+      $$AiSettingsTableAnnotationComposer,
+      $$AiSettingsTableCreateCompanionBuilder,
+      $$AiSettingsTableUpdateCompanionBuilder,
+      (AiSetting, BaseReferences<_$AppDatabase, $AiSettingsTable, AiSetting>),
+      AiSetting,
+      PrefetchHooks Function()
+    >;
+typedef $$ProviderModelCacheTableCreateCompanionBuilder =
+    ProviderModelCacheCompanion Function({
+      required String provider,
+      required String modelsJson,
+      required DateTime fetchedAtUtc,
+      Value<int> rowid,
+    });
+typedef $$ProviderModelCacheTableUpdateCompanionBuilder =
+    ProviderModelCacheCompanion Function({
+      Value<String> provider,
+      Value<String> modelsJson,
+      Value<DateTime> fetchedAtUtc,
+      Value<int> rowid,
+    });
+
+class $$ProviderModelCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $ProviderModelCacheTable> {
+  $$ProviderModelCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get modelsJson => $composableBuilder(
+    column: $table.modelsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAtUtc => $composableBuilder(
+    column: $table.fetchedAtUtc,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ProviderModelCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProviderModelCacheTable> {
+  $$ProviderModelCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get modelsJson => $composableBuilder(
+    column: $table.modelsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAtUtc => $composableBuilder(
+    column: $table.fetchedAtUtc,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ProviderModelCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProviderModelCacheTable> {
+  $$ProviderModelCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<String> get modelsJson => $composableBuilder(
+    column: $table.modelsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fetchedAtUtc => $composableBuilder(
+    column: $table.fetchedAtUtc,
+    builder: (column) => column,
+  );
+}
+
+class $$ProviderModelCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ProviderModelCacheTable,
+          ProviderModelCacheData,
+          $$ProviderModelCacheTableFilterComposer,
+          $$ProviderModelCacheTableOrderingComposer,
+          $$ProviderModelCacheTableAnnotationComposer,
+          $$ProviderModelCacheTableCreateCompanionBuilder,
+          $$ProviderModelCacheTableUpdateCompanionBuilder,
+          (
+            ProviderModelCacheData,
+            BaseReferences<
+              _$AppDatabase,
+              $ProviderModelCacheTable,
+              ProviderModelCacheData
+            >,
+          ),
+          ProviderModelCacheData,
+          PrefetchHooks Function()
+        > {
+  $$ProviderModelCacheTableTableManager(
+    _$AppDatabase db,
+    $ProviderModelCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProviderModelCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProviderModelCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProviderModelCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> provider = const Value.absent(),
+                Value<String> modelsJson = const Value.absent(),
+                Value<DateTime> fetchedAtUtc = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProviderModelCacheCompanion(
+                provider: provider,
+                modelsJson: modelsJson,
+                fetchedAtUtc: fetchedAtUtc,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String provider,
+                required String modelsJson,
+                required DateTime fetchedAtUtc,
+                Value<int> rowid = const Value.absent(),
+              }) => ProviderModelCacheCompanion.insert(
+                provider: provider,
+                modelsJson: modelsJson,
+                fetchedAtUtc: fetchedAtUtc,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ProviderModelCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ProviderModelCacheTable,
+      ProviderModelCacheData,
+      $$ProviderModelCacheTableFilterComposer,
+      $$ProviderModelCacheTableOrderingComposer,
+      $$ProviderModelCacheTableAnnotationComposer,
+      $$ProviderModelCacheTableCreateCompanionBuilder,
+      $$ProviderModelCacheTableUpdateCompanionBuilder,
+      (
+        ProviderModelCacheData,
+        BaseReferences<
+          _$AppDatabase,
+          $ProviderModelCacheTable,
+          ProviderModelCacheData
+        >,
+      ),
+      ProviderModelCacheData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5276,6 +6163,10 @@ class $AppDatabaseManager {
       $$SchedulesTableTableManager(_db, _db.schedules);
   $$ConnectorCredentialsTableTableManager get connectorCredentials =>
       $$ConnectorCredentialsTableTableManager(_db, _db.connectorCredentials);
+  $$AiSettingsTableTableManager get aiSettings =>
+      $$AiSettingsTableTableManager(_db, _db.aiSettings);
+  $$ProviderModelCacheTableTableManager get providerModelCache =>
+      $$ProviderModelCacheTableTableManager(_db, _db.providerModelCache);
 }
 
 // **************************************************************************

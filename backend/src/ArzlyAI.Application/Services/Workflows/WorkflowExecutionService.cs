@@ -212,6 +212,9 @@ public sealed class WorkflowExecutionService(
                 : null;
             var agentOverride = request.AgentOverrides.SingleOrDefault(
                 candidate => candidate.AgentKey == step.ReferenceKey);
+            var effectiveProvider = agent?.Model.Provider.Key;
+            if (agentOverride?.Provider is not null && agent?.AllowModelOverride == true)
+                effectiveProvider = agentOverride.Provider.ToLowerInvariant();
             return new WorkflowNodeRun
             {
                 NodeId = step.Id,
@@ -219,7 +222,7 @@ public sealed class WorkflowExecutionService(
                 DisplayName = step.DisplayName,
                 Type = step.Type,
                 Status = WorkflowNodeStatus.Idle,
-                EffectiveProvider = agent?.Model.Provider.Key,
+                EffectiveProvider = effectiveProvider,
                 EffectiveModel = agentOverride?.Model ?? agent?.Model.Key
             };
         }).ToList()

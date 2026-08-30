@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/geo/country_currency.dart';
-import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/settings/ai_settings_provider.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
@@ -13,7 +14,7 @@ import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
-import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_country_select.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_model_select.dart';
@@ -35,7 +36,7 @@ class _SmartPurchaseConfigureRunScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _seedDefaults());
-    ref.listenManual(openAiModelsProvider, (prev, next) {
+    ref.listenManual(availableProviderModelsProvider, (prev, next) {
       final details = ref.read(presetDetailsProvider).value;
       final shopper = details?.configurableWorkflowAgent();
       if (shopper == null) return;
@@ -63,29 +64,45 @@ class _SmartPurchaseConfigureRunScreenState
         );
   }
 
-  void _syncModelSelection(List<OpenAiModel> models, Agent shopper) {
+  void _syncModelSelection(List<ProviderModel> models, Agent shopper) {
     if (models.isEmpty) return;
     final current = ref.read(runConfigTempProvider);
+    final defaultModel = ref.read(defaultAiModelProvider).value;
     final presetDefault = shopper.modelConfiguration.selectedModel;
-    final modelIds = models.map((model) => model.id).toSet();
+    final webSearchModels = models
+        .where((model) => model.supportsWebSearch)
+        .toList();
+    if (webSearchModels.isEmpty) return;
+    final modelIds = webSearchModels.map((model) => model.id).toSet();
     final existing = current.agentOverrides[shopper.key]?.model;
     if (existing != null && modelIds.contains(existing)) return;
-    final chosen = modelIds.contains(presetDefault)
-        ? presetDefault
-        : models.first.id;
-    final supports = models
-        .firstWhere((model) => model.id == chosen)
-        .supportsTemperature;
+    ProviderModel? chosenModel;
+    if (defaultModel != null) {
+      chosenModel = webSearchModels
+          .where(
+            (model) =>
+                model.id == defaultModel.modelId &&
+                model.provider == defaultModel.provider,
+          )
+          .firstOrNull;
+    }
+    chosenModel ??= webSearchModels
+        .where((model) => model.id == presetDefault)
+        .firstOrNull;
+    chosenModel ??= webSearchModels.first;
     final overrides = Map<String, AgentOverrideDraft>.from(
       current.agentOverrides,
     );
     overrides[shopper.key] = AgentOverrideDraft(
-      model: chosen,
-      temperature: supports ? shopper.modelConfiguration.temperature : null,
+      provider: chosenModel.provider,
+      model: chosenModel.id,
+      temperature: chosenModel.supportsTemperature
+          ? shopper.modelConfiguration.temperature
+          : null,
     );
-    ref
-        .read(runConfigTempProvider.notifier)
-        .update(current.copyWith(agentOverrides: overrides));
+    ref.read(runConfigTempProvider.notifier).update(
+      current.copyWith(agentOverrides: overrides),
+    );
   }
 
   @override
@@ -94,7 +111,7 @@ class _SmartPurchaseConfigureRunScreenState
     final details = ref.watch(presetDetailsProvider).value;
     final theme = ShadTheme.of(context);
     final shopper = details?.configurableWorkflowAgent();
-    final modelsAsync = ref.watch(openAiModelsProvider);
+    final modelsAsync = ref.watch(availableProviderModelsProvider);
     final online = ref.watch(internetConnectionProvider);
     final offlineMode = ref.watch(offlineModeProvider).value ?? false;
     final goal = config.inputs['purchaseGoal']?.trim() ?? '';
@@ -173,7 +190,9 @@ class _SmartPurchaseConfigureRunScreenState
               defaultModelId: shopper.modelConfiguration.selectedModel,
               requiresWebSearch: shopper.harness.webSearchEnabled,
               enabled: true,
-              onRetry: () => ref.read(openAiModelsProvider.notifier).refresh(),
+              onRetry: () => ref
+                  .read(availableProviderModelsProvider.notifier)
+                  .refresh(),
             ),
           ],
           if (shopper != null &&

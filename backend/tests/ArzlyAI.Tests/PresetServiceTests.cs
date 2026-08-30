@@ -17,7 +17,7 @@ public sealed class PresetServiceTests
         var preset = CreatePreset();
         var service = new PresetService(
             new PresetRepositoryStub(preset),
-            new PresetMapper(new OpenAiModelCapabilityPolicy()),
+            new PresetMapper(new ProviderModelCapabilityPolicy()),
             NullLogger<PresetService>.Instance);
 
         var response = await service.GetByKeyAsync(preset.Key, CancellationToken.None);

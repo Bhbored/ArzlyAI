@@ -25,12 +25,13 @@ import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_response.dart';
-import 'package:arzlyai_mobile/core/network/dto/request/models/list_openai_models_request.dart';
-import 'package:arzlyai_mobile/core/network/dto/response/models/openai_model_response.dart';
-import 'package:arzlyai_mobile/core/network/services/models/openai_model_service.dart';
-import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
-import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
-import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
+import 'package:arzlyai_mobile/core/network/dto/request/models/list_provider_models_request.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/models/provider_model_response.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/models/provider_response.dart';
+import 'package:arzlyai_mobile/core/network/services/models/provider_model_service.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
+import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
@@ -72,7 +73,7 @@ WorkflowRunResponse regeneratedWaitingRunDto() {
   );
 }
 
-List<OpenAiModelResponse> fixtureOpenAiModelResponses() {
+List<ProviderModelResponse> fixtureProviderModelResponses() {
   final list =
       jsonDecode(
             File('test/fixtures/network/openai_models.json').readAsStringSync(),
@@ -80,37 +81,61 @@ List<OpenAiModelResponse> fixtureOpenAiModelResponses() {
           as List<dynamic>;
   return list
       .map(
-        (item) => OpenAiModelResponse.fromJson(
+        (item) => ProviderModelResponse.fromJson(
           Map<String, dynamic>.from(item as Map),
         ),
       )
       .toList();
 }
 
-List<OpenAiModel> fixtureOpenAiModels() {
-  const mapper = OpenAiModelMapper();
-  return fixtureOpenAiModelResponses()
+List<ProviderResponse> fixtureProviderResponses() {
+  final list =
+      jsonDecode(
+            File('test/fixtures/network/providers.json').readAsStringSync(),
+          )
+          as List<dynamic>;
+  return list
+      .map(
+        (item) => ProviderResponse.fromJson(
+          Map<String, dynamic>.from(item as Map),
+        ),
+      )
+      .toList();
+}
+
+List<ProviderModel> fixtureProviderModels() {
+  const mapper = ProviderModelMapper();
+  return fixtureProviderModelResponses()
       .map((dto) => mapper.fromDto(dto))
       .toList(growable: false);
 }
 
-class FakeOpenAiModelService extends OpenAiModelService {
-  FakeOpenAiModelService() : super(ApiExecutor(Dio()));
+class FakeProviderModelService extends ProviderModelService {
+  FakeProviderModelService() : super(ApiExecutor(Dio()));
 
-  List<OpenAiModelResponse>? result;
+  List<ProviderResponse>? providersResult;
+  List<ProviderModelResponse>? modelsResult;
   Object? error;
-  ListOpenAiModelsRequest? lastRequest;
+  ListProviderModelsRequest? lastRequest;
   var callCount = 0;
 
   @override
-  Future<List<OpenAiModelResponse>> listModels(
-    ListOpenAiModelsRequest request,
+  Future<List<ProviderResponse>> listProviders() async {
+    final failure = error;
+    if (failure != null) throw failure;
+    return providersResult ?? fixtureProviderResponses();
+  }
+
+  @override
+  Future<List<ProviderModelResponse>> listModels(
+    String provider,
+    ListProviderModelsRequest request,
   ) async {
     callCount++;
     lastRequest = request;
     final failure = error;
     if (failure != null) throw failure;
-    return result ?? [];
+    return modelsResult ?? fixtureProviderModelResponses();
   }
 }
 
@@ -275,12 +300,12 @@ class SeededDetails extends PresetDetailsNotifier {
   Future<PresetDetails?> build() async => details;
 }
 
-class SeededOpenAiModels extends OpenAiModels {
-  SeededOpenAiModels(this.models);
-  final List<OpenAiModel> models;
+class SeededAvailableProviderModels extends AvailableProviderModels {
+  SeededAvailableProviderModels(this.models);
+  final List<ProviderModel> models;
 
   @override
-  Future<List<OpenAiModel>> build() async => models;
+  Future<List<ProviderModel>> build() async => models;
 }
 
 class OnlineMode extends OfflineMode {

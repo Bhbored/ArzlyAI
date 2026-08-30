@@ -6,7 +6,7 @@ import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/submit_approval_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_session_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_status_response.dart';
-import 'package:arzlyai_mobile/core/network/dto/response/models/openai_model_response.dart';
+import 'package:arzlyai_mobile/core/network/dto/response/models/provider_model_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
@@ -169,7 +169,7 @@ void main() {
             as List<dynamic>;
     final models = list
         .map(
-          (item) => OpenAiModelResponse.fromJson(
+          (item) => ProviderModelResponse.fromJson(
             Map<String, dynamic>.from(item as Map),
           ),
         )

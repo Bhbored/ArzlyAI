@@ -59,7 +59,9 @@ Supported blocks are `recommendation`, `candidateComparison`, `riskCallout`, and
 
 ## Credentials
 
-- Only `openai.apiKey` is required.
+- Workflow start requires `openai.apiKey` (seed default) plus any `{provider}.apiKey` used in a model override.
+- `shop-and-recommend` requires a model with hosted web search; DeepSeek is excluded until it supports web search.
+- Configure keys in Settings (`GET /api/v1/providers`); default model is stored in SQLite and seeds preset pickers.
 - Start and first-gate Accept/Edit need a fresh envelope.
 - Final Accept needs no credentials.
 
@@ -67,7 +69,10 @@ Supported blocks are `recommendation`, `candidateComparison`, `riskCallout`, and
 
 - `backend/src/ArzlyAI.Infrastructure/Persistence/Seeds/SmartPurchaseDecisionPresetSeed.cs`
 - `backend/src/ArzlyAI.Application/Services/Workflows/Rendering/ArzlyReportHtmlRenderer.cs`
-- `backend/src/ArzlyAI.Infrastructure/Agents/OpenAiAgentRuntime.cs`
+- `backend/src/ArzlyAI.Infrastructure/Agents/OpenAiAgentRuntime.cs` (Harness web search)
+- `backend/src/ArzlyAI.Infrastructure/Agents/AnthropicAgentRuntime.cs`
+- `backend/src/ArzlyAI.Infrastructure/Agents/GeminiAgentRuntime.cs`
+- `backend/src/ArzlyAI.Api/Controllers/v1/ProviderModelsController.cs`
 
 ## Mobile files
 

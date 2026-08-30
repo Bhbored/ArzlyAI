@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AgentOverrideRequest {
 
- String get agentKey; String? get model; double? get temperature;
+ String get agentKey; String? get provider; String? get model; double? get temperature;
 /// Create a copy of AgentOverrideRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $AgentOverrideRequestCopyWith<AgentOverrideRequest> get copyWith => _$AgentOverr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentOverrideRequest&&(identical(other.agentKey, agentKey) || other.agentKey == agentKey)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentOverrideRequest&&(identical(other.agentKey, agentKey) || other.agentKey == agentKey)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,agentKey,model,temperature);
+int get hashCode => Object.hash(runtimeType,agentKey,provider,model,temperature);
 
 @override
 String toString() {
-  return 'AgentOverrideRequest(agentKey: $agentKey, model: $model, temperature: $temperature)';
+  return 'AgentOverrideRequest(agentKey: $agentKey, provider: $provider, model: $model, temperature: $temperature)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $AgentOverrideRequestCopyWith<$Res>  {
   factory $AgentOverrideRequestCopyWith(AgentOverrideRequest value, $Res Function(AgentOverrideRequest) _then) = _$AgentOverrideRequestCopyWithImpl;
 @useResult
 $Res call({
- String agentKey, String? model, double? temperature
+ String agentKey, String? provider, String? model, double? temperature
 });
 
 
@@ -65,10 +65,11 @@ class _$AgentOverrideRequestCopyWithImpl<$Res>
 
 /// Create a copy of AgentOverrideRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? agentKey = null,Object? model = freezed,Object? temperature = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? agentKey = null,Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,}) {
   return _then(_self.copyWith(
 agentKey: null == agentKey ? _self.agentKey : agentKey // ignore: cast_nullable_to_non_nullable
-as String,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String,provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String agentKey,  String? model,  double? temperature)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String agentKey,  String? provider,  String? model,  double? temperature)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AgentOverrideRequest() when $default != null:
-return $default(_that.agentKey,_that.model,_that.temperature);case _:
+return $default(_that.agentKey,_that.provider,_that.model,_that.temperature);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.agentKey,_that.model,_that.temperature);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String agentKey,  String? model,  double? temperature)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String agentKey,  String? provider,  String? model,  double? temperature)  $default,) {final _that = this;
 switch (_that) {
 case _AgentOverrideRequest():
-return $default(_that.agentKey,_that.model,_that.temperature);}
+return $default(_that.agentKey,_that.provider,_that.model,_that.temperature);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -190,10 +191,10 @@ return $default(_that.agentKey,_that.model,_that.temperature);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String agentKey,  String? model,  double? temperature)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String agentKey,  String? provider,  String? model,  double? temperature)?  $default,) {final _that = this;
 switch (_that) {
 case _AgentOverrideRequest() when $default != null:
-return $default(_that.agentKey,_that.model,_that.temperature);case _:
+return $default(_that.agentKey,_that.provider,_that.model,_that.temperature);case _:
   return null;
 
 }
@@ -205,10 +206,11 @@ return $default(_that.agentKey,_that.model,_that.temperature);case _:
 @JsonSerializable()
 
 class _AgentOverrideRequest implements AgentOverrideRequest {
-  const _AgentOverrideRequest({required this.agentKey, this.model, this.temperature});
+  const _AgentOverrideRequest({required this.agentKey, this.provider, this.model, this.temperature});
   factory _AgentOverrideRequest.fromJson(Map<String, dynamic> json) => _$AgentOverrideRequestFromJson(json);
 
 @override final  String agentKey;
+@override final  String? provider;
 @override final  String? model;
 @override final  double? temperature;
 
@@ -225,16 +227,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentOverrideRequest&&(identical(other.agentKey, agentKey) || other.agentKey == agentKey)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentOverrideRequest&&(identical(other.agentKey, agentKey) || other.agentKey == agentKey)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,agentKey,model,temperature);
+int get hashCode => Object.hash(runtimeType,agentKey,provider,model,temperature);
 
 @override
 String toString() {
-  return 'AgentOverrideRequest(agentKey: $agentKey, model: $model, temperature: $temperature)';
+  return 'AgentOverrideRequest(agentKey: $agentKey, provider: $provider, model: $model, temperature: $temperature)';
 }
 
 
@@ -245,7 +247,7 @@ abstract mixin class _$AgentOverrideRequestCopyWith<$Res> implements $AgentOverr
   factory _$AgentOverrideRequestCopyWith(_AgentOverrideRequest value, $Res Function(_AgentOverrideRequest) _then) = __$AgentOverrideRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String agentKey, String? model, double? temperature
+ String agentKey, String? provider, String? model, double? temperature
 });
 
 
@@ -262,10 +264,11 @@ class __$AgentOverrideRequestCopyWithImpl<$Res>
 
 /// Create a copy of AgentOverrideRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? agentKey = null,Object? model = freezed,Object? temperature = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? agentKey = null,Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,}) {
   return _then(_AgentOverrideRequest(
 agentKey: null == agentKey ? _self.agentKey : agentKey // ignore: cast_nullable_to_non_nullable
-as String,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String,provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,
   ));

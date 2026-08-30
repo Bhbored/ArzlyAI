@@ -24,7 +24,9 @@ import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
+import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
@@ -84,15 +86,13 @@ class ActiveRun extends _$ActiveRun {
       }
       state = const AsyncLoading<WorkflowRun?>();
       final writer = details.configurableWorkflowAgent();
-      final overrides = _buildOverrides(config, details, writer);
+      final overrides = await _buildOverrides(config, details, writer);
       final credentialRepo = ref.read(credentialRepositoryProvider);
-      final startKeys = details.envelopeKeysForPhase(
-        CredentialPhase.workflowStart,
-      );
-      final startCredentials = await credentialRepo.readForPreset(
-        details,
-        CredentialPhase.workflowStart,
-      );
+      final startKeys = {
+        ...details.envelopeKeysForPhase(CredentialPhase.workflowStart),
+        ..._overrideProviderKeys(overrides),
+      }.toList(growable: false);
+      final startCredentials = await credentialRepo.readForEnvelopeKeys(startKeys);
       final missingStart = credentialRepo.missingEnvelopeKeys(
         startKeys,
         startCredentials,
@@ -287,12 +287,21 @@ class ActiveRun extends _$ActiveRun {
     }
   }
 
-  List<AgentOverrideRequest> _buildOverrides(
+  List<String> _overrideProviderKeys(List<AgentOverrideRequest> overrides) =>
+      overrides
+          .map((item) => item.provider)
+          .whereType<String>()
+          .map(providerCredentialEnvelopeKey)
+          .toList(growable: false);
+
+  Future<List<AgentOverrideRequest>> _buildOverrides(
     RunConfigState config,
     PresetDetails details,
     Agent? writer,
-  ) {
+  ) async {
     final overrides = <AgentOverrideRequest>[];
+    final models = await ref.read(availableProviderModelsProvider.future);
+    final repo = ref.read(providerModelRepositoryProvider);
     if (config.agentOverrides.isNotEmpty) {
       for (final entry in config.agentOverrides.entries) {
         final agent = details.agents
@@ -301,11 +310,10 @@ class ActiveRun extends _$ActiveRun {
         if (agent == null) continue;
         final model = entry.value.model;
         if (model == null) continue;
+        final provider = entry.value.provider ?? agent.modelConfiguration.provider;
         double? temperature;
         if (agent.modelConfiguration.isTemperatureEditable) {
-          final supportsTemperature = ref
-              .read(openAiModelRepositoryProvider)
-              .modelSupportsTemperature(model);
+          final supportsTemperature = repo.modelSupportsTemperature(models, model);
           if (supportsTemperature == true) {
             temperature = AppValidators.clampTemperature(
               entry.value.temperature ?? agent.modelConfiguration.temperature,
@@ -317,6 +325,7 @@ class ActiveRun extends _$ActiveRun {
         overrides.add(
           AgentOverrideRequest(
             agentKey: entry.key,
+            provider: provider,
             model: model,
             temperature: temperature,
           ),
@@ -324,10 +333,9 @@ class ActiveRun extends _$ActiveRun {
       }
     } else if (writer != null && writer.modelConfiguration.isModelEditable) {
       final model = config.model ?? writer.modelConfiguration.selectedModel;
+      final provider = config.provider ?? writer.modelConfiguration.provider;
       double? temperature;
-      final supportsTemperature = ref
-          .read(openAiModelRepositoryProvider)
-          .modelSupportsTemperature(model);
+      final supportsTemperature = repo.modelSupportsTemperature(models, model);
       if (supportsTemperature == true) {
         temperature = AppValidators.clampTemperature(
           config.temperature ?? writer.modelConfiguration.temperature,
@@ -338,6 +346,7 @@ class ActiveRun extends _$ActiveRun {
       overrides.add(
         AgentOverrideRequest(
           agentKey: writer.key,
+          provider: provider,
           model: model,
           temperature: temperature,
         ),

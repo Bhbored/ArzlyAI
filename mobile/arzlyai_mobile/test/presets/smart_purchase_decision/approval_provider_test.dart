@@ -19,10 +19,11 @@ import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
-import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
+import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import '../../helpers/fakes.dart';
 
@@ -55,7 +56,7 @@ ProviderContainer _container({
   required MemoryCredentialStore store,
   required FakeEnvelopeService envelopes,
   required AppDatabase db,
-  required OpenAiModelRepository openAiRepo,
+  required ProviderModelRepository providerModelRepo,
 }) {
   return ProviderContainer(
     overrides: [
@@ -64,7 +65,10 @@ ProviderContainer _container({
       workflowHubClientProvider.overrideWithValue(hub),
       credentialStoreProvider.overrideWithValue(store),
       credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
-      openAiModelRepositoryProvider.overrideWithValue(openAiRepo),
+      providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
+      availableProviderModelsProvider.overrideWith(
+        () => SeededAvailableProviderModels(fixtureProviderModels()),
+      ),
       internetConnectionProvider.overrideWithValue(true),
       offlineModeProvider.overrideWith(OnlineMode.new),
       presetDetailsProvider.overrideWith(() => SeededDetails(smartPurchaseDetails())),
@@ -79,7 +83,7 @@ void main() {
   late MemoryCredentialStore store;
   late FakeEnvelopeService envelopes;
   late FakeHub hub;
-  late OpenAiModelRepository openAiRepo;
+  late ProviderModelRepository providerModelRepo;
 
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -87,13 +91,15 @@ void main() {
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
     envelopes = FakeEnvelopeService();
     hub = FakeHub();
-    openAiRepo = OpenAiModelRepository(
-      FakeOpenAiModelService()..result = fixtureOpenAiModelResponses(),
+    providerModelRepo = ProviderModelRepository(
+      db,
+      FakeProviderModelService()
+        ..modelsResult = fixtureProviderModelResponses(),
       CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
-      const OpenAiModelMapper(),
+      const ProviderModelMapper(),
     );
-    await openAiRepo.listModels();
+    await providerModelRepo.listModelsForProvider('openai');
   });
 
   tearDown(() async {
@@ -113,7 +119,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
-      openAiRepo: openAiRepo,
+      providerModelRepo: providerModelRepo,
     );
     addTearDown(container.dispose);
 
@@ -156,7 +162,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
-      openAiRepo: openAiRepo,
+      providerModelRepo: providerModelRepo,
     );
     addTearDown(container.dispose);
 
@@ -193,7 +199,7 @@ void main() {
       store: store,
       envelopes: envelopes,
       db: db,
-      openAiRepo: openAiRepo,
+      providerModelRepo: providerModelRepo,
     );
     addTearDown(container.dispose);
 

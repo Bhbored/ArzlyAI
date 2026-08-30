@@ -74,7 +74,8 @@ Operational endpoints:
 | `GET` | `/health/ready` | Readiness including PostgreSQL connectivity |
 | `GET` | `/api/v1/presets` | Published preset catalog |
 | `GET` | `/api/v1/presets/{key}` | Complete preset graph |
-| `POST` | `/api/v1/providers/openai/models` | List usable account models and UI capabilities using an encrypted API key |
+| `GET` | `/api/v1/providers` | Supported AI provider catalog |
+| `POST` | `/api/v1/providers/{provider}/models` | List usable account models and UI capabilities using an encrypted `{provider}.apiKey` |
 | `POST` | `/api/v1/connectors/{connectorKey}/session` | Start a device-scoped Nango connect session |
 | `GET` | `/api/v1/connectors/{connectorKey}/status` | Read device connector status |
 | `GET` | `/api/v1/connectors/{connectorKey}/credentials` | Fetch mapped connector credentials from Nango |
@@ -127,7 +128,7 @@ The admin is intentionally a placeholder. Do not implement preset editing until 
 
 ## Security Boundary
 
-There is no registration or backend user database. Credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Never commit real keys or production connection strings, and never log credential payloads, access tokens, API keys, author URNs, or user content.
+There is no registration or backend user database. Credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Provider API keys use envelope fields `{provider}.apiKey` (`openai`, `anthropic`, `gemini`, `deepseek`). Flutter stores a default model in SQLite (`ai_settings`) and caches live catalogs per provider (`provider_model_cache`). After upgrading to Drift schema version 4, reinstall the app or clear app data. Never commit real keys or production connection strings, and never log credential payloads, access tokens, API keys, author URNs, or user content.
 
 ## Stage 1 Limitations
 

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
-import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/settings/ai_settings_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
-import 'package:arzlyai_mobile/domain/entities/provider/openai_model.dart';
+import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
@@ -28,7 +29,7 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
   @override
   void initState() {
     super.initState();
-    ref.listenManual(openAiModelsProvider, (prev, next) {
+    ref.listenManual(availableProviderModelsProvider, (prev, next) {
       final details = ref.read(presetDetailsProvider).value;
       final writer = details?.configurableWorkflowAgent();
       if (writer == null) return;
@@ -36,33 +37,41 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
     }, fireImmediately: true);
   }
 
-  void _syncModelSelection(List<OpenAiModel> models, Agent writer) {
+  void _syncModelSelection(List<ProviderModel> models, Agent writer) {
     if (models.isEmpty) return;
     final current = ref.read(runConfigTempProvider);
+    final defaultModel = ref.read(defaultAiModelProvider).value;
     final presetDefault = writer.modelConfiguration.selectedModel;
     final modelIds = models.map((model) => model.id).toSet();
     if (current.model != null && modelIds.contains(current.model)) return;
-    final chosen = modelIds.contains(presetDefault)
-        ? presetDefault
-        : models.first.id;
-    final supports = models
-        .firstWhere((model) => model.id == chosen)
-        .supportsTemperature;
-    ref
-        .read(runConfigTempProvider.notifier)
-        .update(
-          current.copyWith(
-            model: chosen,
-            temperature: supports ? current.temperature : null,
-          ),
-        );
+    ProviderModel? chosenModel;
+    if (defaultModel != null) {
+      chosenModel = models
+          .where(
+            (model) =>
+                model.id == defaultModel.modelId &&
+                model.provider == defaultModel.provider,
+          )
+          .firstOrNull;
+    }
+    chosenModel ??= models
+        .where((model) => model.id == presetDefault)
+        .firstOrNull;
+    chosenModel ??= models.first;
+    ref.read(runConfigTempProvider.notifier).update(
+      current.copyWith(
+        provider: chosenModel.provider,
+        model: chosenModel.id,
+        temperature: chosenModel.supportsTemperature ? current.temperature : null,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final details = ref.watch(presetDetailsProvider).value;
     final config = ref.watch(runConfigTempProvider);
-    final modelsAsync = ref.watch(openAiModelsProvider);
+    final modelsAsync = ref.watch(availableProviderModelsProvider);
     final theme = ShadTheme.of(context);
     final writer = details?.configurableWorkflowAgent();
     final topicError = AppValidators.requiredNonEmpty(config.topic);
@@ -83,7 +92,8 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Configure', style: theme.textTheme.h4)),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(openAiModelsProvider.notifier).refresh(),
+        onRefresh: () =>
+            ref.read(availableProviderModelsProvider.notifier).refresh(),
         child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(context.paddingMedium),
@@ -96,8 +106,9 @@ class _ConfigureRunScreenState extends ConsumerState<ConfigureRunScreen> {
                 SizedBox(height: context.spaceSmall / 2),
                 AppModelSelect(
                   enabled: true,
-                  onRetry: () =>
-                      ref.read(openAiModelsProvider.notifier).refresh(),
+                  onRetry: () => ref
+                      .read(availableProviderModelsProvider.notifier)
+                      .refresh(),
                 ),
               ],
               if (writer != null &&

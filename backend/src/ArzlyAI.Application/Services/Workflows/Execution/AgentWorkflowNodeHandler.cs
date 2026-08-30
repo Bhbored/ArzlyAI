@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ArzlyAI.Application.Constants;
 using ArzlyAI.Application.Services.Agents;
 using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Domain.Enums;
@@ -8,7 +9,7 @@ using SerilogTimings;
 namespace ArzlyAI.Application.Services.Workflows.Execution;
 
 public sealed class AgentWorkflowNodeHandler(
-    IAgentRuntime agentRuntime,
+    IAgentRuntimeResolver runtimeResolver,
     IModelCapabilityPolicy capabilities) : IWorkflowNodeHandler
 {
     public WorkflowNodeType NodeType => WorkflowNodeType.Agent;
@@ -30,13 +31,15 @@ public sealed class AgentWorkflowNodeHandler(
             return new WorkflowNodeExecutionResult(
                 input, WorkflowNodeStatus.Completed, $"{context.Step.DisplayName} completed.");
 
-        var model = ResolveModel(agent, context.AgentOverride?.Model);
+        var provider = ResolveProvider(agent, context.AgentOverride?.Provider);
+        var model = ResolveModel(agent, provider, context.AgentOverride?.Model);
         if (agent.Harness.WebSearchEnabled &&
-            !capabilities.SupportsWebSearch(agent.Model.Provider.Key, model))
+            !capabilities.SupportsWebSearch(provider, model))
             throw new ArgumentException($"Model '{model}' does not support hosted web search.");
-        var temperature = ResolveTemperature(agent, model, context.AgentOverride?.Temperature);
-        var credentialKey = $"{agent.Model.Provider.Key}.apiKey";
-        var output = await agentRuntime.ExecuteAsync(
+        var temperature = ResolveTemperature(agent, provider, model, context.AgentOverride?.Temperature);
+        var credentialKey = AiProviderKeys.CredentialKey(provider);
+        var runtime = runtimeResolver.Resolve(provider);
+        var output = await runtime.ExecuteAsync(
             agent,
             input,
             model,
@@ -48,7 +51,7 @@ public sealed class AgentWorkflowNodeHandler(
             output,
             WorkflowNodeStatus.Completed,
             $"{context.Step.DisplayName} completed.",
-            EffectiveProvider: agent.Model.Provider.Key,
+            EffectiveProvider: provider,
             EffectiveModel: model,
             EffectiveTemperature: temperature);
     }
@@ -65,17 +68,32 @@ public sealed class AgentWorkflowNodeHandler(
                 .ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.Ordinal));
     }
 
-    private string ResolveModel(AgentDefinition agent, string? requested)
+    private static string ResolveProvider(AgentDefinition agent, string? requested)
+    {
+        if (string.IsNullOrWhiteSpace(requested))
+            return agent.Model.Provider.Key;
+        if (!agent.AllowModelOverride)
+            throw new ArgumentException($"Agent '{agent.Key}' does not allow provider changes.");
+        if (!AiProviderKeys.IsSupported(requested))
+            throw new ArgumentException($"Provider '{requested}' is not supported.");
+        return requested.ToLowerInvariant();
+    }
+
+    private string ResolveModel(AgentDefinition agent, string provider, string? requested)
     {
         if (string.IsNullOrWhiteSpace(requested)) return agent.Model.Key;
         if (!agent.AllowModelOverride)
             throw new ArgumentException($"Agent '{agent.Key}' does not allow model changes.");
-        if (!capabilities.IsUsable(agent.Model.Provider.Key, requested))
+        if (!capabilities.IsUsable(provider, requested))
             throw new ArgumentException($"Model '{requested}' is not usable by this agent.");
         return requested;
     }
 
-    private double? ResolveTemperature(AgentDefinition agent, string model, double? requested)
+    private double? ResolveTemperature(
+        AgentDefinition agent,
+        string provider,
+        string model,
+        double? requested)
     {
         if (!agent.AllowTemperatureOverride)
         {
@@ -84,7 +102,7 @@ public sealed class AgentWorkflowNodeHandler(
             return null;
         }
 
-        if (!capabilities.SupportsTemperature(agent.Model.Provider.Key, model))
+        if (!capabilities.SupportsTemperature(provider, model))
         {
             if (requested is not null)
                 throw new ArgumentException($"Model '{model}' does not support temperature.");

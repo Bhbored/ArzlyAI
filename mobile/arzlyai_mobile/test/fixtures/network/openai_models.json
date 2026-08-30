@@ -2,15 +2,19 @@
   {
     "id": "gpt-5-mini",
     "displayName": "GPT-5 Mini",
+    "provider": "openai",
     "ownedBy": "openai",
     "createdAtUtc": "2025-04-14T00:00:00+00:00",
-    "supportsTemperature": false
+    "supportsTemperature": false,
+    "supportsWebSearch": true
   },
   {
     "id": "gpt-4.1-mini",
     "displayName": "GPT 4.1 Mini",
+    "provider": "openai",
     "ownedBy": "openai",
     "createdAtUtc": "2025-04-14T00:00:00+00:00",
-    "supportsTemperature": true
+    "supportsTemperature": true,
+    "supportsWebSearch": true
   }
 ]

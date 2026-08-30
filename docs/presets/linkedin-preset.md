@@ -198,7 +198,7 @@ Conceptual request:
 }
 ```
 
-The encrypted credential JSON for this phase must contain `openai.apiKey`. Flutter obtains selectable models from `POST /api/v1/providers/openai/models` and follows each result's `supportsTemperature` flag. The backend rejects unsupported combinations and omits the provider parameter for GPT-5 Mini and reasoning models.
+The encrypted credential JSON for this phase must contain `openai.apiKey` (or the override provider's `{provider}.apiKey`). Flutter loads selectable models from `GET /api/v1/providers` and `POST /api/v1/providers/{provider}/models`, filters by saved keys and `supportsWebSearch` when required, and sends `AgentOverrideRequest.provider` with the run. Settings stores a default model in SQLite. The backend rejects unsupported combinations and omits temperature for models that do not support it.
 
 ### Approve, edit, or reject
 
@@ -321,11 +321,12 @@ flowchart LR
 | `backend/src/ArzlyAI.Application/DTOs/Presets/PresetDetailsResponse.cs` | Complete selected-preset response. |
 | `backend/src/ArzlyAI.Application/DTOs/Presets/AgentResponse.cs` | Agent UI definition and locked-prompt flag. |
 | `backend/src/ArzlyAI.Application/DTOs/Presets/AgentModelConfigurationResponse.cs` | Selected model, allowed models, and temperature constraints. |
-| `backend/src/ArzlyAI.Api/Controllers/v1/ModelsController.cs` | Online OpenAI model-catalog endpoint. |
-| `backend/src/ArzlyAI.Application/DTOs/Models/ListOpenAiModelsRequest.cs` | Encrypted model-catalog request. |
-| `backend/src/ArzlyAI.Application/DTOs/Models/OpenAiModelResponse.cs` | Usable model and `SupportsTemperature` client contract. |
-| `backend/src/ArzlyAI.Application/Services/Models/OpenAiModelCatalogService.cs` | Decrypts the short-lived key and maps the online catalog. |
-| `backend/src/ArzlyAI.Application/Services/Models/OpenAiModelCapabilityPolicy.cs` | Central usable-model and temperature-capability policy. |
+| `backend/src/ArzlyAI.Api/Controllers/v1/ProvidersController.cs` | Supported provider catalog. |
+| `backend/src/ArzlyAI.Api/Controllers/v1/ProviderModelsController.cs` | Live model catalog proxy. |
+| `backend/src/ArzlyAI.Application/DTOs/Models/ListProviderModelsRequest.cs` | Encrypted model-catalog request. |
+| `backend/src/ArzlyAI.Application/DTOs/Models/ProviderModelResponse.cs` | Usable model, provider, and capability flags. |
+| `backend/src/ArzlyAI.Application/Services/Models/ProviderModelCatalogService.cs` | Decrypts the short-lived key and maps the online catalog. |
+| `backend/src/ArzlyAI.Application/Services/Models/ProviderModelCapabilityPolicy.cs` | Central usable-model and capability policy. |
 | `backend/src/ArzlyAI.Infrastructure/Services/Models/OpenAiModelClient.cs` | Calls OpenAI `GET /v1/models`. |
 | `backend/src/ArzlyAI.Application/DTOs/Presets/ModelOptionResponse.cs` | One selectable model. |
 | `backend/src/ArzlyAI.Application/DTOs/Presets/AgentHarnessResponse.cs` | Harness settings shown to the client. |
