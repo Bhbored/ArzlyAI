@@ -18,8 +18,9 @@ public static class LinkedInPresetSeed
                 cancellationToken))
             return;
 
-        var provider = new ProviderDefinition { Id = Id("0001"), Key = "openai", DisplayName = "OpenAI" };
-        var model = new ModelDefinition { Id = Id("0002"), ProviderId = provider.Id, Key = "gpt-5-mini", DisplayName = "GPT-5 mini", IsDefault = true };
+        var model = await dbContext.Models
+            .Include(item => item.Provider)
+            .SingleAsync(item => item.Provider.Key == "openai" && item.Key == "gpt-5-mini", cancellationToken);
         var linkedIn = new IntegrationDefinition
         {
             Id = Id("0003"), Key = "linkedin.posts", DisplayName = "LinkedIn Posts",
@@ -85,7 +86,7 @@ public static class LinkedInPresetSeed
             new WorkflowConnectionDefinition { Id = Id("0022"), WorkflowId = workflow.Id, SourceStepId = Id("0018"), TargetStepId = Id("0019") }
         };
 
-        dbContext.AddRange(provider, model, linkedIn, preset, agent, harness, publisherAgent, publisherHarness, workflow);
+        dbContext.AddRange(linkedIn, preset, agent, harness, publisherAgent, publisherHarness, workflow);
         dbContext.AddRange(steps);
         dbContext.AddRange(connections);
         dbContext.Add(new PresetIntegration { PresetId = preset.Id, IntegrationId = linkedIn.Id });

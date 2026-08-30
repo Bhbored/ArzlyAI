@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/enums/preset_input_field_type.dart';
-import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
@@ -206,7 +206,9 @@ class _DynamicPresetConfigureScreenState
               defaultModelId: agent.modelConfiguration.selectedModel,
               requiresWebSearch: agent.harness.webSearchEnabled,
               enabled: true,
-              onRetry: () => ref.read(openAiModelsProvider.notifier).refresh(),
+              onRetry: () => ref
+                  .read(availableProviderModelsProvider.notifier)
+                  .refresh(),
             ),
           ],
           if (editableTemp) ...[

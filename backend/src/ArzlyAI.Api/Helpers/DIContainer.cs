@@ -201,13 +201,14 @@ public static class DIContainer
 
     private static IServiceCollection RegisterApplicationServices(this IServiceCollection services)
     {
-        services.AddSingleton<IModelCapabilityPolicy, OpenAiModelCapabilityPolicy>();
+        services.AddSingleton<IModelCapabilityPolicy, ProviderModelCapabilityPolicy>();
         services.AddSingleton<IPresetMapper, PresetMapper>();
         services.AddSingleton<IWorkflowRunMapper, WorkflowRunMapper>();
         services.AddSingleton<IWorkflowGraphPlanner, WorkflowGraphPlanner>();
         services.AddSingleton<IWorkflowInputMapper, WorkflowInputMapper>();
         services.AddScoped<IPresetService, PresetService>();
-        services.AddScoped<IOpenAiModelCatalogService, OpenAiModelCatalogService>();
+        services.AddScoped<IProviderCatalogService, ProviderCatalogService>();
+        services.AddScoped<IProviderModelCatalogService, ProviderModelCatalogService>();
         services.AddScoped<IWorkflowNodeHandler, AgentWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, HumanApprovalWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, IntegrationWorkflowNodeHandler>();
@@ -225,8 +226,21 @@ public static class DIContainer
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICredentialEnvelopeProtector, EphemeralCredentialEnvelopeProtector>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
-        services.AddHttpClient<IOpenAiModelClient, OpenAiModelClient>(client =>
+        services.AddSingleton<IAgentRuntimeResolver, AgentRuntimeResolver>();
+        services.AddHttpClient<IProviderModelClient, OpenAiModelClient>(client =>
             client.BaseAddress = new Uri("https://api.openai.com/"));
+        services.AddHttpClient<IProviderModelClient, AnthropicModelClient>(client =>
+            client.BaseAddress = new Uri("https://api.anthropic.com/"));
+        services.AddHttpClient<IProviderModelClient, GeminiModelClient>(client =>
+            client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
+        services.AddHttpClient<IProviderModelClient, DeepSeekModelClient>(client =>
+            client.BaseAddress = new Uri("https://api.deepseek.com/"));
+        services.AddHttpClient<IAgentRuntime, AnthropicAgentRuntime>(client =>
+            client.BaseAddress = new Uri("https://api.anthropic.com/"));
+        services.AddHttpClient<IAgentRuntime, GeminiAgentRuntime>(client =>
+            client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
+        services.AddHttpClient<IAgentRuntime, DeepSeekAgentRuntime>(client =>
+            client.BaseAddress = new Uri("https://api.deepseek.com/"));
         services.AddHttpClient<INangoConnectorClient, NangoConnectorClient>((serviceProvider, client) =>
         {
             var settings = serviceProvider.GetRequiredService<

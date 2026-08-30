@@ -1,8 +1,11 @@
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_schema.dart';
+import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
+import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
 
 extension PresetDetailsSupport on PresetDetails {
   Agent? agentForNode(WorkflowNode node) {
@@ -35,11 +38,25 @@ extension PresetDetailsSupport on PresetDetails {
     return primaryWorkflowAgent();
   }
 
+  List<Agent> startupModelAgents() {
+    final ordered = [...workflow.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
+    final agents = <Agent>[];
+    for (final node in ordered) {
+      if (node.type == 'HumanApproval') break;
+      if (node.type != 'Agent') continue;
+      final agent = agentForNode(node);
+      if (agent != null) agents.add(agent);
+    }
+    return agents;
+  }
+
   List<CredentialRequirement> credentialRequirements() {
     final requirements = <CredentialRequirement>[];
     final seen = <String>{};
 
     for (final agent in agents) {
+      if (!agent.modelConfiguration.isModelEditable) continue;
       final provider = agent.modelConfiguration.provider;
       final envelopeKey = providerCredentialEnvelopeKey(provider);
       if (seen.add(envelopeKey)) {
@@ -95,6 +112,7 @@ extension PresetDetailsSupport on PresetDetails {
     switch (phase) {
       case CredentialPhase.workflowStart:
         return agents
+            .where((agent) => agent.modelConfiguration.isModelEditable)
             .map(
               (agent) => providerCredentialEnvelopeKey(
                 agent.modelConfiguration.provider,
@@ -104,13 +122,16 @@ extension PresetDetailsSupport on PresetDetails {
             .toList(growable: false);
       case CredentialPhase.editRequest:
         final writer = primaryWorkflowAgent();
-        if (writer == null) return [];
+        if (writer == null || !writer.modelConfiguration.isModelEditable) {
+          return [];
+        }
         return [
           providerCredentialEnvelopeKey(writer.modelConfiguration.provider),
         ];
       case CredentialPhase.approval:
         if (integrations.isEmpty) {
           return agents
+              .where((agent) => agent.modelConfiguration.isModelEditable)
               .map(
                 (agent) => providerCredentialEnvelopeKey(
                   agent.modelConfiguration.provider,
@@ -128,6 +149,107 @@ extension PresetDetailsSupport on PresetDetails {
             )
             .toList(growable: false);
     }
+  }
+
+  List<String> workflowStartCredentialKeys({
+    Iterable<String> overrideProviders = const [],
+  }) {
+    final keys = overrideProviders
+        .where((provider) => provider.isNotEmpty)
+        .map(providerCredentialEnvelopeKey)
+        .toSet();
+    if (keys.isNotEmpty) return keys.toList(growable: false);
+    return envelopeKeysForPhase(CredentialPhase.workflowStart);
+  }
+
+  List<String> approvalCredentialKeys({
+    required WorkflowRun run,
+    required ApprovalDecision decision,
+    Map<String, String> overrideProvidersByAgent = const {},
+  }) {
+    switch (decision) {
+      case ApprovalDecision.reject:
+        return [];
+      case ApprovalDecision.edit:
+        final approvalIndex = run.waitingApprovalIndex();
+        if (approvalIndex == null) return [];
+        final agentIndex = run.agentIndexBeforeApproval(approvalIndex);
+        if (agentIndex == null) return [];
+        return _modelCredentialKeysForAgents(
+          [run.nodes[agentIndex].nodeKey],
+          run,
+          overrideProvidersByAgent,
+        );
+      case ApprovalDecision.accept:
+        final approvalIndex = run.waitingApprovalIndex();
+        if (approvalIndex == null) return [];
+        if (!run.hasRemainingWorkAfterApproval(approvalIndex)) return [];
+        if (run.hasRemainingIntegrationAfterApproval(approvalIndex)) {
+          return envelopeKeysForPhase(CredentialPhase.approval);
+        }
+        if (overrideProvidersByAgent.isNotEmpty) {
+          return workflowStartCredentialKeys(
+            overrideProviders: overrideProvidersByAgent.values,
+          );
+        }
+        final nextAgentIndex = run.nextAgentIndexAfterApproval(approvalIndex);
+        if (nextAgentIndex == null) return [];
+        return _modelCredentialKeysForAgents(
+          [run.nodes[nextAgentIndex].nodeKey],
+          run,
+          overrideProvidersByAgent,
+        );
+    }
+  }
+
+  List<String> _modelCredentialKeysForAgents(
+    Iterable<String> agentKeys,
+    WorkflowRun run,
+    Map<String, String> overrideProvidersByAgent,
+  ) {
+    final keys = <String>{};
+    for (final agentKey in agentKeys) {
+      final provider = resolveProviderForAgent(
+        agentKey: agentKey,
+        run: run,
+        overrideProvidersByAgent: overrideProvidersByAgent,
+      );
+      if (provider != null && provider.isNotEmpty) {
+        keys.add(providerCredentialEnvelopeKey(provider));
+      }
+    }
+    return keys.toList(growable: false);
+  }
+
+  String? resolveProviderForAgent({
+    required String agentKey,
+    required WorkflowRun run,
+    Map<String, String> overrideProvidersByAgent = const {},
+  }) {
+    final overrideProvider = overrideProvidersByAgent[agentKey];
+    if (overrideProvider != null && overrideProvider.isNotEmpty) {
+      return overrideProvider;
+    }
+    final node = run.nodes.where((item) => item.nodeKey == agentKey).firstOrNull;
+    if (node?.effectiveProvider != null && node!.effectiveProvider!.isNotEmpty) {
+      return node.effectiveProvider;
+    }
+    final configurable = configurableWorkflowAgent();
+    if (configurable != null) {
+      final configured = overrideProvidersByAgent[configurable.key];
+      if (configured != null && configured.isNotEmpty) {
+        return configured;
+      }
+    }
+    for (final candidate in run.nodes) {
+      if (candidate.type != 'Agent') continue;
+      final provider = candidate.effectiveProvider;
+      if (provider != null && provider.isNotEmpty) {
+        return provider;
+      }
+    }
+    final agent = agents.where((item) => item.key == agentKey).firstOrNull;
+    return agent?.modelConfiguration.provider;
   }
 }
 

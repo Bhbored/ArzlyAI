@@ -7,6 +7,7 @@ part 'agent_override_request.g.dart';
 sealed class AgentOverrideRequest with _$AgentOverrideRequest {
   const factory AgentOverrideRequest({
     required String agentKey,
+    String? provider,
     String? model,
     double? temperature,
   }) = _AgentOverrideRequest;

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:arzlyai_mobile/core/constants/ai_providers.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_request.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
@@ -64,27 +65,12 @@ class _AppScheduleSectionState extends ConsumerState<AppScheduleSection> {
     return '$hour:$minute';
   }
 
-  String? _modelOverridesJson(PresetDetails details, RunConfigState config) {
-    final writer = details.configurableWorkflowAgent();
-    if (writer == null || !writer.modelConfiguration.isModelEditable) {
-      return null;
-    }
-    final overrides = [
-      AgentOverrideRequest(
-        agentKey: writer.key,
-        model: config.model ?? writer.modelConfiguration.selectedModel,
-        temperature: config.temperature,
-      ),
-    ];
-    return jsonEncode(overrides.map((e) => e.toJson()).toList());
-  }
-
   Future<String> _ensureWorkflowInstance() async {
     final details = ref.read(presetDetailsProvider).value;
     final config = ref.read(runConfigTempProvider);
     if (details == null) throw StateError('Preset details are required.');
 
-    final overridesJson = _modelOverridesJson(details, config);
+    final overridesJson = buildScheduleModelOverridesJson(details, config);
 
     if (_localWorkflowId != null) {
       await ref.read(workflowRepositoryProvider).updateInstance(
@@ -197,4 +183,28 @@ class _AppScheduleSectionState extends ConsumerState<AppScheduleSection> {
       ),
     );
   }
+}
+
+@visibleForTesting
+String? buildScheduleModelOverridesJson(
+  PresetDetails details,
+  RunConfigState config,
+) {
+  final writer = details.configurableWorkflowAgent();
+  if (writer == null || !writer.modelConfiguration.isModelEditable) return null;
+  final model = config.model ?? writer.modelConfiguration.selectedModel;
+  final overrides = [
+    AgentOverrideRequest(
+      agentKey: writer.key,
+      provider:
+          config.provider ??
+          inferAiProviderFromModel(model) ??
+          writer.modelConfiguration.provider,
+      model: model,
+      temperature: writer.modelConfiguration.isTemperatureEditable
+          ? config.temperature
+          : null,
+    ),
+  ];
+  return jsonEncode(overrides.map((override) => override.toJson()).toList());
 }

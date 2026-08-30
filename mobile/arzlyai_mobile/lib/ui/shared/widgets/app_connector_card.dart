@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
@@ -12,15 +11,25 @@ import 'package:arzlyai_mobile/data/providers/connectors/linkedin_connector_stat
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/brand_icon.dart';
 
 class AppConnectorCard extends ConsumerWidget {
-  const AppConnectorCard._({required this.connectorKey, super.key});
+  const AppConnectorCard._({
+    required this.connectorKey,
+    this.compact = false,
+    super.key,
+  });
 
-  factory AppConnectorCard.linkedin({Key? key}) {
-    return AppConnectorCard._(connectorKey: ConnectorKeys.linkedin, key: key);
+  factory AppConnectorCard.linkedin({Key? key, bool compact = false}) {
+    return AppConnectorCard._(
+      connectorKey: ConnectorKeys.linkedin,
+      compact: compact,
+      key: key,
+    );
   }
 
   final String connectorKey;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,58 +48,56 @@ class AppConnectorCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                FaIcon(
-                  FontAwesomeIcons.linkedin,
-                  size: context.iconLarge,
-                  color: theme.colorScheme.primary,
-                ),
-                SizedBox(width: context.spaceSmall),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'LinkedIn',
-                        style: theme.textTheme.small.copyWith(
-                          color: theme.colorScheme.cardForeground,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      connected.when(
-                        data: (value) => Text(
-                          value ? 'Connected' : 'Not connected',
-                          style: theme.textTheme.muted.copyWith(
-                            color: theme.colorScheme.mutedForeground,
+            if (!compact) ...[
+              Row(
+                children: [
+                  BrandIcon.linkedin(size: context.iconLarge + 4),
+                  SizedBox(width: context.spaceSmall),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'LinkedIn',
+                          style: theme.textTheme.small.copyWith(
+                            color: theme.colorScheme.cardForeground,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        loading: () => Text(
-                          'Checking connection…',
-                          style: theme.textTheme.muted.copyWith(
-                            color: theme.colorScheme.mutedForeground,
+                        connected.when(
+                          data: (value) => Text(
+                            value ? 'Connected' : 'Not connected',
+                            style: theme.textTheme.muted.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                          loading: () => Text(
+                            'Checking connection…',
+                            style: theme.textTheme.muted.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                          error: (_, _) => Text(
+                            'Not connected',
+                            style: theme.textTheme.muted.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
                           ),
                         ),
-                        error: (_, _) => Text(
-                          'Not connected',
-                          style: theme.textTheme.muted.copyWith(
-                            color: theme.colorScheme.mutedForeground,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: context.spaceSmall),
-            Text(
-              'Authorize through LinkedIn in your browser. ArzlyAI uses Nango to broker OAuth — access tokens stay on your device.',
-              style: theme.textTheme.muted.copyWith(
-                color: theme.colorScheme.mutedForeground,
+                ],
               ),
-            ),
-            SizedBox(height: context.spaceSmall),
+              SizedBox(height: context.spaceSmall),
+              Text(
+                'Authorize through LinkedIn in your browser. ArzlyAI uses Nango to broker OAuth — access tokens stay on your device.',
+                style: theme.textTheme.muted.copyWith(
+                  color: theme.colorScheme.mutedForeground,
+                ),
+              ),
+              SizedBox(height: context.spaceSmall),
+            ],
             _Actions(
               connectorKey: connectorKey,
               connected: connected.value ?? false,

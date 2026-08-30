@@ -1,6 +1,7 @@
 export 'app_button.dart';
 export 'app_card.dart';
 export 'app_connector_card.dart';
+export 'brand_icon.dart';
 export 'app_country_select.dart';
 export 'app_credential_field.dart';
 export 'app_dialog.dart';

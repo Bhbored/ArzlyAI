@@ -14,6 +14,7 @@ namespace ArzlyAI.Infrastructure.Agents;
 public sealed class OpenAiAgentRuntime(
     ILogger<OpenAiAgentRuntime> logger) : IAgentRuntime
 {
+    public string ProviderKey => Application.Constants.AiProviderKeys.OpenAi;
     public async Task<string> ExecuteAsync(AgentDefinition definition, string input, string model,
         double? temperature, string apiKey, CancellationToken cancellationToken)
     {

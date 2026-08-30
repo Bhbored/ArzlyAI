@@ -8,6 +8,7 @@ part 'run_config_temp.g.dart';
 @freezed
 sealed class AgentOverrideDraft with _$AgentOverrideDraft {
   const factory AgentOverrideDraft({
+    String? provider,
     String? model,
     double? temperature,
   }) = _AgentOverrideDraft;
@@ -17,6 +18,7 @@ sealed class AgentOverrideDraft with _$AgentOverrideDraft {
 sealed class RunConfigState with _$RunConfigState {
   const factory RunConfigState({
     @Default('') String topic,
+    String? provider,
     String? model,
     double? temperature,
     @Default(<String, String>{}) Map<String, String> inputs,

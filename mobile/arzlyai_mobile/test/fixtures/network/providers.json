@@ -1,0 +1,6 @@
+[
+  { "key": "openai", "displayName": "OpenAI" },
+  { "key": "anthropic", "displayName": "Anthropic" },
+  { "key": "gemini", "displayName": "Gemini" },
+  { "key": "deepseek", "displayName": "DeepSeek" }
+]

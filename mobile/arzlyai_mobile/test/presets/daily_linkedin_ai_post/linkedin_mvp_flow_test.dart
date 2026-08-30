@@ -7,7 +7,7 @@ import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/core/realtime/workflow_hub_client.dart';
-import 'package:arzlyai_mobile/data/providers/models/openai_models_provider.dart';
+import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/providers/network/internet_connection_provider.dart';
 import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart';
 import 'package:arzlyai_mobile/data/providers/preset/preset_catalog_provider.dart';
@@ -17,8 +17,8 @@ import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/provider/openai_model_repository.dart';
-import 'package:arzlyai_mobile/domain/mappers/provider/openai_model_mapper.dart';
+import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
+import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import 'package:arzlyai_mobile/ui/features/presets/catalog/preset_catalog_screen.dart';
 import '../../helpers/fakes.dart';
@@ -38,13 +38,15 @@ void main() {
     final workflows = FakeWorkflowService();
     final hub = FakeHub();
     final envelopes = FakeEnvelopeService();
-    final openAiRepo = OpenAiModelRepository(
-      FakeOpenAiModelService()..result = fixtureOpenAiModelResponses(),
+    final providerModelRepo = ProviderModelRepository(
+      db,
+      FakeProviderModelService()
+        ..modelsResult = fixtureProviderModelResponses(),
       CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
-      const OpenAiModelMapper(),
+      const ProviderModelMapper(),
     );
-    await openAiRepo.listModels();
+    await providerModelRepo.listModelsForProvider('openai');
 
     await tester.pumpWidget(
       ProviderScope(
@@ -56,10 +58,10 @@ void main() {
           presetDetailsProvider.overrideWith(
             () => SeededDetails(fixtureDetails()),
           ),
-          openAiModelsProvider.overrideWith(
-            () => SeededOpenAiModels(fixtureOpenAiModels()),
+          availableProviderModelsProvider.overrideWith(
+            () => SeededAvailableProviderModels(fixtureProviderModels()),
           ),
-          openAiModelRepositoryProvider.overrideWithValue(openAiRepo),
+          providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
           workflowServiceProvider.overrideWithValue(workflows),
           workflowHubClientProvider.overrideWithValue(hub),
           credentialStoreProvider.overrideWithValue(store),

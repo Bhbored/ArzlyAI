@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using ArzlyAI.Application.Constants;
 using ArzlyAI.Application.Models.Providers;
 using ArzlyAI.Application.Services.Models;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,10 @@ namespace ArzlyAI.Infrastructure.Services.Models;
 
 public sealed class OpenAiModelClient(
     HttpClient httpClient,
-    ILogger<OpenAiModelClient> logger) : IOpenAiModelClient
+    ILogger<OpenAiModelClient> logger) : IProviderModelClient
 {
+    public string ProviderKey => AiProviderKeys.OpenAi;
+
     public async Task<IReadOnlyList<ProviderModel>> ListAsync(
         string apiKey,
         CancellationToken cancellationToken)

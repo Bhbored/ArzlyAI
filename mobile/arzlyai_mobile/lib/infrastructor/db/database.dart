@@ -5,8 +5,10 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:arzlyai_mobile/infrastructor/tables/ai_settings_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/connector_credentials_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/preset_cache_table.dart';
+import 'package:arzlyai_mobile/infrastructor/tables/provider_model_cache_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/schedule_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/workflow_instance_table.dart';
 import 'package:arzlyai_mobile/infrastructor/tables/workflow_node_run_table.dart';
@@ -31,6 +33,8 @@ AppDatabase appDatabase(Ref ref) {
     WorkflowNodeRuns,
     Schedules,
     ConnectorCredentials,
+    AiSettings,
+    ProviderModelCache,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -39,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

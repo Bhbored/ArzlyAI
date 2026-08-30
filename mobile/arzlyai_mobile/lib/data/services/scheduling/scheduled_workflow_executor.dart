@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:arzlyai_mobile/core/constants/ai_providers.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
@@ -13,7 +14,7 @@ import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
-import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 
 class ScheduledWorkflowExecutor {
@@ -43,7 +44,9 @@ class ScheduledWorkflowExecutor {
     }
 
     if (await workflowRepository.hasPendingApproval(localWorkflowId)) {
-      final pending = await workflowRepository.latestRunForWorkflow(localWorkflowId);
+      final pending = await workflowRepository.latestRunForWorkflow(
+        localWorkflowId,
+      );
       await scheduleRepository.recordSuccess(
         localWorkflowId: localWorkflowId,
         outcome: ScheduleOutcomes.skipped,
@@ -54,7 +57,9 @@ class ScheduledWorkflowExecutor {
           runId: pending.runId,
         );
       }
-      final schedule = await scheduleRepository.getByWorkflowId(localWorkflowId);
+      final schedule = await scheduleRepository.getByWorkflowId(
+        localWorkflowId,
+      );
       if (schedule != null) {
         await scheduler.registerSchedule(schedule);
       }
@@ -75,15 +80,23 @@ class ScheduledWorkflowExecutor {
         throw StateError('Preset details are not available offline.');
       }
 
-      final keys = details.envelopeKeysForPhase(CredentialPhase.workflowStart);
+      final overrides = _ensureOverrideProviders(
+        _parseOverrides(instance.modelOverridesJson),
+        details,
+      );
+      final keys = details.workflowStartCredentialKeys(
+        overrideProviders: overrides.map((item) => item.provider ?? ''),
+      );
       final credentials = await credentialRepository.readForEnvelopeKeys(keys);
-      final missing = credentialRepository.missingEnvelopeKeys(keys, credentials);
+      final missing = credentialRepository.missingEnvelopeKeys(
+        keys,
+        credentials,
+      );
       if (missing.isNotEmpty) {
-        throw StateError('OpenAI API key is required.');
+        throw StateError('Missing credentials: ${missing.join(', ')}');
       }
 
       final envelope = await envelopeService.encrypt(credentials);
-      final overrides = _parseOverrides(instance.modelOverridesJson);
 
       final dto = await workflowService.start(
         StartWorkflowRequest(
@@ -120,7 +133,9 @@ class ScheduledWorkflowExecutor {
         );
       }
 
-      final schedule = await scheduleRepository.getByWorkflowId(localWorkflowId);
+      final schedule = await scheduleRepository.getByWorkflowId(
+        localWorkflowId,
+      );
       if (schedule != null && schedule.enabled) {
         await scheduler.registerSchedule(schedule);
       }
@@ -147,6 +162,24 @@ class ScheduledWorkflowExecutor {
           ),
         )
         .toList();
+  }
+
+  List<AgentOverrideRequest> _ensureOverrideProviders(
+    List<AgentOverrideRequest> overrides,
+    PresetDetails details,
+  ) {
+    return overrides.map((override) {
+      if (override.provider?.isNotEmpty ?? false) return override;
+      final configuredProvider = details.agents
+          .where((agent) => agent.key == override.agentKey)
+          .firstOrNull
+          ?.modelConfiguration
+          .provider;
+      final provider = override.model == null
+          ? configuredProvider
+          : inferAiProviderFromModel(override.model!) ?? configuredProvider;
+      return override.copyWith(provider: provider);
+    }).toList(growable: false);
   }
 
   String _sanitize(Object error) {

@@ -8,7 +8,7 @@ namespace ArzlyAI.Infrastructure.Persistence.Seeds;
 public static class SmartPurchaseDecisionPresetSeed
 {
     public const string PresetKey = "smart-purchase-decision";
-    private const int TargetVersion = 5;
+    private const int TargetVersion = 7;
 
     public static async Task SeedAsync(ArzlyDbContext dbContext, CancellationToken cancellationToken)
     {
@@ -129,7 +129,7 @@ public static class SmartPurchaseDecisionPresetSeed
     [
         Agent("1011", preset, modelId, "understand-request", "Understand Request",
             UnderstandInstructions, RestatementSchema, 3, false,
-            allowModelOverride: false, allowTemperatureOverride: false),
+            allowModelOverride: true, allowTemperatureOverride: false),
         Agent("1012", preset, modelId, "shop-and-recommend", "Shop and Recommend",
             ShopInstructions, ReportSchema, 8, true,
             allowModelOverride: true, allowTemperatureOverride: true)
@@ -248,9 +248,16 @@ public static class SmartPurchaseDecisionPresetSeed
 
     private const string ShopInstructions =
         "Using the confirmed shopper request, search the web for real products sold in the shopper's " +
-        "country. Use the country name and local retailers in search queries — not only global catalogs. " +
-        "Include every product that clearly fits the budget and checklist. Target four to eight options " +
-        "when search supports it; never return only one unless search truly finds a single match. " +
+        "country. Search broadly across local retailers, national distributors, reputable marketplaces, " +
+        "and manufacturer product pages. Use the country name and local retailers in search queries — not " +
+        "only global catalogs. Return at least three distinct product suggestions whenever the research " +
+        "identifies three products relevant to the request. A product is eligible when its identity, key " +
+        "features, and relevance are supported by a credible source; verified price, live availability, " +
+        "a direct store URL, and an image are not all required for the product to be suggested. Never " +
+        "replace the shortlist with 'No Verified Recommendation' solely because a retailer blocks access, " +
+        "a listing is sold out, or optional commerce details are missing. Use 'Price unavailable' when a " +
+        "price is unknown, null for an unverified image, and an empty actions list when no valid direct " +
+        "product-page offer is available. Explain verification gaps in detail or a riskCallout block. " +
         "Create an arzly.report version 4 purchaseDecision document with a concise title, summary, " +
         "recommendation block (winner as the first item), candidateComparison block (remaining matches), " +
         "optional riskCallout block, and verified sources. For each product include a direct HTTPS image " +

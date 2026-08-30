@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AgentOverrideDraft {
 
- String? get model; double? get temperature;
+ String? get provider; String? get model; double? get temperature;
 /// Create a copy of AgentOverrideDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AgentOverrideDraftCopyWith<AgentOverrideDraft> get copyWith => _$AgentOverrideD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentOverrideDraft&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AgentOverrideDraft&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,model,temperature);
+int get hashCode => Object.hash(runtimeType,provider,model,temperature);
 
 @override
 String toString() {
-  return 'AgentOverrideDraft(model: $model, temperature: $temperature)';
+  return 'AgentOverrideDraft(provider: $provider, model: $model, temperature: $temperature)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AgentOverrideDraftCopyWith<$Res>  {
   factory $AgentOverrideDraftCopyWith(AgentOverrideDraft value, $Res Function(AgentOverrideDraft) _then) = _$AgentOverrideDraftCopyWithImpl;
 @useResult
 $Res call({
- String? model, double? temperature
+ String? provider, String? model, double? temperature
 });
 
 
@@ -62,9 +62,10 @@ class _$AgentOverrideDraftCopyWithImpl<$Res>
 
 /// Create a copy of AgentOverrideDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? model = freezed,Object? temperature = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,}) {
   return _then(_self.copyWith(
-model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -148,10 +149,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? model,  double? temperature)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? provider,  String? model,  double? temperature)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AgentOverrideDraft() when $default != null:
-return $default(_that.model,_that.temperature);case _:
+return $default(_that.provider,_that.model,_that.temperature);case _:
   return orElse();
 
 }
@@ -169,10 +170,10 @@ return $default(_that.model,_that.temperature);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? model,  double? temperature)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? provider,  String? model,  double? temperature)  $default,) {final _that = this;
 switch (_that) {
 case _AgentOverrideDraft():
-return $default(_that.model,_that.temperature);}
+return $default(_that.provider,_that.model,_that.temperature);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -186,10 +187,10 @@ return $default(_that.model,_that.temperature);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? model,  double? temperature)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? provider,  String? model,  double? temperature)?  $default,) {final _that = this;
 switch (_that) {
 case _AgentOverrideDraft() when $default != null:
-return $default(_that.model,_that.temperature);case _:
+return $default(_that.provider,_that.model,_that.temperature);case _:
   return null;
 
 }
@@ -201,9 +202,10 @@ return $default(_that.model,_that.temperature);case _:
 
 
 class _AgentOverrideDraft implements AgentOverrideDraft {
-  const _AgentOverrideDraft({this.model, this.temperature});
+  const _AgentOverrideDraft({this.provider, this.model, this.temperature});
   
 
+@override final  String? provider;
 @override final  String? model;
 @override final  double? temperature;
 
@@ -217,16 +219,16 @@ _$AgentOverrideDraftCopyWith<_AgentOverrideDraft> get copyWith => __$AgentOverri
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentOverrideDraft&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AgentOverrideDraft&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,model,temperature);
+int get hashCode => Object.hash(runtimeType,provider,model,temperature);
 
 @override
 String toString() {
-  return 'AgentOverrideDraft(model: $model, temperature: $temperature)';
+  return 'AgentOverrideDraft(provider: $provider, model: $model, temperature: $temperature)';
 }
 
 
@@ -237,7 +239,7 @@ abstract mixin class _$AgentOverrideDraftCopyWith<$Res> implements $AgentOverrid
   factory _$AgentOverrideDraftCopyWith(_AgentOverrideDraft value, $Res Function(_AgentOverrideDraft) _then) = __$AgentOverrideDraftCopyWithImpl;
 @override @useResult
 $Res call({
- String? model, double? temperature
+ String? provider, String? model, double? temperature
 });
 
 
@@ -254,9 +256,10 @@ class __$AgentOverrideDraftCopyWithImpl<$Res>
 
 /// Create a copy of AgentOverrideDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? model = freezed,Object? temperature = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,}) {
   return _then(_AgentOverrideDraft(
-model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
@@ -268,7 +271,7 @@ as double?,
 /// @nodoc
 mixin _$RunConfigState {
 
- String get topic; String? get model; double? get temperature; Map<String, String> get inputs; List<CandidateSeed> get candidateSeeds; Map<String, AgentOverrideDraft> get agentOverrides;
+ String get topic; String? get provider; String? get model; double? get temperature; Map<String, String> get inputs; List<CandidateSeed> get candidateSeeds; Map<String, AgentOverrideDraft> get agentOverrides;
 /// Create a copy of RunConfigState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -279,16 +282,16 @@ $RunConfigStateCopyWith<RunConfigState> get copyWith => _$RunConfigStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RunConfigState&&(identical(other.topic, topic) || other.topic == topic)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&const DeepCollectionEquality().equals(other.inputs, inputs)&&const DeepCollectionEquality().equals(other.candidateSeeds, candidateSeeds)&&const DeepCollectionEquality().equals(other.agentOverrides, agentOverrides));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RunConfigState&&(identical(other.topic, topic) || other.topic == topic)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&const DeepCollectionEquality().equals(other.inputs, inputs)&&const DeepCollectionEquality().equals(other.candidateSeeds, candidateSeeds)&&const DeepCollectionEquality().equals(other.agentOverrides, agentOverrides));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topic,model,temperature,const DeepCollectionEquality().hash(inputs),const DeepCollectionEquality().hash(candidateSeeds),const DeepCollectionEquality().hash(agentOverrides));
+int get hashCode => Object.hash(runtimeType,topic,provider,model,temperature,const DeepCollectionEquality().hash(inputs),const DeepCollectionEquality().hash(candidateSeeds),const DeepCollectionEquality().hash(agentOverrides));
 
 @override
 String toString() {
-  return 'RunConfigState(topic: $topic, model: $model, temperature: $temperature, inputs: $inputs, candidateSeeds: $candidateSeeds, agentOverrides: $agentOverrides)';
+  return 'RunConfigState(topic: $topic, provider: $provider, model: $model, temperature: $temperature, inputs: $inputs, candidateSeeds: $candidateSeeds, agentOverrides: $agentOverrides)';
 }
 
 
@@ -299,7 +302,7 @@ abstract mixin class $RunConfigStateCopyWith<$Res>  {
   factory $RunConfigStateCopyWith(RunConfigState value, $Res Function(RunConfigState) _then) = _$RunConfigStateCopyWithImpl;
 @useResult
 $Res call({
- String topic, String? model, double? temperature, Map<String, String> inputs, List<CandidateSeed> candidateSeeds, Map<String, AgentOverrideDraft> agentOverrides
+ String topic, String? provider, String? model, double? temperature, Map<String, String> inputs, List<CandidateSeed> candidateSeeds, Map<String, AgentOverrideDraft> agentOverrides
 });
 
 
@@ -316,10 +319,11 @@ class _$RunConfigStateCopyWithImpl<$Res>
 
 /// Create a copy of RunConfigState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? topic = null,Object? model = freezed,Object? temperature = freezed,Object? inputs = null,Object? candidateSeeds = null,Object? agentOverrides = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? topic = null,Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,Object? inputs = null,Object? candidateSeeds = null,Object? agentOverrides = null,}) {
   return _then(_self.copyWith(
 topic: null == topic ? _self.topic : topic // ignore: cast_nullable_to_non_nullable
-as String,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String,provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,inputs: null == inputs ? _self.inputs : inputs // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,candidateSeeds: null == candidateSeeds ? _self.candidateSeeds : candidateSeeds // ignore: cast_nullable_to_non_nullable
@@ -406,10 +410,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String topic,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String topic,  String? provider,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RunConfigState() when $default != null:
-return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);case _:
+return $default(_that.topic,_that.provider,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);case _:
   return orElse();
 
 }
@@ -427,10 +431,10 @@ return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.can
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String topic,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String topic,  String? provider,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)  $default,) {final _that = this;
 switch (_that) {
 case _RunConfigState():
-return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);}
+return $default(_that.topic,_that.provider,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -444,10 +448,10 @@ return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.can
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String topic,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String topic,  String? provider,  String? model,  double? temperature,  Map<String, String> inputs,  List<CandidateSeed> candidateSeeds,  Map<String, AgentOverrideDraft> agentOverrides)?  $default,) {final _that = this;
 switch (_that) {
 case _RunConfigState() when $default != null:
-return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);case _:
+return $default(_that.topic,_that.provider,_that.model,_that.temperature,_that.inputs,_that.candidateSeeds,_that.agentOverrides);case _:
   return null;
 
 }
@@ -459,10 +463,11 @@ return $default(_that.topic,_that.model,_that.temperature,_that.inputs,_that.can
 
 
 class _RunConfigState implements RunConfigState {
-  const _RunConfigState({this.topic = '', this.model, this.temperature, final  Map<String, String> inputs = const <String, String>{}, final  List<CandidateSeed> candidateSeeds = const <CandidateSeed>[], final  Map<String, AgentOverrideDraft> agentOverrides = const <String, AgentOverrideDraft>{}}): _inputs = inputs,_candidateSeeds = candidateSeeds,_agentOverrides = agentOverrides;
+  const _RunConfigState({this.topic = '', this.provider, this.model, this.temperature, final  Map<String, String> inputs = const <String, String>{}, final  List<CandidateSeed> candidateSeeds = const <CandidateSeed>[], final  Map<String, AgentOverrideDraft> agentOverrides = const <String, AgentOverrideDraft>{}}): _inputs = inputs,_candidateSeeds = candidateSeeds,_agentOverrides = agentOverrides;
   
 
 @override@JsonKey() final  String topic;
+@override final  String? provider;
 @override final  String? model;
 @override final  double? temperature;
  final  Map<String, String> _inputs;
@@ -497,16 +502,16 @@ _$RunConfigStateCopyWith<_RunConfigState> get copyWith => __$RunConfigStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RunConfigState&&(identical(other.topic, topic) || other.topic == topic)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&const DeepCollectionEquality().equals(other._inputs, _inputs)&&const DeepCollectionEquality().equals(other._candidateSeeds, _candidateSeeds)&&const DeepCollectionEquality().equals(other._agentOverrides, _agentOverrides));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RunConfigState&&(identical(other.topic, topic) || other.topic == topic)&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&const DeepCollectionEquality().equals(other._inputs, _inputs)&&const DeepCollectionEquality().equals(other._candidateSeeds, _candidateSeeds)&&const DeepCollectionEquality().equals(other._agentOverrides, _agentOverrides));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,topic,model,temperature,const DeepCollectionEquality().hash(_inputs),const DeepCollectionEquality().hash(_candidateSeeds),const DeepCollectionEquality().hash(_agentOverrides));
+int get hashCode => Object.hash(runtimeType,topic,provider,model,temperature,const DeepCollectionEquality().hash(_inputs),const DeepCollectionEquality().hash(_candidateSeeds),const DeepCollectionEquality().hash(_agentOverrides));
 
 @override
 String toString() {
-  return 'RunConfigState(topic: $topic, model: $model, temperature: $temperature, inputs: $inputs, candidateSeeds: $candidateSeeds, agentOverrides: $agentOverrides)';
+  return 'RunConfigState(topic: $topic, provider: $provider, model: $model, temperature: $temperature, inputs: $inputs, candidateSeeds: $candidateSeeds, agentOverrides: $agentOverrides)';
 }
 
 
@@ -517,7 +522,7 @@ abstract mixin class _$RunConfigStateCopyWith<$Res> implements $RunConfigStateCo
   factory _$RunConfigStateCopyWith(_RunConfigState value, $Res Function(_RunConfigState) _then) = __$RunConfigStateCopyWithImpl;
 @override @useResult
 $Res call({
- String topic, String? model, double? temperature, Map<String, String> inputs, List<CandidateSeed> candidateSeeds, Map<String, AgentOverrideDraft> agentOverrides
+ String topic, String? provider, String? model, double? temperature, Map<String, String> inputs, List<CandidateSeed> candidateSeeds, Map<String, AgentOverrideDraft> agentOverrides
 });
 
 
@@ -534,10 +539,11 @@ class __$RunConfigStateCopyWithImpl<$Res>
 
 /// Create a copy of RunConfigState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? topic = null,Object? model = freezed,Object? temperature = freezed,Object? inputs = null,Object? candidateSeeds = null,Object? agentOverrides = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? topic = null,Object? provider = freezed,Object? model = freezed,Object? temperature = freezed,Object? inputs = null,Object? candidateSeeds = null,Object? agentOverrides = null,}) {
   return _then(_RunConfigState(
 topic: null == topic ? _self.topic : topic // ignore: cast_nullable_to_non_nullable
-as String,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String,provider: freezed == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String?,temperature: freezed == temperature ? _self.temperature : temperature // ignore: cast_nullable_to_non_nullable
 as double?,inputs: null == inputs ? _self._inputs : inputs // ignore: cast_nullable_to_non_nullable
 as Map<String, String>,candidateSeeds: null == candidateSeeds ? _self._candidateSeeds : candidateSeeds // ignore: cast_nullable_to_non_nullable

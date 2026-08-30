@@ -7,7 +7,9 @@ using ArzlyAI.Application.Security;
 using ArzlyAI.Application.Services.Presets;
 using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Services.Workflows;
+using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Application.Services.Workflows.Execution;
+using ArzlyAI.Domain.Catalog;
 using ArzlyAI.Domain.Enums;
 using ArzlyAI.Domain.Presets;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -73,6 +75,32 @@ public sealed class WorkflowApprovalTransitionTests
         Assert.All(result.Nodes, node => Assert.Equal(nameof(WorkflowNodeStatus.Completed), node.Status));
     }
 
+    [Fact]
+    public async Task StartAsync_WhenProviderChangesWithoutModel_RejectsAmbiguousOverride()
+    {
+        var fixture = CreateFixture();
+        var request = StartRequest(
+            [new AgentOverrideRequest("writer", "anthropic", null, null)]);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            fixture.Service.StartAsync(request, CancellationToken.None));
+
+        Assert.Contains("model override is required", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task StartAsync_WhenProviderAndModelDoNotMatch_RejectsOverride()
+    {
+        var fixture = CreateFixture();
+        var request = StartRequest(
+            [new AgentOverrideRequest("writer", "gemini", "deepseek-chat", null)]);
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            fixture.Service.StartAsync(request, CancellationToken.None));
+
+        Assert.Contains("does not belong", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static Fixture CreateFixture()
     {
         var preset = CreatePreset();
@@ -94,6 +122,7 @@ public sealed class WorkflowApprovalTransitionTests
             handlers,
             realtime,
             new WorkflowRunMapper(),
+            new ProviderModelCapabilityPolicy(),
             NullLogger<WorkflowExecutionService>.Instance);
         return new Fixture(service, integration, realtime);
     }
@@ -109,6 +138,43 @@ public sealed class WorkflowApprovalTransitionTests
             Version = 1,
             IsPublished = true
         };
+        var provider = new ProviderDefinition
+        {
+            Id = Guid.NewGuid(),
+            Key = "openai",
+            DisplayName = "OpenAI"
+        };
+        var model = new ModelDefinition
+        {
+            Id = Guid.NewGuid(),
+            ProviderId = provider.Id,
+            Provider = provider,
+            Key = "gpt-5-mini",
+            DisplayName = "GPT-5 mini"
+        };
+        provider.Models.Add(model);
+        var agent = new AgentDefinition
+        {
+            Id = Guid.NewGuid(),
+            PresetId = preset.Id,
+            Preset = preset,
+            ModelId = model.Id,
+            Model = model,
+            Key = "writer",
+            Name = "Writer",
+            Instructions = "Write",
+            RuntimeType = AgentRuntimeType.Model,
+            AllowModelOverride = true,
+            AllowTemperatureOverride = true
+        };
+        agent.Harness = new AgentHarnessDefinition
+        {
+            Id = Guid.NewGuid(),
+            AgentId = agent.Id,
+            Agent = agent,
+            MaxIterations = 3
+        };
+        preset.Agents.Add(agent);
         var workflow = new WorkflowDefinition
         {
             Id = Guid.NewGuid(),
@@ -160,10 +226,11 @@ public sealed class WorkflowApprovalTransitionTests
         Workflow = workflow
     };
 
-    private static StartWorkflowRequest StartRequest() => new(
+    private static StartWorkflowRequest StartRequest(
+        IReadOnlyList<AgentOverrideRequest>? overrides = null) => new(
         "test-preset",
         new Dictionary<string, string> { ["topic"] = "AI" },
-        [],
+        overrides ?? [],
         Envelope());
 
     private static CredentialEnvelope Envelope() => new(

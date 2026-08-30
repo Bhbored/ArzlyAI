@@ -1,4 +1,4 @@
-export 'package:arzlyai_mobile/core/network/services/models/openai_model_service.dart'
+export 'package:arzlyai_mobile/core/network/services/models/provider_model_service.dart'
     hide retry;
 export 'package:arzlyai_mobile/core/network/services/geo/countries_catalog_service.dart'
     hide retry;

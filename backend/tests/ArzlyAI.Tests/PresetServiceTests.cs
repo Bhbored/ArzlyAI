@@ -17,7 +17,7 @@ public sealed class PresetServiceTests
         var preset = CreatePreset();
         var service = new PresetService(
             new PresetRepositoryStub(preset),
-            new PresetMapper(new OpenAiModelCapabilityPolicy()),
+            new PresetMapper(new ProviderModelCapabilityPolicy()),
             NullLogger<PresetService>.Instance);
 
         var response = await service.GetByKeyAsync(preset.Key, CancellationToken.None);
@@ -30,10 +30,25 @@ public sealed class PresetServiceTests
         Assert.Single(response.Workflow.Connections);
     }
 
-    private static PresetDefinition CreatePreset()
+    [Fact]
+    public async Task GetByKeyAsync_WhenDefaultModelHasNoTemperature_AllowsCapableOverrideModels()
+    {
+        var preset = CreatePreset("gpt-5-mini");
+        var service = new PresetService(
+            new PresetRepositoryStub(preset),
+            new PresetMapper(new ProviderModelCapabilityPolicy()),
+            NullLogger<PresetService>.Instance);
+
+        var response = await service.GetByKeyAsync(preset.Key, CancellationToken.None);
+
+        Assert.NotNull(response);
+        Assert.True(response.Agents[0].ModelConfiguration.IsTemperatureEditable);
+    }
+
+    private static PresetDefinition CreatePreset(string modelKey = "gpt-4.1-mini")
     {
         var provider = new ProviderDefinition { Id = Guid.NewGuid(), Key = "openai", DisplayName = "OpenAI" };
-        var model = new ModelDefinition { Id = Guid.NewGuid(), ProviderId = provider.Id, Key = "gpt-4.1-mini", DisplayName = "GPT-4.1 mini", Provider = provider };
+        var model = new ModelDefinition { Id = Guid.NewGuid(), ProviderId = provider.Id, Key = modelKey, DisplayName = modelKey, Provider = provider };
         provider.Models.Add(model);
         var preset = new PresetDefinition { Id = Guid.NewGuid(), Key = "preset", Name = "Preset", Description = "Description", Version = 1, IsPublished = true, UpdatedAtUtc = DateTimeOffset.UtcNow };
         var agent = new AgentDefinition

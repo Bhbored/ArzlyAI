@@ -59,9 +59,7 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
             agent.DefaultTemperature,
             agent.MinimumTemperature,
             agent.MaximumTemperature,
-            agent.AllowTemperatureOverride && capabilities.SupportsTemperature(
-                agent.Model.Provider.Key,
-                agent.Model.Key),
+            agent.AllowTemperatureOverride,
             capabilities.SupportsWebSearch(agent.Model.Provider.Key, agent.Model.Key)),
         new AgentHarnessResponse(
             agent.Harness.PlanningEnabled,

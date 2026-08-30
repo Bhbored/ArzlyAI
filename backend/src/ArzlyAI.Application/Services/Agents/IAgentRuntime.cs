@@ -1,7 +1,11 @@
 using ArzlyAI.Domain.Presets;
+
 namespace ArzlyAI.Application.Services.Agents;
+
 public interface IAgentRuntime
 {
+    string ProviderKey { get; }
+
     Task<string> ExecuteAsync(
         AgentDefinition agent,
         string input,
