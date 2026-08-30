@@ -43,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,23 +52,6 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON;');
-      final columns = await customSelect('PRAGMA table_info(schedules)').get();
-      final names = columns.map((row) => row.read<String>('name')).toSet();
-      if (!names.contains('recurrence_json')) {
-        await customStatement(
-          "ALTER TABLE schedules ADD COLUMN recurrence_json TEXT NOT NULL DEFAULT '{}'",
-        );
-      }
-      if (!names.contains('workflow_inputs_json')) {
-        await customStatement(
-          "ALTER TABLE schedules ADD COLUMN workflow_inputs_json TEXT NOT NULL DEFAULT '{}'",
-        );
-      }
-      if (!names.contains('preset_name')) {
-        await customStatement(
-          "ALTER TABLE schedules ADD COLUMN preset_name TEXT NOT NULL DEFAULT 'ArzlyAI'",
-        );
-      }
     },
   );
 }

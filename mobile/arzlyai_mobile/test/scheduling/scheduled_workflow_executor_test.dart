@@ -7,8 +7,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
-import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/domain/entities/scheduling/schedule_recurrence.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/network/executor/api_executor.dart';
@@ -68,7 +66,7 @@ void main() {
     credentialStore = MemoryCredentialStore();
     credentialRepository = CredentialRepository(
       credentialStore,
-      ConnectorCredentialRepository(credentialStore, legacyDatabase: db),
+      ConnectorCredentialRepository(db),
     );
     envelopeService = FakeEnvelopeService();
     notifications = RecordingNotifications();
@@ -97,7 +95,7 @@ void main() {
     localWorkflowId = instance.id;
 
     credentialStore.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(credentialStore, db);
+    await seedLinkedInConnector(db);
 
     final due = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
     await scheduleRepository.upsert(
@@ -113,66 +111,54 @@ void main() {
     await db.close();
   });
 
-  test(
-    'background generation uses OpenAI credentials but not LinkedIn',
-    () async {
-      await executor.execute(localWorkflowId);
+  test('background generation uses OpenAI credentials but not LinkedIn', () async {
+    await executor.execute(localWorkflowId);
 
-      expect(workflowService.startCount, 1);
-      expect(
-        envelopeService.lastCredentials?.keys,
-        contains(providerCredentialEnvelopeKey('openai')),
-      );
-      expect(
-        envelopeService.lastCredentials?.keys.any(
-          (key) => key.contains('linkedin'),
-        ),
-        isFalse,
-      );
-      expect(workflowService.lastStart?.credentials.requestId, 'r');
-    },
-  );
+    expect(workflowService.startCount, 1);
+    expect(
+      envelopeService.lastCredentials?.keys,
+      contains(providerCredentialEnvelopeKey('openai')),
+    );
+    expect(
+      envelopeService.lastCredentials?.keys.any(
+        (key) => key.contains('linkedin'),
+      ),
+      isFalse,
+    );
+    expect(workflowService.lastStart?.credentials.requestId, 'r');
+  });
 
   for (final config in [
     ('anthropic', 'claude-sonnet-4-20250514'),
     ('gemini', 'gemini-2.5-flash'),
     ('deepseek', 'deepseek-chat'),
   ]) {
-    test(
-      'background generation uses ${config.$1} override credentials',
-      () async {
-        final provider = config.$1;
-        final model = config.$2;
-        credentialStore.values[providerCredentialEnvelopeKey(provider)] =
-            '$provider-key';
-        await workflowRepository.updateInstance(
-          id: localWorkflowId,
-          topic: 'AI agents',
-          modelOverridesJson: jsonEncode([
-            {
-              'agentKey': 'content-writer',
-              'provider': provider,
-              'model': model,
-            },
-          ]),
-        );
+    test('background generation uses ${config.$1} override credentials', () async {
+      final provider = config.$1;
+      final model = config.$2;
+      credentialStore.values[providerCredentialEnvelopeKey(provider)] =
+          '$provider-key';
+      await workflowRepository.updateInstance(
+        id: localWorkflowId,
+        topic: 'AI agents',
+        modelOverridesJson: jsonEncode([
+          {
+            'agentKey': 'content-writer',
+            'provider': provider,
+            'model': model,
+          },
+        ]),
+      );
 
-        await executor.execute(localWorkflowId);
+      await executor.execute(localWorkflowId);
 
-        expect(
-          envelopeService.lastCredentials,
-          containsPair(
-            providerCredentialEnvelopeKey(provider),
-            '$provider-key',
-          ),
-        );
-        expect(
-          workflowService.lastStart?.agentOverrides.single.provider,
-          provider,
-        );
-        expect(workflowService.lastStart?.agentOverrides.single.model, model);
-      },
-    );
+      expect(
+        envelopeService.lastCredentials,
+        containsPair(providerCredentialEnvelopeKey(provider), '$provider-key'),
+      );
+      expect(workflowService.lastStart?.agentOverrides.single.provider, provider);
+      expect(workflowService.lastStart?.agentOverrides.single.model, model);
+    });
   }
 
   test('legacy scheduled override infers provider from model', () async {
@@ -198,129 +184,30 @@ void main() {
     );
   });
 
-  test(
-    'receipt background run sends full inputs and Google plus selected model credentials',
-    () async {
-      await seedReceiptPresetCache(db);
-      credentialStore.values[providerCredentialEnvelopeKey('anthropic')] =
-          'anthropic-key';
-      await ConnectorCredentialRepository(
-        credentialStore,
-        legacyDatabase: db,
-      ).saveFields(ConnectorKeys.google, const {
-        GoogleConnectorFields.accessToken: 'google-token',
-        GoogleConnectorFields.email: 'person@example.com',
-      });
-      final instance = await workflowRepository.createInstance(
-        presetKey: 'receipt-monthly-spending',
-        presetVersion: 1,
-        name: 'Monthly Receipt Spending',
-        topic: 'Monthly Receipt Spending',
-        modelOverridesJson: jsonEncode([
-          {
-            'agentKey': 'receipt-report-writer',
-            'provider': 'anthropic',
-            'model': 'claude-sonnet-4-20250514',
-          },
-        ]),
-      );
-      await scheduleRepository.upsert(
-        localWorkflowId: instance.id,
-        localTime: '08:00',
-        timeZoneId: 'UTC',
-        enabled: true,
-        recurrence: ScheduleRecurrence(
-          type: ScheduleRecurrenceType.monthly,
-          anchorDate: DateTime(2026, 1, 1),
-        ),
-        workflowInputs: const {
-          'spreadsheetId': 'sheet-1',
-          'sourceRange': "'Receipts'!A:Z",
-          'columnMappingJson': '{"date":"Date","amount":"Amount"}',
-          'asOfDate': '2026-08-31',
-          'currencyCode': 'USD',
-          'recipientEmail': 'person@example.com',
-          'deliveryMode': 'preview',
-        },
-        presetName: 'Monthly Receipt Spending',
-        nextRunAtUtc: DateTime.now().toUtc().subtract(
-          const Duration(minutes: 1),
-        ),
-      );
+  test('waiting for approval persists run and shows draft-ready notification', () async {
+    await executor.execute(localWorkflowId);
 
-      await executor.execute(instance.id);
+    expect(notifications.lastDraftReadyRunId, workflowService.startResult.runId);
+    expect(notifications.lastDraftReadyAction, NotificationActions.review);
+    expect(notifications.reminderCancelled, isTrue);
 
-      final receiptSchedule = await scheduleRepository.getByWorkflowId(
-        instance.id,
-      );
-      expect(
-        workflowService.startCount,
-        1,
-        reason: receiptSchedule?.failureMessage,
-      );
-      expect(
-        workflowService.lastStart?.inputs,
-        containsPair('spreadsheetId', 'sheet-1'),
-      );
-      expect(
-        workflowService.lastStart?.inputs,
-        containsPair('sourceRange', "'Receipts'!A:Z"),
-      );
-      expect(
-        workflowService.lastStart?.inputs,
-        containsPair('deliveryMode', 'deliver'),
-      );
-      expect(
-        envelopeService.lastCredentials,
-        containsPair(
-          providerCredentialEnvelopeKey('anthropic'),
-          'anthropic-key',
-        ),
-      );
-      expect(
-        envelopeService.lastCredentials,
-        containsPair('google.accessToken', 'google-token'),
-      );
-      expect(
-        envelopeService.lastCredentials,
-        containsPair('google.email', 'person@example.com'),
-      );
-      expect(notifications.lastPresetName, 'Monthly Receipt Spending');
-    },
-  );
+    final schedule = await scheduleRepository.getByWorkflowId(localWorkflowId);
+    expect(schedule?.lastOutcome, ScheduleOutcomes.waitingForUser);
 
-  test(
-    'waiting for approval persists run and shows draft-ready notification',
-    () async {
-      await executor.execute(localWorkflowId);
-
-      expect(
-        notifications.lastDraftReadyRunId,
-        workflowService.startResult.runId,
-      );
-      expect(notifications.lastDraftReadyAction, NotificationActions.review);
-      expect(notifications.reminderCancelled, isTrue);
-
-      final schedule = await scheduleRepository.getByWorkflowId(
-        localWorkflowId,
-      );
-      expect(schedule?.lastOutcome, ScheduleOutcomes.waitingForUser);
-
-      final run = await workflowRepository.getLocalRun(
-        workflowService.startResult.runId,
-      );
-      expect(run?.status, WorkflowRunStatus.waitingForApproval);
-    },
-  );
+    final run = await workflowRepository.getLocalRun(
+      workflowService.startResult.runId,
+    );
+    expect(run?.status, WorkflowRunStatus.waitingForApproval);
+  });
 
   test('existing pending approval prevents overlapping generation', () async {
     await executor.execute(localWorkflowId);
     workflowService.startCount = 0;
 
     final due = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
-    await (db.update(
-      db.schedules,
-    )..where((t) => t.localWorkflowId.equals(localWorkflowId))).write(
+    await (db.update(db.schedules)
+          ..where((t) => t.localWorkflowId.equals(localWorkflowId)))
+        .write(
       SchedulesCompanion(
         nextRunAtUtc: Value(due),
         lastSucceededAtUtc: const Value(null),
@@ -353,39 +240,36 @@ void main() {
     expect(schedule?.lastOutcome, ScheduleOutcomes.failed);
   });
 
-  test(
-    'fresh envelope is built per attempt and never persisted in schedule',
-    () async {
-      await executor.execute(localWorkflowId);
-      expect(envelopeService.encryptCount, 1);
-      expect(workflowService.lastStart?.credentials.requestId, 'r');
+  test('fresh envelope is built per attempt and never persisted in schedule', () async {
+    await executor.execute(localWorkflowId);
+    expect(envelopeService.encryptCount, 1);
+    expect(workflowService.lastStart?.credentials.requestId, 'r');
 
-      final instance = await workflowRepository.createInstance(
-        presetKey: 'daily-linkedin-ai-post',
-        presetVersion: 1,
-        name: 'Daily 2',
-        topic: 'Agents',
-      );
-      final due = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
-      await scheduleRepository.upsert(
-        localWorkflowId: instance.id,
-        localTime: '08:00',
-        timeZoneId: 'UTC',
-        enabled: true,
-        nextRunAtUtc: due,
-      );
+    final instance = await workflowRepository.createInstance(
+      presetKey: 'daily-linkedin-ai-post',
+      presetVersion: 1,
+      name: 'Daily 2',
+      topic: 'Agents',
+    );
+    final due = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
+    await scheduleRepository.upsert(
+      localWorkflowId: instance.id,
+      localTime: '08:00',
+      timeZoneId: 'UTC',
+      enabled: true,
+      nextRunAtUtc: due,
+    );
 
-      await executor.execute(instance.id);
+    await executor.execute(instance.id);
 
-      expect(envelopeService.encryptCount, 2);
-      expect(workflowService.lastStart?.credentials.requestId, 'r');
+    expect(envelopeService.encryptCount, 2);
+    expect(workflowService.lastStart?.credentials.requestId, 'r');
 
-      final dump = await db.customSelect('SELECT * FROM schedules').get();
-      final encoded = dump.map((row) => row.data.toString()).join();
-      expect(encoded.contains('wrappedKey'), isFalse);
-      expect(encoded.contains('ciphertext'), isFalse);
-    },
-  );
+    final dump = await db.customSelect('SELECT * FROM schedules').get();
+    final encoded = dump.map((row) => row.data.toString()).join();
+    expect(encoded.contains('wrappedKey'), isFalse);
+    expect(encoded.contains('ciphertext'), isFalse);
+  });
 }
 
 Future<void> seedPresetCache(AppDatabase db) async {
@@ -404,95 +288,18 @@ Future<void> seedPresetCache(AppDatabase db) async {
       );
 }
 
-Future<void> seedReceiptPresetCache(AppDatabase db) async {
-  final json = fixtureJson('preset_details.json');
-  json['key'] = 'receipt-monthly-spending';
-  json['name'] = 'Monthly Receipt Spending';
-  json['agents'] = [
-    {
-      ...Map<String, dynamic>.from((json['agents'] as List).first as Map),
-      'key': 'receipt-report-writer',
-      'name': 'Receipt Report Writer',
-    },
-  ];
-  json['workflow'] = {
-    'key': 'receipt-report',
-    'nodes': [
-      {
-        'id': '00000000-0000-0000-0000-000000000101',
-        'key': 'google.sheets.read',
-        'displayName': 'Read receipts',
-        'type': 'Integration',
-        'position': 1,
-        'requiresHumanApproval': false,
-      },
-      {
-        'id': '00000000-0000-0000-0000-000000000102',
-        'key': 'receipt-report-writer',
-        'displayName': 'Write report',
-        'type': 'Agent',
-        'position': 2,
-        'requiresHumanApproval': false,
-      },
-      {
-        'id': '00000000-0000-0000-0000-000000000103',
-        'key': 'google.sheets.report',
-        'displayName': 'Deliver report',
-        'type': 'Integration',
-        'position': 3,
-        'requiresHumanApproval': false,
-      },
-      {
-        'id': '00000000-0000-0000-0000-000000000104',
-        'key': 'google.gmail.send-html',
-        'displayName': 'Email report',
-        'type': 'Integration',
-        'position': 4,
-        'requiresHumanApproval': false,
-      },
-    ],
-    'connections': [],
-  };
-  json['integrations'] = [
-    for (final key in [
-      'google.sheets.read',
-      'google.sheets.report',
-      'google.gmail.send-html',
-    ])
-      {
-        'key': key,
-        'name': key,
-        'description': key,
-        'credentialSchemaJson':
-            '{"type":"oauth2AccessToken","fields":["google.accessToken","google.email"]}',
-      },
-  ];
-  await db
-      .into(db.presetCache)
-      .insertOnConflictUpdate(
-        PresetCacheCompanion.insert(
-          key: 'receipt-monthly-spending',
-          version: 1,
-          responseJson: jsonEncode(
-            PresetDetailsResponse.fromJson(json).toJson(),
-          ),
-          fetchedAtUtc: DateTime.now().toUtc(),
-        ),
-      );
-}
-
 class FakePresetService extends PresetService {
   FakePresetService() : super(ApiExecutor(Dio()), Dio());
 }
 
 class RecordingNotifications extends LocalNotificationService {
-  RecordingNotifications() : super(FlutterLocalNotificationsPlugin());
+  RecordingNotifications()
+    : super(FlutterLocalNotificationsPlugin());
 
   bool reminderCancelled = false;
   String? lastDraftReadyRunId;
   String? lastDraftReadyAction;
   String? lastSkippedRunId;
-  String? lastPresetName;
   bool tapToRunShown = false;
   String? tapToRunMessage;
 
@@ -505,39 +312,30 @@ class RecordingNotifications extends LocalNotificationService {
   Future<void> showDraftReady({
     required String localWorkflowId,
     required String runId,
-    String presetName = 'LinkedIn',
   }) async {
     lastDraftReadyRunId = runId;
     lastDraftReadyAction = NotificationActions.review;
-    lastPresetName = presetName;
   }
 
   @override
   Future<void> showSkippedReview({
     required String localWorkflowId,
     required String runId,
-    String presetName = 'LinkedIn',
   }) async {
     lastSkippedRunId = runId;
-    lastPresetName = presetName;
   }
 
   @override
   Future<void> showTapToRun({
     required String localWorkflowId,
     String? message,
-    String presetName = 'ArzlyAI workflow',
   }) async {
     tapToRunShown = true;
     tapToRunMessage = message;
-    lastPresetName = presetName;
   }
 
   @override
-  Future<void> scheduleReminder(
-    WorkflowSchedule schedule, {
-    String presetName = 'ArzlyAI workflow',
-  }) async {}
+  Future<void> scheduleReminder(WorkflowSchedule schedule) async {}
 }
 
 class RecordingScheduler extends WorkflowScheduler {

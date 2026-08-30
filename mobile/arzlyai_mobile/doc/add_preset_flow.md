@@ -13,13 +13,9 @@ How presets work in `arzlyai_mobile`, and how to add a new one after the backend
 
 The app does **not** hard-code preset names in generic code. Catalog and details screens read `PresetDetailsResponse`. Only the **run journey** (screens after “Configure run”) is implemented per preset under `implementations/<preset_key>/`.
 
-**Reference implementations:**
+**Reference implementation:** `daily-linkedin-ai-post` → `implementations/daily_linkedin_ai_post/`.
 
-- `daily-linkedin-ai-post` → `implementations/daily_linkedin_ai_post/` (human approval + publish)
-- `smart-purchase-decision` → `implementations/smart_purchase_decision/` (two approval gates)
-- `receipt-*` (seven presets) → `implementations/receipt_workflows/` (shared configurator, no approval gate, zero report persistence)
-
-Monorepo backend contract: `docs/presets/` (e.g. `linkedin-preset.md`, [`receipt-automation.md`](../../docs/presets/receipt-automation.md)).
+Monorepo backend contract: `docs/presets/` (e.g. `linkedin-preset.md`).
 
 ---
 
@@ -45,12 +41,6 @@ lib/ui/features/presets/
       review_screen.dart
       result_screen.dart
       execution_screen.dart               # test-only hub pattern
-    receipt_workflows/                    # Shared run journey for all receipt-* presets
-      configure_run_screen.dart
-      execution_screen.dart
-      result_screen.dart
-      receipt_report_view.dart
-      receipt_workflow_metadata.dart
   configure/
     dynamic_preset_configure_screen.dart  # schema-driven configure (Smart Buy)
 
@@ -70,8 +60,6 @@ lib/data/repositories/
 
 test/presets/daily_linkedin_ai_post/      # tests + fixtures for LinkedIn
 test/presets/smart_purchase_decision/     # tests + fixtures for Smart Buy
-test/presets/receipt_workflows/           # tests + fixtures for receipt presets
-test/repositories/receipt_workflow_privacy_test.dart
 test/fixtures/network/                    # shared DTO fixtures (not preset-specific)
 ```
 
@@ -258,29 +246,6 @@ Screens:
 - **Execution** — friendly progress labels; auto-opens confirm or result
 - **Review** — plain-language confirmation card at first gate; report at final gate
 - **Result** — WebView HTML or native blocks; Share as secondary action
-
----
-
-## Receipt workflows (`receipt-*`)
-
-Seven presets share one folder. `preset_run_router.dart` routes any key in `receiptPresetKeys` to the shared screens.
-
-| Phase | Credentials | Notes |
-| --- | --- | --- |
-| Start | `{provider}.apiKey` + `google.accessToken` | Google from Nango sync; writer model overridable |
-| Complete | None | No human approval node |
-
-Screens:
-
-- **Configure** — Google sheet picker (`AppGoogleSheetSelector`), column mapping, mode-specific fields (budget, tax rate, category), model override, schedule section with delivery preferences
-- **Execution** — node progress; auto-navigates to result on terminal status
-- **Result** — in-session finance report preview (`ReceiptReportView`); content is **not** written to SQLite
-
-Privacy: `WorkflowRepository` strips report and receipt data before SQLite persist. See `receipt_workflow_privacy_test.dart`.
-
-On-demand runs force `deliveryMode: preview`. Scheduled runs store sheet/mapping/recipient preferences and override to `deliveryMode: deliver` at execution — backend currently expects `sheets`, `email`, or `both` (see [`receipt-automation.md`](../../docs/presets/receipt-automation.md#known-gaps)).
-
-Backend contract: [`docs/presets/receipt-automation.md`](../../docs/presets/receipt-automation.md). Google OAuth: [`docs/connectors/nango-google.md`](../../docs/connectors/nango-google.md).
 
 ---
 

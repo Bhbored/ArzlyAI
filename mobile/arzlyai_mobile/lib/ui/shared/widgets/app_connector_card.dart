@@ -7,7 +7,7 @@ import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/data/providers/connectors/connector_connect_provider.dart';
-import 'package:arzlyai_mobile/data/providers/connectors/connector_status_provider.dart';
+import 'package:arzlyai_mobile/data/providers/connectors/linkedin_connector_status_provider.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
@@ -28,20 +28,16 @@ class AppConnectorCard extends ConsumerWidget {
     );
   }
 
-  factory AppConnectorCard.google({Key? key, bool compact = false}) {
-    return AppConnectorCard._(
-      connectorKey: ConnectorKeys.google,
-      compact: compact,
-      key: key,
-    );
-  }
-
   final String connectorKey;
   final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connected = ref.watch(connectorLocalStatusProvider(connectorKey));
+    if (connectorKey != ConnectorKeys.linkedin) {
+      return const SizedBox.shrink();
+    }
+
+    final connected = ref.watch(linkedInConnectorStatusProvider);
     final connectState = ref.watch(connectorConnectProvider(connectorKey));
     final busy = connectState is AsyncLoading;
     final theme = ShadTheme.of(context);
@@ -55,14 +51,14 @@ class AppConnectorCard extends ConsumerWidget {
             if (!compact) ...[
               Row(
                 children: [
-                  _connectorIcon(context),
+                  BrandIcon.linkedin(size: context.iconLarge + 4),
                   SizedBox(width: context.spaceSmall),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _connectorName,
+                          'LinkedIn',
                           style: theme.textTheme.small.copyWith(
                             color: theme.colorScheme.cardForeground,
                             fontWeight: FontWeight.w600,
@@ -95,7 +91,7 @@ class AppConnectorCard extends ConsumerWidget {
               ),
               SizedBox(height: context.spaceSmall),
               Text(
-                _connectorDescription,
+                'Authorize through LinkedIn in your browser. ArzlyAI uses Nango to broker OAuth — access tokens stay on your device.',
                 style: theme.textTheme.muted.copyWith(
                   color: theme.colorScheme.mutedForeground,
                 ),
@@ -131,26 +127,6 @@ class AppConnectorCard extends ConsumerWidget {
     }
     return 'Connector action failed.';
   }
-
-  String get _connectorName => switch (connectorKey) {
-    ConnectorKeys.linkedin => 'LinkedIn',
-    ConnectorKeys.google => 'Google',
-    _ => connectorKey,
-  };
-
-  String get _connectorDescription => switch (connectorKey) {
-    ConnectorKeys.linkedin =>
-      'Authorize through LinkedIn in your browser. ArzlyAI uses Nango to broker OAuth — access tokens stay on your device.',
-    ConnectorKeys.google =>
-      'Authorize Google Sheets and Gmail in your browser. OAuth access tokens stay in secure storage on this device.',
-    _ => 'Authorize this connector in your browser.',
-  };
-
-  Widget _connectorIcon(BuildContext context) => switch (connectorKey) {
-    ConnectorKeys.linkedin => BrandIcon.linkedin(size: context.iconLarge + 4),
-    ConnectorKeys.google => BrandIcon.google(size: context.iconLarge + 4),
-    _ => const SizedBox.shrink(),
-  };
 }
 
 class _Actions extends ConsumerWidget {

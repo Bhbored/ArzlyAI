@@ -1,6 +1,5 @@
 export 'connectors/connector_auth_launcher.dart';
 export 'connectors/connector_repository.dart' hide retry;
-export 'connectors/google_resource_repository.dart';
 export 'credentials/connector_credential_repository.dart' hide retry;
 export 'credentials/credential_repository.dart' hide retry;
 export 'credentials/credential_store.dart';

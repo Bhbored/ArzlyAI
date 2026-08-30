@@ -158,26 +158,8 @@ extension PresetDetailsSupport on PresetDetails {
         .where((provider) => provider.isNotEmpty)
         .map(providerCredentialEnvelopeKey)
         .toSet();
-    if (keys.isEmpty) {
-      keys.addAll(envelopeKeysForPhase(CredentialPhase.workflowStart));
-    }
-    final ordered = [...workflow.nodes]
-      ..sort((a, b) => a.position.compareTo(b.position));
-    for (final node in ordered) {
-      if (node.type == 'HumanApproval') break;
-      if (node.type != 'Integration') continue;
-      final integration = integrations
-          .where((item) => item.key == node.key)
-          .firstOrNull;
-      if (integration == null) continue;
-      keys.addAll(
-        envelopeKeysForIntegration(
-          integration.key,
-          integration.credentialSchemaJson,
-        ),
-      );
-    }
-    return keys.toList(growable: false);
+    if (keys.isNotEmpty) return keys.toList(growable: false);
+    return envelopeKeysForPhase(CredentialPhase.workflowStart);
   }
 
   List<String> approvalCredentialKeys({
@@ -248,11 +230,8 @@ extension PresetDetailsSupport on PresetDetails {
     if (overrideProvider != null && overrideProvider.isNotEmpty) {
       return overrideProvider;
     }
-    final node = run.nodes
-        .where((item) => item.nodeKey == agentKey)
-        .firstOrNull;
-    if (node?.effectiveProvider != null &&
-        node!.effectiveProvider!.isNotEmpty) {
+    final node = run.nodes.where((item) => item.nodeKey == agentKey).firstOrNull;
+    if (node?.effectiveProvider != null && node!.effectiveProvider!.isNotEmpty) {
       return node.effectiveProvider;
     }
     final configurable = configurableWorkflowAgent();

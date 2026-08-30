@@ -12,7 +12,7 @@ See also: [add_preset_flow.md](add_preset_flow.md) for preset UI and workflow ex
 | --- | --- |
 | File | `arzlyai.sqlite` |
 | Location | Application documents directory (`getApplicationDocumentsDirectory()`) |
-| Schema version | `5` (`lib/infrastructor/db/database.dart`) |
+| Schema version | `2` (`lib/infrastructor/db/database.dart`) |
 | Foreign keys | `PRAGMA foreign_keys = ON` on open (logical relations only — no FK columns in Drift tables yet) |
 
 Provider: `appDatabaseProvider` → `AppDatabase`.
@@ -30,8 +30,6 @@ Table definitions: `lib/infrastructor/tables/*.dart`.
 | Run + node execution state | SQLite `workflow_runs`, `workflow_node_runs` | Survive app restarts, SignalR merge, 404 expiry |
 | Device-owned schedules | SQLite `schedules` | Wall-clock time, next run, claim/outcome state — no backend schedule API |
 | LinkedIn connector envelope fields | SQLite `connector_credentials` | Nango sync result for approval/publish envelopes |
-| Google connector envelope fields | SQLite `connector_credentials` | Nango sync for Sheets/Gmail workflow envelopes |
-| Receipt report content / row values | **Not stored** | Stripped on persist for `receipt-*` presets; in-memory only during active run |
 | OpenAI / provider API keys | Secure storage (`CredentialStore`) | Never in SQLite |
 | Backend URL, theme, offline flag | `shared_preferences` | App settings |
 
@@ -389,8 +387,5 @@ On a connected device/emulator, the DB file lives in the app’s documents direc
 | Where are schedules stored? | `schedules` — device-owned; backend has no schedule API |
 | What happens when a schedule is due? | Workmanager runs executor → `POST /workflows/runs` → draft-ready notification at approval |
 | Where is LinkedIn token for publish? | `connector_credentials` (synced from Nango); OpenAI key stays in secure storage |
-| Where are receipt rows / finance reports stored? | **Nowhere in SQLite** for `receipt-*` presets — only in-memory during active run; source of truth is Google Sheets |
-| Where is receipt schedule configuration? | `schedules.workflow_inputs_json` (spreadsheet id, mapping, currency, delivery prefs — not row data) |
-| Where is Google OAuth token? | Secure storage + `connector_credentials` (`google.accessToken`, `google.email`) |
 | Can I delete `workflow_instances`? | No cascade today; orphans possible if instances deleted without runs |
 | Are runs tied to presets? | `preset_key` on instance and run; details from `preset_cache` |

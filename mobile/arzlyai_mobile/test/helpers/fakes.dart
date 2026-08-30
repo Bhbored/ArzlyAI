@@ -96,8 +96,9 @@ List<ProviderResponse> fixtureProviderResponses() {
           as List<dynamic>;
   return list
       .map(
-        (item) =>
-            ProviderResponse.fromJson(Map<String, dynamic>.from(item as Map)),
+        (item) => ProviderResponse.fromJson(
+          Map<String, dynamic>.from(item as Map),
+        ),
       )
       .toList();
 }
@@ -317,14 +318,8 @@ class ForcedOfflineMode extends OfflineMode {
   Future<bool> build() async => true;
 }
 
-Future<void> seedLinkedInConnector(
-  MemoryCredentialStore store,
-  AppDatabase db,
-) {
-  return ConnectorCredentialRepository(
-    store,
-    legacyDatabase: db,
-  ).saveFields(ConnectorKeys.linkedin, {
+Future<void> seedLinkedInConnector(AppDatabase db) {
+  return ConnectorCredentialRepository(db).saveFields(ConnectorKeys.linkedin, {
     LinkedInConnectorFields.accessToken: 'li-token',
     LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
   });

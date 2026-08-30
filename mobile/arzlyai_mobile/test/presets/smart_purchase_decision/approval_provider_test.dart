@@ -41,9 +41,8 @@ final _deepseekChat = ProviderModel(
 WorkflowRunResponse _runFixture(String name) {
   return WorkflowRunResponse.fromJson(
     jsonDecode(
-          File(
-            'test/presets/smart_purchase_decision/fixtures/$name',
-          ).readAsStringSync(),
+          File('test/presets/smart_purchase_decision/fixtures/$name')
+              .readAsStringSync(),
         )
         as Map<String, dynamic>,
   );
@@ -83,9 +82,7 @@ ProviderContainer _container({
       ),
       internetConnectionProvider.overrideWithValue(true),
       offlineModeProvider.overrideWith(OnlineMode.new),
-      presetDetailsProvider.overrideWith(
-        () => SeededDetails(smartPurchaseDetails()),
-      ),
+      presetDetailsProvider.overrideWith(() => SeededDetails(smartPurchaseDetails())),
     ],
   );
 }
@@ -109,10 +106,7 @@ void main() {
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(
-        store,
-        ConnectorCredentialRepository(store, legacyDatabase: db),
-      ),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const ProviderModelMapper(),
     );
@@ -123,123 +117,106 @@ void main() {
     await db.close();
   });
 
-  test(
-    'ApprovalRequest_WhenRequirementsEdit_SendsFeedbackAndEnvelope',
-    () async {
-      final waiting = _runFixture('workflow_run_requirements_waiting.json');
-      final workflows = FakeWorkflowService(
-        startResult: waiting,
-        approvalResult: waiting,
-        editApprovalResult: waiting,
-      );
-      final container = _container(
-        workflows: workflows,
-        hub: hub,
-        store: store,
-        envelopes: envelopes,
-        db: db,
-        providerModelRepo: providerModelRepo,
-      );
-      addTearDown(container.dispose);
+  test('ApprovalRequest_WhenRequirementsEdit_SendsFeedbackAndEnvelope', () async {
+    final waiting = _runFixture('workflow_run_requirements_waiting.json');
+    final workflows = FakeWorkflowService(
+      startResult: waiting,
+      approvalResult: waiting,
+      editApprovalResult: waiting,
+    );
+    final container = _container(
+      workflows: workflows,
+      hub: hub,
+      store: store,
+      envelopes: envelopes,
+      db: db,
+      providerModelRepo: providerModelRepo,
+    );
+    addTearDown(container.dispose);
 
-      container
-          .read(runConfigTempProvider.notifier)
-          .update(
-            const RunConfigState(
-              inputs: {
-                'purchaseGoal': 'Laptop for university',
-                'countryCode': 'US',
-                'currencyCode': 'USD',
-              },
-            ),
-          );
-      await container.read(activeRunProvider.future);
-      await container
-          .read(activeRunProvider.notifier)
-          .start(container.read(runConfigTempProvider));
-      await container
-          .read(activeRunProvider.notifier)
-          .submitApproval(
-            ApprovalDecision.edit,
-            editedContent: 'Add battery life priority',
-          );
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(
+        inputs: {
+          'purchaseGoal': 'Laptop for university',
+          'countryCode': 'US',
+          'currencyCode': 'USD',
+        },
+      ),
+    );
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container.read(activeRunProvider.notifier).submitApproval(
+      ApprovalDecision.edit,
+      editedContent: 'Add battery life priority',
+    );
 
-      expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
-      expect(
-        workflows.lastApproval?.editedContent,
-        'Add battery life priority',
-      );
-      expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
-      expect(
-        envelopes.lastCredentials,
-        contains(providerCredentialEnvelopeKey('openai')),
-      );
-    },
-  );
+    expect(workflows.lastApproval?.decision, ApprovalDecision.edit);
+    expect(workflows.lastApproval?.editedContent, 'Add battery life priority');
+    expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
+    expect(
+      envelopes.lastCredentials,
+      contains(providerCredentialEnvelopeKey('openai')),
+    );
+  });
 
-  test(
-    'confirm accept sends deepseek envelope from stored overrides',
-    () async {
-      store.values.clear();
-      store.values[providerCredentialEnvelopeKey('deepseek')] = 'ds-test';
-      final waiting = _runFixture('workflow_run_requirements_waiting.json');
-      final workflows = FakeWorkflowService(
-        startResult: waiting,
-        approvalResult: waiting,
-      );
-      final models = [...fixtureProviderModels(), _deepseekChat];
-      final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          workflowServiceProvider.overrideWithValue(workflows),
-          workflowHubClientProvider.overrideWithValue(hub),
-          credentialStoreProvider.overrideWithValue(store),
-          credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
-          providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
-          availableProviderModelsProvider.overrideWith(
-            () => SeededAvailableProviderModels(models),
+  test('confirm accept sends deepseek envelope from stored overrides', () async {
+    store.values.clear();
+    store.values[providerCredentialEnvelopeKey('deepseek')] = 'ds-test';
+    final waiting = _runFixture('workflow_run_requirements_waiting.json');
+    final workflows = FakeWorkflowService(
+      startResult: waiting,
+      approvalResult: waiting,
+    );
+    final models = [...fixtureProviderModels(), _deepseekChat];
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        workflowServiceProvider.overrideWithValue(workflows),
+        workflowHubClientProvider.overrideWithValue(hub),
+        credentialStoreProvider.overrideWithValue(store),
+        credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
+        providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
+        availableProviderModelsProvider.overrideWith(
+          () => SeededAvailableProviderModels(models),
+        ),
+        internetConnectionProvider.overrideWithValue(true),
+        offlineModeProvider.overrideWith(OnlineMode.new),
+        presetDetailsProvider.overrideWith(
+          () => SeededDetails(smartPurchaseDetails()),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    container.read(runConfigTempProvider.notifier).update(
+          RunConfigState(
+            inputs: const {
+              'purchaseGoal': 'Laptop for university',
+              'countryCode': 'US',
+              'currencyCode': 'USD',
+            },
+            agentOverrides: const {
+              'shop-and-recommend': AgentOverrideDraft(model: 'deepseek-chat'),
+            },
           ),
-          internetConnectionProvider.overrideWithValue(true),
-          offlineModeProvider.overrideWith(OnlineMode.new),
-          presetDetailsProvider.overrideWith(
-            () => SeededDetails(smartPurchaseDetails()),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
+        );
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    await container
+        .read(activeRunProvider.notifier)
+        .submitApproval(ApprovalDecision.accept);
 
-      container
-          .read(runConfigTempProvider.notifier)
-          .update(
-            RunConfigState(
-              inputs: const {
-                'purchaseGoal': 'Laptop for university',
-                'countryCode': 'US',
-                'currencyCode': 'USD',
-              },
-              agentOverrides: const {
-                'shop-and-recommend': AgentOverrideDraft(
-                  model: 'deepseek-chat',
-                ),
-              },
-            ),
-          );
-      await container.read(activeRunProvider.future);
-      await container
-          .read(activeRunProvider.notifier)
-          .start(container.read(runConfigTempProvider));
-      await container
-          .read(activeRunProvider.notifier)
-          .submitApproval(ApprovalDecision.accept);
-
-      expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
-      expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
-      expect(
-        envelopes.lastCredentials,
-        isNot(contains(providerCredentialEnvelopeKey('openai'))),
-      );
-    },
-  );
+    expect(workflows.lastApproval?.credentials, isA<CredentialEnvelope>());
+    expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
+    expect(
+      envelopes.lastCredentials,
+      isNot(contains(providerCredentialEnvelopeKey('openai'))),
+    );
+  });
 
   test('ApprovalRequest_WhenReject_SendsNoCredentials', () async {
     final waiting = _runFixture('workflow_run_requirements_waiting.json');
@@ -257,17 +234,15 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container
-        .read(runConfigTempProvider.notifier)
-        .update(
-          const RunConfigState(
-            inputs: {
-              'purchaseGoal': 'Laptop for university',
-              'countryCode': 'US',
-              'currencyCode': 'USD',
-            },
-          ),
-        );
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(
+        inputs: {
+          'purchaseGoal': 'Laptop for university',
+          'countryCode': 'US',
+          'currencyCode': 'USD',
+        },
+      ),
+    );
     await container.read(activeRunProvider.future);
     await container
         .read(activeRunProvider.notifier)
@@ -296,17 +271,15 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    container
-        .read(runConfigTempProvider.notifier)
-        .update(
-          const RunConfigState(
-            inputs: {
-              'purchaseGoal': 'Laptop for university',
-              'countryCode': 'US',
-              'currencyCode': 'USD',
-            },
-          ),
-        );
+    container.read(runConfigTempProvider.notifier).update(
+      const RunConfigState(
+        inputs: {
+          'purchaseGoal': 'Laptop for university',
+          'countryCode': 'US',
+          'currencyCode': 'USD',
+        },
+      ),
+    );
     await container.read(activeRunProvider.future);
     await container
         .read(activeRunProvider.notifier)

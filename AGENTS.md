@@ -56,13 +56,6 @@ A preset contains agents, Harness policies, workflow nodes/connections, and inte
 | --- | --- | --- |
 | `daily-linkedin-ai-post` | `generate-and-publish` | Writer -> review/edit -> passthrough publisher -> `linkedin.posts`. Publishes only approved text. |
 | `smart-purchase-decision` | `confirm-and-recommend` | Brief -> confirmation -> web search -> recommendation -> review. |
-| `receipt-monthly-spending` | `analyze-and-deliver` | Sheets read -> `receipt.analyze` -> finance report -> optional Sheets/Gmail delivery. |
-| `receipt-weekly-budget` | `analyze-and-deliver` | Same engine; weekly budget comparison. |
-| `receipt-quarterly-tax` | `analyze-and-deliver` | Same engine; quarterly tax estimate. |
-| `receipt-yearly-review` | `analyze-and-deliver` | Same engine; yearly trend review. |
-| `receipt-category-dive` | `analyze-and-deliver` | Same engine; single-category analysis. |
-| `receipt-anomaly-detector` | `analyze-and-deliver` | Same engine; anomaly highlighting. |
-| `receipt-savings-tracker` | `analyze-and-deliver` | Same engine; savings target tracking. |
 
 ## Git and Security
 

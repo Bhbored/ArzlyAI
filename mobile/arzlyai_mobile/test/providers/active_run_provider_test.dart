@@ -86,17 +86,14 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(store, db);
+    await seedLinkedInConnector(db);
     envelopes = FakeEnvelopeService();
     hub = FakeHub();
     providerModelRepo = ProviderModelRepository(
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(
-        store,
-        ConnectorCredentialRepository(store, legacyDatabase: db),
-      ),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const ProviderModelMapper(),
     );
@@ -453,16 +450,15 @@ void main() {
         defaultAiModelProvider.overrideWith((ref) async => null),
         internetConnectionProvider.overrideWithValue(true),
         offlineModeProvider.overrideWith(OnlineMode.new),
-        presetDetailsProvider.overrideWith(
-          () => SeededDetails(fixtureDetails()),
-        ),
+        presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
       ],
     );
     addTearDown(container.dispose);
-    container
-        .read(runConfigTempProvider.notifier)
-        .update(
-          const RunConfigState(topic: 'AI agents', model: 'deepseek-chat'),
+    container.read(runConfigTempProvider.notifier).update(
+          const RunConfigState(
+            topic: 'AI agents',
+            model: 'deepseek-chat',
+          ),
         );
     await container.read(activeRunProvider.future);
     await container
@@ -482,72 +478,66 @@ void main() {
     expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
   });
 
-  test(
-    'smart purchase start applies deepseek to startup agent override',
-    () async {
-      store.values.clear();
-      store.values[providerCredentialEnvelopeKey('deepseek')] = 'ds-test';
-      final workflows = FakeWorkflowService();
-      final models = [...fixtureProviderModels(), _deepseekChat];
-      final smartPurchase = const PresetMapper().detailsFromDto(
-        PresetDetailsResponse.fromJson(
-          jsonDecode(
-                File(
-                  'test/presets/smart_purchase_decision/fixtures/preset_details.json',
-                ).readAsStringSync(),
-              )
-              as Map<String, dynamic>,
+  test('smart purchase start applies deepseek to startup agent override', () async {
+    store.values.clear();
+    store.values[providerCredentialEnvelopeKey('deepseek')] = 'ds-test';
+    final workflows = FakeWorkflowService();
+    final models = [...fixtureProviderModels(), _deepseekChat];
+    final smartPurchase = const PresetMapper().detailsFromDto(
+      PresetDetailsResponse.fromJson(
+        jsonDecode(
+              File(
+                'test/presets/smart_purchase_decision/fixtures/preset_details.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        workflowServiceProvider.overrideWithValue(workflows),
+        workflowHubClientProvider.overrideWithValue(hub),
+        credentialStoreProvider.overrideWithValue(store),
+        credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
+        providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
+        availableProviderModelsProvider.overrideWith(
+          () => SeededAvailableProviderModels(models),
         ),
-      );
-      final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          workflowServiceProvider.overrideWithValue(workflows),
-          workflowHubClientProvider.overrideWithValue(hub),
-          credentialStoreProvider.overrideWithValue(store),
-          credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
-          providerModelRepositoryProvider.overrideWithValue(providerModelRepo),
-          availableProviderModelsProvider.overrideWith(
-            () => SeededAvailableProviderModels(models),
+        defaultAiModelProvider.overrideWith((ref) async => null),
+        internetConnectionProvider.overrideWithValue(true),
+        offlineModeProvider.overrideWith(OnlineMode.new),
+        presetDetailsProvider.overrideWith(
+          () => SeededDetails(smartPurchase),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(runConfigTempProvider.notifier).update(
+          RunConfigState(
+            topic: 'Noise cancelling headphones',
+            agentOverrides: {
+              'shop-and-recommend': const AgentOverrideDraft(
+                model: 'deepseek-chat',
+              ),
+            },
           ),
-          defaultAiModelProvider.overrideWith((ref) async => null),
-          internetConnectionProvider.overrideWithValue(true),
-          offlineModeProvider.overrideWith(OnlineMode.new),
-          presetDetailsProvider.overrideWith(
-            () => SeededDetails(smartPurchase),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      container
-          .read(runConfigTempProvider.notifier)
-          .update(
-            RunConfigState(
-              topic: 'Noise cancelling headphones',
-              agentOverrides: {
-                'shop-and-recommend': const AgentOverrideDraft(
-                  model: 'deepseek-chat',
-                ),
-              },
-            ),
-          );
-      await container.read(activeRunProvider.future);
-      await container
-          .read(activeRunProvider.notifier)
-          .start(container.read(runConfigTempProvider));
-      final overrideKeys = workflows.lastStart!.agentOverrides
-          .map((item) => item.agentKey)
-          .toSet();
-      expect(overrideKeys, contains('understand-request'));
-      expect(overrideKeys, contains('shop-and-recommend'));
-      final startup = workflows.lastStart!.agentOverrides.singleWhere(
-        (item) => item.agentKey == 'understand-request',
-      );
-      expect(startup.provider, 'deepseek');
-      expect(startup.model, 'deepseek-chat');
-      expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
-    },
-  );
+        );
+    await container.read(activeRunProvider.future);
+    await container
+        .read(activeRunProvider.notifier)
+        .start(container.read(runConfigTempProvider));
+    final overrideKeys = workflows.lastStart!.agentOverrides
+        .map((item) => item.agentKey)
+        .toSet();
+    expect(overrideKeys, contains('understand-request'));
+    expect(overrideKeys, contains('shop-and-recommend'));
+    final startup = workflows.lastStart!.agentOverrides
+        .singleWhere((item) => item.agentKey == 'understand-request');
+    expect(startup.provider, 'deepseek');
+    expect(startup.model, 'deepseek-chat');
+    expect(envelopes.lastCredentials?['deepseek.apiKey'], 'ds-test');
+  });
 
   test('SubmitApproval_WhenReceiveTimeout_KeepsRunProcessing', () async {
     final workflows = FakeWorkflowService()..approvalError = receiveTimeout();

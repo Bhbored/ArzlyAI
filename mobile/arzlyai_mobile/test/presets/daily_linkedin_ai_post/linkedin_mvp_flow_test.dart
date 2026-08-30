@@ -34,7 +34,7 @@ void main() {
     addTearDown(db.close);
     final store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(store, db);
+    await seedLinkedInConnector(db);
     final workflows = FakeWorkflowService();
     final hub = FakeHub();
     final envelopes = FakeEnvelopeService();
@@ -42,10 +42,7 @@ void main() {
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(
-        store,
-        ConnectorCredentialRepository(store, legacyDatabase: db),
-      ),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const ProviderModelMapper(),
     );

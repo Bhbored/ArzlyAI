@@ -31,22 +31,18 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 - Backend preset catalog in PostgreSQL with idempotent seeding.
 - `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
 - `smart-purchase-decision` preset with plain-language confirmation, web search, and shopper-friendly recommendations.
-- Seven receipt automation presets (`receipt-*`) with Google Sheets read, deterministic analysis, finance reports, and optional Sheets/Gmail delivery.
-- Nango Google connector for Sheets metadata, report tabs, and Gmail HTML send.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
 - SignalR node-status events, rate limits, health probes, and structured logging.
 - Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
 - Empty Flutter Android/iOS shell ready for the first vertical slice.
 - Empty React TypeScript admin shell reserved for later preset administration.
 
-Flutter SQLite stores workflow configuration, schedules, and non-receipt run metadata. Receipt presets never persist report content or receipt row values locally. Provider and connector credentials belong in platform secure storage. Backend PostgreSQL stores only the public preset catalog.
+Flutter SQLite will be the source of truth for user workflow instances, history, schedules, and generated content. Provider credentials belong in platform secure storage. Backend PostgreSQL stores only the public preset catalog.
 
 ## Documentation
 
 - [LinkedIn preset](docs/presets/linkedin-preset.md)
 - [Smart Buy preset](docs/presets/smart-purchase-decision.md)
-- [Receipt automation](docs/presets/receipt-automation.md)
-- [Nango Google connector](docs/connectors/nango-google.md)
 - [Flutter Smart Buy Lab HTML report handoff](docs/presets/flutter-smart-purchase-html-report.md)
 - [Flutter workflow timeout and realtime handoff](docs/presets/flutter-workflow-execution-timeout.md)
 - [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
@@ -84,9 +80,6 @@ Operational endpoints:
 | `GET` | `/api/v1/connectors/{connectorKey}/status` | Read device connector status |
 | `GET` | `/api/v1/connectors/{connectorKey}/credentials` | Fetch mapped connector credentials from Nango |
 | `DELETE` | `/api/v1/connectors/{connectorKey}` | Disconnect the device connector |
-| `GET` | `/api/v1/connectors/google/resources/spreadsheets` | List Google spreadsheets for receipt configuration |
-| `GET` | `/api/v1/connectors/google/resources/spreadsheets/{id}/tabs` | List tabs in a spreadsheet |
-| `GET` | `/api/v1/connectors/google/resources/spreadsheets/{id}/tabs/{title}/headers` | Read header row for column mapping |
 | `POST` | `/api/v1/workflows/runs` | Start a preset run |
 | `GET` | `/api/v1/workflows/runs/{runId}` | Retrieve an ephemeral run |
 | `POST` | `/api/v1/workflows/runs/{runId}/approval` | Accept, edit, or reject output |
@@ -135,7 +128,7 @@ The admin is intentionally a placeholder. Do not implement preset editing until 
 
 ## Security Boundary
 
-There is no registration or backend user database. Credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Provider API keys use envelope fields `{provider}.apiKey` (`openai`, `anthropic`, `gemini`, `deepseek`). Connector OAuth fields use `{connector}.{field}` (e.g. `google.accessToken`, `linkedin.accessToken`). Flutter stores a default model in SQLite (`ai_settings`) and caches live catalogs per provider (`provider_model_cache`). After upgrading to Drift schema version 5, reinstall the app or clear app data. Never commit real keys or production connection strings, and never log credential payloads, access tokens, API keys, author URNs, receipt rows, or user content.
+There is no registration or backend user database. Credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Provider API keys use envelope fields `{provider}.apiKey` (`openai`, `anthropic`, `gemini`, `deepseek`). Flutter stores a default model in SQLite (`ai_settings`) and caches live catalogs per provider (`provider_model_cache`). After upgrading to Drift schema version 4, reinstall the app or clear app data. Never commit real keys or production connection strings, and never log credential payloads, access tokens, API keys, author URNs, or user content.
 
 ## Stage 1 Limitations
 

@@ -36,10 +36,7 @@ void main() {
     repository = ProviderModelRepository(
       db,
       service,
-      CredentialRepository(
-        store,
-        ConnectorCredentialRepository(store, legacyDatabase: db),
-      ),
+      CredentialRepository(store, ConnectorCredentialRepository(db)),
       envelopes,
       const ProviderModelMapper(),
     );
@@ -84,17 +81,14 @@ void main() {
     );
   });
 
-  test(
-    'listModelsForProvider rejects missing openai key before network',
-    () async {
-      store.values.clear();
-      await expectLater(
-        repository.listModelsForProvider('openai'),
-        throwsA(isA<StateError>()),
-      );
-      expect(service.callCount, 0);
-    },
-  );
+  test('listModelsForProvider rejects missing openai key before network', () async {
+    store.values.clear();
+    await expectLater(
+      repository.listModelsForProvider('openai'),
+      throwsA(isA<StateError>()),
+    );
+    expect(service.callCount, 0);
+  });
 
   test('listModelsForProvider returns empty list without error', () async {
     service.modelsResult = [];
