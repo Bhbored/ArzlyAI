@@ -199,7 +199,7 @@ test/presets/<folder_name>/
 
 Point `fixtureJson()` in `test/helpers/fakes.dart` at preset fixtures, or add a preset-local helper.
 
-Run: `.fvm/flutter_sdk/bin/flutter.bat test`
+Run: `fvm flutter test`
 
 ---
 
@@ -225,29 +225,27 @@ Screens:
 
 ---
 
-## Smart Buy Lab (`smart-purchase-decision`)
+## Smart Buy (`smart-purchase-decision`)
 
 | Item | Value |
 | --- | --- |
 | API key | `smart-purchase-decision` |
 | Mobile folder | `implementations/smart_purchase_decision/` |
-| Configure | `dynamic_preset_configure_screen.dart` (reads `inputSchemaJson`) |
-| Workflow | Agent → HumanApproval → Agent → Operation → Agent → HumanApproval (no Integration) |
+| Configure | `configure_run_screen.dart` (goal, optional budget/notes, country; currency auto-filled) |
+| Workflow | Agent → HumanApproval → Agent → HumanApproval (4 steps) |
 | Start credentials | `openai.apiKey` |
-| Requirements Accept | `openai.apiKey` (agents remain) |
-| Requirements Edit | `openai.apiKey` |
-| Requirements Reject | None |
+| Confirm Accept | `openai.apiKey` |
+| Confirm Edit | `openai.apiKey` |
+| Confirm Reject | None |
 | Final Accept / Edit / Reject | None (terminal approval) |
-| Result | Typed `ArzlyReport` (`arzly.report` v1) persisted in SQLite; HTML/PDF export local |
-
-Domain types live under `lib/domain/entities/preset/` and `lib/domain/entities/report/` as Freezed entities with dedicated mappers — UI never parses raw JSON.
+| Result | `arzly.report` v4 in SQLite; optional Share from result screen |
 
 Screens:
 
-- **Configure** — schema-driven fields, candidate seeds (max 5, HTTPS URLs), per-agent model/temperature overrides; pops back to details after start
-- **Details hub** — live graph (same as LinkedIn); tap completed terminal HumanApproval with `resultContract`/`report` opens result
-- **Review** — labels from node `configurationJson`; brief panel at requirements gate, report panel at final gate
-- **Result** — native block rendering + share HTML/PDF
+- **Configure** — what you're buying, optional budget and notes, country picker, single model picker for the shopper agent; **Find options** pushes execution screen
+- **Execution** — friendly progress labels; auto-opens confirm or result
+- **Review** — plain-language confirmation card at first gate; report at final gate
+- **Result** — WebView HTML or native blocks; Share as secondary action
 
 ---
 
@@ -279,9 +277,9 @@ Screens:
 
 ```bash
 cd mobile/arzlyai_mobile
-.fvm/flutter_sdk/bin/flutter.bat pub get
-.fvm/flutter_sdk/bin/flutter.bat test
-.fvm/flutter_sdk/bin/flutter.bat run
+fvm flutter pub get
+fvm flutter test
+fvm flutter run
 ```
 
 Codegen (only when changing `@riverpod` / `@freezed` on providers):

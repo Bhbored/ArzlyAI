@@ -8,7 +8,7 @@ namespace ArzlyAI.Application.Services.Workflows.Rendering;
 public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
 {
     public bool CanRender(string contractKey, int contractVersion) =>
-        contractKey.Equals("arzly.report", StringComparison.Ordinal) && contractVersion is >= 1 and <= 3;
+        contractKey.Equals("arzly.report", StringComparison.Ordinal) && contractVersion is >= 1 and <= 4;
 
     public string Render(JsonElement document)
     {
@@ -62,7 +62,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data: blob:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; form-action 'none'">
   <title>{{{Encode(title)}}}</title>
   <style>
     :root{color-scheme:light dark;--bg:#f6f6f4;--surface:#fff;--surface-2:#f0f0ec;--ink:#171717;--muted:#5d5d58;--line:#deded8;--accent:#a16207;--accent-soft:#fff7df;--danger:#a12b24;--danger-soft:#fff0ed;--on-accent:#fff}
@@ -81,7 +81,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
   </style>
 </head>
 <body><a class="skip" href="#decision">Skip to decision</a><main>
-  <header class="masthead"><div class="eyebrow">ArzlyAI · Smart Buy Lab</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
+  <header class="masthead"><div class="eyebrow">ArzlyAI · Smart Buy</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
   <div id="decision">{{{content}}}</div>{{{sources}}}
 </main></body>
 </html>
@@ -113,7 +113,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
         var imageUrl = HttpsUrl(winner, "imageUrl");
         html.Append("<article class=\"panel winner\">");
         if (imageUrl is not null)
-            html.Append("<div class=\"winner-media\"><img loading=\"eager\" referrerpolicy=\"no-referrer\" width=\"640\" height=\"400\" src=\"")
+            html.Append("<div class=\"winner-media\"><img loading=\"eager\" width=\"640\" height=\"400\" src=\"")
                 .Append(Encode(imageUrl)).Append("\" alt=\"").Append(Encode(label)).Append("\"></div>");
         html.Append("<div class=\"winner-body\"><h3>").Append(Encode(label)).Append("</h3>");
         AppendValueAndDetail(html, winner);
@@ -122,7 +122,18 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
             html.Append("<p class=\"description\">").Append(Encode(textContent)).Append("</p>");
         AppendMetrics(html, Metrics(data));
         AppendActions(html, winner, true);
-        html.Append("</div></article></section>");
+        html.Append("</div></article>");
+
+        if (items.Count > 1)
+        {
+            html.Append("<section aria-labelledby=\"shortlist-title\"><div class=\"section-head\"><div class=\"kicker\">Shortlist</div><h2 id=\"shortlist-title\">")
+                .Append(Encode("Also consider")).Append("</h2></div><div class=\"products\">");
+            foreach (var item in items.Skip(1))
+                AppendProduct(html, item);
+            html.Append("</div></section>");
+        }
+
+        html.Append("</section>");
     }
 
     private static void AppendComparison(StringBuilder html, JsonElement block)
@@ -145,7 +156,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
         var imageUrl = HttpsUrl(item, "imageUrl");
         html.Append(imageUrl is null ? "<article class=\"panel product no-image\">" : "<article class=\"panel product\">");
         if (imageUrl is not null)
-            html.Append("<div class=\"product-media\"><img loading=\"lazy\" referrerpolicy=\"no-referrer\" width=\"480\" height=\"300\" src=\"")
+            html.Append("<div class=\"product-media\"><img loading=\"lazy\" width=\"480\" height=\"300\" src=\"")
                 .Append(Encode(imageUrl)).Append("\" alt=\"").Append(Encode(label)).Append("\"></div>");
         html.Append("<div class=\"product-body\"><h3>").Append(Encode(label)).Append("</h3>");
         AppendValueAndDetail(html, item);

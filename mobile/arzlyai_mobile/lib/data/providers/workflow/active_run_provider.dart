@@ -164,6 +164,13 @@ class ActiveRun extends _$ActiveRun {
     state = const AsyncData(null);
   }
 
+  Future<void> refreshSnapshot() async {
+    final current = state.value;
+    if (current == null) return;
+    if (current.status != WorkflowRunStatus.waitingForApproval) return;
+    await _refreshRunSnapshot(current);
+  }
+
   Future<void> recover() async {
     final runId = ref.read(selectedRunIdProvider);
     if (runId == null) return;

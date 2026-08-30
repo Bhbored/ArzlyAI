@@ -101,7 +101,8 @@ class WorkflowRunMapper {
 
   ArzlyReport? _reportFromDto(WorkflowRunResponse dto) {
     return _reportMapper.fromMap(dto.resultDocument) ??
-        _reportMapper.fromJsonString(dto.finalResponse);
+        _reportMapper.fromJsonString(dto.finalResponse) ??
+        _reportMapper.fromJsonString(dto.approval?.currentContent);
   }
 
   ResultContract? _resultContractFromDto(WorkflowRunResponse dto) {

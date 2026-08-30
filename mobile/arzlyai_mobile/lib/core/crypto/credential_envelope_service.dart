@@ -25,7 +25,10 @@ class CredentialEnvelopeService {
   Future<CredentialEnvelope> encrypt(Map<String, String> credentials) async {
     try {
       final descriptor = await _security.getEncryptionKey();
-      return _builder.build(descriptor: descriptor, credentials: credentials);
+      return await _builder.build(
+        descriptor: descriptor,
+        credentials: credentials,
+      );
     } on ApiException {
       final descriptor = await _security.getEncryptionKey();
       return _builder.build(descriptor: descriptor, credentials: credentials);

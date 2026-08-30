@@ -14,6 +14,7 @@ import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_brief_panel.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_report_view.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_review_content.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_dialog.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_text_field.dart';
@@ -31,6 +32,15 @@ class _SmartPurchaseReviewScreenState
     extends ConsumerState<SmartPurchaseReviewScreen> {
   var _showFeedback = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activeRunProvider.notifier).refreshSnapshot();
+    });
+  }
+
   WorkflowNode? _waitingNode(PresetDetails? preset, WorkflowRun? run) {
     if (preset == null || run == null) return null;
     final index = run.waitingApprovalIndex();
@@ -41,9 +51,24 @@ class _SmartPurchaseReviewScreenState
         .firstOrNull;
   }
 
+  bool _isFinalReview(
+    PresetDetails? preset,
+    WorkflowRun? run,
+    WorkflowNode? waitingNode,
+    String content,
+  ) {
+    return SmartPurchaseReviewContent.isFinalReview(
+      preset: preset,
+      run: run,
+      waitingNode: waitingNode,
+      content: content,
+    );
+  }
+
   void _submit(
     ApprovalDecision decision, {
     String? editedContent,
+    required bool finalReview,
   }) {
     ref
         .read(activeRunProvider.notifier)
@@ -63,9 +88,14 @@ class _SmartPurchaseReviewScreenState
     final waitingNode = _waitingNode(preset, run);
     final labels = waitingNode?.approvalConfiguration;
     final content = run?.approval?.currentContent ?? '';
-    final hasReportView = run != null &&
-        (run.renderedResult != null || run.report != null);
-    final hasHtml = run != null &&
+    final finalReview = _isFinalReview(preset, run, waitingNode, content);
+    final showReport = SmartPurchaseReviewContent.shouldShowReportView(
+      run: run,
+      finalReview: finalReview,
+      content: content,
+    );
+    final hasHtml =
+        run != null &&
         run.renderedResult?.mediaType == 'text/html' &&
         (run.renderedResult?.content.trim().isNotEmpty ?? false);
     final showFeedbackField = !hasHtml || _showFeedback;
@@ -92,8 +122,8 @@ class _SmartPurchaseReviewScreenState
                 hasHtml ? context.paddingSmall : context.paddingMedium,
                 0,
               ),
-              child: run != null && hasReportView
-                  ? SmartPurchaseReportView(run: run)
+              child: showReport
+                  ? SmartPurchaseReportView(run: run!)
                   : SingleChildScrollView(
                       child: SmartPurchaseBriefPanel(content: content),
                     ),
@@ -104,7 +134,7 @@ class _SmartPurchaseReviewScreenState
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 context.paddingMedium,
-                hasHtml ? context.paddingSmall : context.paddingMedium,
+                hasHtml ? context.spaceSmall : context.paddingMedium,
                 context.paddingMedium,
                 context.paddingMedium,
               ),
@@ -113,11 +143,16 @@ class _SmartPurchaseReviewScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (showFeedbackField) ...[
-                    Text('Edit feedback', style: theme.textTheme.small),
+                    Text(
+                      finalReview ? 'What should change?' : 'What to fix',
+                      style: theme.textTheme.small,
+                    ),
                     SizedBox(height: context.spaceSmall / 2),
                     AppTextField.reviewDraft(),
                     SizedBox(
-                      height: hasHtml ? context.spaceSmall : context.spaceMedium,
+                      height: hasHtml
+                          ? context.spaceSmall
+                          : context.spaceMedium,
                     ),
                   ] else ...[
                     AppButton.ghost(
@@ -126,123 +161,74 @@ class _SmartPurchaseReviewScreenState
                     ),
                     SizedBox(height: context.spaceSmall),
                   ],
-                  if (hasHtml)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton.destructive(
-                            label: labels?.rejectLabel ?? 'Reject',
-                            onPressed: busy
-                                ? null
-                                : () async {
-                                    final ok = await AppDialog.confirm(
-                                      context,
-                                      title: labels?.rejectLabel ?? 'Reject',
-                                      message: 'Cancel this run?',
-                                    );
-                                    if (!ok || !mounted) return;
-                                    _submit(ApprovalDecision.reject);
-                                  },
-                          ),
-                        ),
-                        SizedBox(width: context.spaceSmall),
-                        Expanded(
-                          child: AppButton.ghost(
-                            label: labels?.editLabel ?? 'Edit',
-                            onPressed: busy
-                                ? null
-                                : () async {
-                                    if (!_showFeedback) {
-                                      setState(() => _showFeedback = true);
-                                      return;
-                                    }
-                                    if (AppValidators.requiredNonEmpty(draft) !=
-                                        null) {
-                                      return;
-                                    }
-                                    final ok = await AppDialog.confirm(
-                                      context,
-                                      title: labels?.editLabel ?? 'Edit',
-                                      message: 'Send feedback and regenerate?',
-                                    );
-                                    if (!ok || !mounted) return;
-                                    _submit(
-                                      ApprovalDecision.edit,
-                                      editedContent:
-                                          ref.read(reviewDraftTempProvider),
-                                    );
-                                  },
-                          ),
-                        ),
-                        SizedBox(width: context.spaceSmall),
-                        Expanded(
-                          child: AppButton.primary(
-                            label: labels?.acceptLabel ?? 'Accept',
-                            onPressed: busy
-                                ? null
-                                : () async {
-                                    final ok = await AppDialog.confirm(
-                                      context,
-                                      title: labels?.acceptLabel ?? 'Accept',
-                                      message: 'Continue with this decision?',
-                                    );
-                                    if (!ok || !mounted) return;
-                                    _submit(ApprovalDecision.accept);
-                                  },
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    AppButton.primary(
-                      label: labels?.acceptLabel ?? 'Accept',
-                      onPressed: busy
-                          ? null
-                          : () async {
-                              final ok = await AppDialog.confirm(
-                                context,
-                                title: labels?.acceptLabel ?? 'Accept',
-                                message: 'Continue with this decision?',
-                              );
-                              if (!ok || !mounted) return;
-                              _submit(ApprovalDecision.accept);
-                            },
-                    ),
-                    SizedBox(height: context.spaceSmall),
-                    AppButton.ghost(
-                      label: labels?.editLabel ?? 'Edit',
-                      onPressed:
-                          busy || AppValidators.requiredNonEmpty(draft) != null
-                          ? null
-                          : () async {
-                              final ok = await AppDialog.confirm(
-                                context,
-                                title: labels?.editLabel ?? 'Edit',
-                                message: 'Send feedback and regenerate?',
-                              );
-                              if (!ok || !mounted) return;
-                              _submit(
-                                ApprovalDecision.edit,
-                                editedContent: ref.read(reviewDraftTempProvider),
-                              );
-                            },
-                    ),
-                    SizedBox(height: context.spaceSmall),
-                    AppButton.destructive(
-                      label: labels?.rejectLabel ?? 'Reject',
-                      onPressed: busy
-                          ? null
-                          : () async {
-                              final ok = await AppDialog.confirm(
-                                context,
-                                title: labels?.rejectLabel ?? 'Reject',
-                                message: 'Cancel this run?',
-                              );
-                              if (!ok || !mounted) return;
-                              _submit(ApprovalDecision.reject);
-                            },
-                    ),
-                  ],
+                  AppButton.primary(
+                    label: labels?.acceptLabel ?? 'Accept',
+                    onPressed: busy
+                        ? null
+                        : () async {
+                            final ok = await AppDialog.confirm(
+                              context,
+                              title: labels?.acceptLabel ?? 'Accept',
+                              message: finalReview
+                                  ? 'Keep this recommendation?'
+                                  : 'Search for products with these details?',
+                            );
+                            if (!ok || !mounted) return;
+                            _submit(
+                              ApprovalDecision.accept,
+                              finalReview: finalReview,
+                            );
+                          },
+                  ),
+                  SizedBox(height: context.spaceSmall),
+                  AppButton.ghost(
+                    label: labels?.editLabel ?? 'Edit',
+                    onPressed:
+                        busy ||
+                            (!hasHtml &&
+                                AppValidators.requiredNonEmpty(draft) != null)
+                        ? null
+                        : () async {
+                            if (hasHtml && !_showFeedback) {
+                              setState(() => _showFeedback = true);
+                              return;
+                            }
+                            if (AppValidators.requiredNonEmpty(draft) != null) {
+                              return;
+                            }
+                            final ok = await AppDialog.confirm(
+                              context,
+                              title: labels?.editLabel ?? 'Edit',
+                              message: finalReview
+                                  ? 'Try a different search with your feedback?'
+                                  : 'Update what we understood?',
+                            );
+                            if (!ok || !mounted) return;
+                            _submit(
+                              ApprovalDecision.edit,
+                              editedContent: ref.read(reviewDraftTempProvider),
+                              finalReview: finalReview,
+                            );
+                          },
+                  ),
+                  SizedBox(height: context.spaceSmall),
+                  AppButton.destructive(
+                    label: labels?.rejectLabel ?? 'Reject',
+                    onPressed: busy
+                        ? null
+                        : () async {
+                            final ok = await AppDialog.confirm(
+                              context,
+                              title: labels?.rejectLabel ?? 'Reject',
+                              message: 'Cancel this run?',
+                            );
+                            if (!ok || !mounted) return;
+                            _submit(
+                              ApprovalDecision.reject,
+                              finalReview: finalReview,
+                            );
+                          },
+                  ),
                 ],
               ),
             ),

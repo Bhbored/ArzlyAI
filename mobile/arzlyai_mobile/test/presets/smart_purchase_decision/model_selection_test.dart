@@ -34,23 +34,21 @@ Agent _agent({
 }
 
 void main() {
-  test('ModelSelection_WhenDropdownDefaults_InitializesMatchingAgentOverride', () {
-    final agent = _agent(key: 'purchase-brief-architect');
+  test('ModelSelection_WhenShopperDefaults_InitializesMatchingAgentOverride', () {
+    final agent = _agent(key: 'shop-and-recommend');
     final overrides = <String, AgentOverrideDraft>{
       agent.key: AgentOverrideDraft(
         model: agent.modelConfiguration.selectedModel,
       ),
     };
-    expect(overrides['purchase-brief-architect']?.model, 'gpt-5-mini');
+    expect(overrides['shop-and-recommend']?.model, 'gpt-5-mini');
   });
 
-  test('StartRequest_WhenAgentsConfigured_SendsAllKeyedOverrides', () {
+  test('StartRequest_WhenShopperConfigured_SendsKeyedOverride', () {
     final overrides = {
-      'purchase-brief-architect': const AgentOverrideDraft(model: 'gpt-4o-mini'),
-      'market-researcher': const AgentOverrideDraft(model: 'gpt-5-mini'),
-      'report-composer': const AgentOverrideDraft(model: 'gpt-5-mini'),
+      'shop-and-recommend': const AgentOverrideDraft(model: 'gpt-4o-mini'),
     };
-    expect(overrides.keys, hasLength(3));
-    expect(overrides['purchase-brief-architect']?.model, 'gpt-4o-mini');
+    expect(overrides.keys, hasLength(1));
+    expect(overrides['shop-and-recommend']?.model, 'gpt-4o-mini');
   });
 }

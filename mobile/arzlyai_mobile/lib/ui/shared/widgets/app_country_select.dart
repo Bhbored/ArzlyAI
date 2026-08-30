@@ -12,11 +12,13 @@ class AppCountrySelect extends ConsumerWidget {
   const AppCountrySelect({
     required this.fieldKey,
     required this.label,
+    this.onSelected,
     super.key,
   });
 
   final String fieldKey;
   final String label;
+  final ValueChanged<String>? onSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,6 +85,7 @@ class AppCountrySelect extends ConsumerWidget {
     ref.read(runConfigTempProvider.notifier).update(
       current.copyWith(inputs: inputs),
     );
+    onSelected?.call(selected);
   }
 
   Country? _countryForCode(List<Country> countries, String code) {

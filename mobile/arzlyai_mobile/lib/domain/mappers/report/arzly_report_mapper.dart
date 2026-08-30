@@ -6,23 +6,81 @@ class ArzlyReportMapper {
   const ArzlyReportMapper();
 
   ArzlyReport? fromMap(Map<String, dynamic>? value) {
-    if (value == null || value['schema'] != 'arzly.report') return null;
+    if (value == null) return null;
+    if (!_looksLikeReport(value)) return null;
+    final normalized = _normalizeMap(value);
+    final schema = normalized['schema'] as String?;
     return ArzlyReport(
-      schema: value['schema'] as String,
-      version: value['version'] as int? ?? 1,
-      kind: value['kind'] as String? ?? '',
-      title: value['title'] as String? ?? '',
-      summary: value['summary'] as String? ?? '',
-      generatedAtUtc: value['generatedAtUtc'] as String? ?? '',
-      blocks: (value['blocks'] as List<dynamic>? ?? const [])
-          .cast<Map<String, dynamic>>()
-          .map(_block)
+      schema: schema ?? 'arzly.report',
+      version: _readVersion(normalized['version']) ?? 4,
+      kind: normalized['kind'] as String? ?? 'purchaseDecision',
+      title: normalized['title'] as String? ?? '',
+      summary: normalized['summary'] as String? ?? '',
+      generatedAtUtc: normalized['generatedAtUtc'] as String? ?? '',
+      blocks: (normalized['blocks'] as List<dynamic>? ?? const [])
+          .map((block) => _block(_readMap(block)))
           .toList(growable: false),
-      sources: (value['sources'] as List<dynamic>? ?? const [])
-          .cast<Map<String, dynamic>>()
-          .map(_source)
+      sources: (normalized['sources'] as List<dynamic>? ?? const [])
+          .map((source) => _source(_readMap(source)))
           .toList(growable: false),
     );
+  }
+
+  bool _looksLikeReport(Map<String, dynamic> value) {
+    final schema = value['schema'] as String?;
+    final kind = value['kind'] as String?;
+    final blocks = value['blocks'];
+    final sources = value['sources'];
+    final hasBlocks = blocks is List && blocks.isNotEmpty;
+    final hasSources = sources is List && sources.isNotEmpty;
+    final version = _readVersion(value['version']);
+    if (schema == 'arzly.report') return true;
+    if (kind == 'purchaseDecision' && (hasBlocks || hasSources)) return true;
+    if (hasBlocks && version == 4) return true;
+    if (hasSources && version == 4) return true;
+    return false;
+  }
+
+  Map<String, dynamic> _normalizeMap(Map<String, dynamic> value) {
+    final normalized = Map<String, dynamic>.from(value);
+    normalized.putIfAbsent('schema', () => 'arzly.report');
+    normalized.putIfAbsent('kind', () => 'purchaseDecision');
+    if (_readVersion(normalized['version']) == null) {
+      normalized['version'] = 4;
+    }
+    final blocks = normalized['blocks'];
+    final hasBlocks = blocks is List && blocks.isNotEmpty;
+    if (hasBlocks) return normalized;
+    final sources = normalized['sources'];
+    if (sources is! List || sources.isEmpty) return normalized;
+    normalized['blocks'] = [
+      {
+        'type': 'recommendation',
+        'title': normalized['title'] ?? 'Options',
+        'data': {
+          'text': normalized['summary'] ?? '',
+          'items': [
+            for (final source in sources)
+              if (source is Map)
+                {
+                  'label': _readMap(source)['title'] ?? '',
+                  'value': '',
+                  'detail': _readMap(source)['publisher'] ?? '',
+                  'url': _readMap(source)['url'],
+                  'actions': const [],
+                },
+          ],
+        },
+      },
+    ];
+    return normalized;
+  }
+
+  int? _readVersion(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
   }
 
   ArzlyReport? fromJsonString(String? value) {
@@ -93,12 +151,10 @@ class ArzlyReportMapper {
     return ArzlyReportBlockData(
       text: json['text'] as String? ?? '',
       items: (json['items'] as List<dynamic>? ?? const [])
-          .cast<Map<String, dynamic>>()
-          .map(_item)
+          .map((item) => _item(_readMap(item)))
           .toList(growable: false),
       metrics: (json['metrics'] as List<dynamic>? ?? const [])
-          .cast<Map<String, dynamic>>()
-          .map(_metric)
+          .map((metric) => _metric(_readMap(metric)))
           .toList(growable: false),
     );
   }
@@ -112,9 +168,8 @@ class ArzlyReportMapper {
       imageUrl: json['imageUrl'] as String?,
       actionLabel: json['actionLabel'] as String?,
       actions: (json['actions'] as List<dynamic>? ?? const [])
-          .cast<Map<String, dynamic>>()
+          .map((action) => _itemAction(_readMap(action)))
           .take(3)
-          .map(_itemAction)
           .toList(growable: false),
     );
   }

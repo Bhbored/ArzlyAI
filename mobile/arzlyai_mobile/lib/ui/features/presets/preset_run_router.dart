@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/configure_run_screen.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/configure_run_screen.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/preset_key.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/review_screen.dart' as linkedin;
 import 'package:arzlyai_mobile/ui/features/presets/implementations/daily_linkedin_ai_post/result_screen.dart' as linkedin;
-import 'package:arzlyai_mobile/ui/features/presets/configure/dynamic_preset_configure_screen.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/execution_screen.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/preset_key.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/review_screen.dart' as smart;
@@ -14,7 +14,7 @@ Widget? configureRunScreenForPreset(String presetKey) {
     case DailyLinkedInAiPostPreset.key:
       return const ConfigureRunScreen();
     case SmartPurchaseDecisionPreset.key:
-      return const DynamicPresetConfigureScreen();
+      return const SmartPurchaseConfigureRunScreen();
     default:
       return null;
   }

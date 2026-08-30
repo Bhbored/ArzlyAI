@@ -18,16 +18,16 @@ class SmartPurchaseResultScreen extends ConsumerWidget {
     final theme = ShadTheme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Result', style: theme.textTheme.h4),
+        title: Text('Your pick', style: theme.textTheme.h4),
         actions: runAsync.maybeWhen(
           data: (run) {
             if (run == null) return null;
-            final actions = _shareActions(context, run);
-            if (actions.isEmpty) return null;
+            final share = _shareButton(context, run);
+            if (share == null) return null;
             return [
               Padding(
                 padding: EdgeInsets.only(right: context.paddingSmall),
-                child: actions.first,
+                child: share,
               ),
             ];
           },
@@ -39,7 +39,7 @@ class SmartPurchaseResultScreen extends ConsumerWidget {
           if (run == null) {
             return Center(
               child: Text(
-                'No decision report available.',
+                'No recommendation available.',
                 style: theme.textTheme.p,
               ),
             );
@@ -56,8 +56,10 @@ class SmartPurchaseResultScreen extends ConsumerWidget {
             padding: EdgeInsets.all(context.paddingMedium),
             children: [
               SmartPurchaseReportView(run: run),
-              SizedBox(height: context.spaceLarge),
-              ..._shareActions(context, run),
+              if (_shareButton(context, run) != null) ...[
+                SizedBox(height: context.spaceLarge),
+                _shareButton(context, run)!,
+              ],
             ],
           );
         },
@@ -67,33 +69,24 @@ class SmartPurchaseResultScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _shareActions(BuildContext context, WorkflowRun run) {
+  Widget? _shareButton(BuildContext context, WorkflowRun run) {
     final export = const ReportExportService();
     final rendered = run.renderedResult;
     if (rendered?.mediaType == 'text/html' &&
         (rendered?.content.trim().isNotEmpty ?? false)) {
-      return [
-        AppButton.primary(
-          label: 'Share HTML',
-          onPressed: () => export.shareRenderedHtml(
-            rendered!,
-            subject: run.report?.title,
-          ),
+      return AppButton.ghost(
+        label: 'Share',
+        onPressed: () => export.shareRenderedHtml(
+          rendered!,
+          subject: run.report?.title,
         ),
-      ];
+      );
     }
     final report = run.report;
-    if (report == null) return const [];
-    return [
-      AppButton.primary(
-        label: 'Share HTML',
-        onPressed: () => export.shareHtml(report),
-      ),
-      SizedBox(height: context.spaceSmall),
-      AppButton.ghost(
-        label: 'Share PDF',
-        onPressed: () => export.sharePdf(report),
-      ),
-    ];
+    if (report == null) return null;
+    return AppButton.ghost(
+      label: 'Share',
+      onPressed: () => export.shareHtml(report),
+    );
   }
 }

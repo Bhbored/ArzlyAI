@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_transport_state.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
@@ -12,6 +13,7 @@ class AppLiveWorkflowGraph extends ConsumerWidget {
     required this.connections,
     this.startingNodeId,
     this.onNodeTap,
+    this.isNodeTapEnabled,
     super.key,
   });
 
@@ -19,6 +21,8 @@ class AppLiveWorkflowGraph extends ConsumerWidget {
   final List<WorkflowConnection> connections;
   final String? startingNodeId;
   final void Function(WorkflowNode node, WorkflowNodeStatus? status)? onNodeTap;
+  final bool Function(WorkflowNode node, WorkflowNodeStatus? status)?
+      isNodeTapEnabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,6 +46,7 @@ class AppLiveWorkflowGraph extends ConsumerWidget {
       connections: connections,
       nodeStatuses: nodeStatuses,
       onNodeTap: onNodeTap,
+      isNodeTapEnabled: isNodeTapEnabled,
     );
   }
 }

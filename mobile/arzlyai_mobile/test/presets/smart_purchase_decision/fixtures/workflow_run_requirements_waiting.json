@@ -5,50 +5,42 @@
   "nodes": [
     {
       "nodeId": "00000000-0000-0000-0001-000000000021",
-      "nodeKey": "purchase-brief-architect",
-      "displayName": "Build Purchase Brief",
+      "nodeKey": "understand-request",
+      "displayName": "Understand request",
       "type": "Agent",
       "status": "Completed",
       "isRunning": false,
-      "output": "{\"category\":\"Laptop\"}"
+      "output": "{\"summary\":\"A laptop for university under $800\",\"checklist\":[\"Lightweight\",\"Good battery\"],\"countryCode\":\"US\",\"currencyCode\":\"USD\"}"
     },
     {
       "nodeId": "00000000-0000-0000-0001-000000000022",
-      "nodeKey": "confirm-requirements",
-      "displayName": "Confirm Requirements",
+      "nodeKey": "confirm-request",
+      "displayName": "Confirm",
       "type": "HumanApproval",
       "status": "WaitingForApproval",
       "isRunning": false,
-      "output": "Brief text"
+      "output": "{\"summary\":\"A laptop for university under $800\",\"checklist\":[\"Lightweight\",\"Good battery\"],\"countryCode\":\"US\",\"currencyCode\":\"USD\"}"
     },
     {
       "nodeId": "00000000-0000-0000-0001-000000000023",
-      "nodeKey": "market-researcher",
-      "displayName": "Research Candidates",
+      "nodeKey": "shop-and-recommend",
+      "displayName": "Search and compare",
       "type": "Agent",
       "status": "Idle",
       "isRunning": false
     },
     {
       "nodeId": "00000000-0000-0000-0001-000000000024",
-      "nodeKey": "decision.weighted-score",
-      "displayName": "Score Candidates",
-      "type": "Operation",
-      "status": "Idle",
-      "isRunning": false
-    },
-    {
-      "nodeId": "00000000-0000-0000-0001-000000000025",
-      "nodeKey": "review-recommendation",
-      "displayName": "Review Recommendation",
+      "nodeKey": "review-pick",
+      "displayName": "Your pick",
       "type": "HumanApproval",
       "status": "Idle",
       "isRunning": false
     }
   ],
   "approval": {
-    "originalContent": "Brief text",
-    "currentContent": "Brief text",
+    "originalContent": "{\"summary\":\"A laptop for university under $800\",\"checklist\":[\"Lightweight\",\"Good battery\"],\"countryCode\":\"US\",\"currencyCode\":\"USD\"}",
+    "currentContent": "{\"summary\":\"A laptop for university under $800\",\"checklist\":[\"Lightweight\",\"Good battery\"],\"countryCode\":\"US\",\"currencyCode\":\"USD\"}",
     "wasEdited": false
   }
 }

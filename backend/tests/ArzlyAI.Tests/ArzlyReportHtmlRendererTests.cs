@@ -85,4 +85,57 @@ public sealed class ArzlyReportHtmlRendererTests
         Assert.DoesNotContain("javascript:", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("http://example.com/image.jpg", html, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void Render_WhenRecommendationHasMultipleItems_RendersWinnerAndShortlist()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+          "title":"Laptop picks",
+          "summary":"Shortlist for Lebanon",
+          "blocks":[{
+            "type":"recommendation",
+            "title":"Our pick",
+            "data":{
+              "text":"Best overall",
+              "items":[
+                {
+                  "label":"Winner Laptop",
+                  "value":"$799",
+                  "detail":"Top choice",
+                  "imageUrl":"https://example.com/winner.jpg",
+                  "actions":[{
+                    "storeName":"Local Store",
+                    "label":"$799 · View offer",
+                    "availability":"In stock",
+                    "url":"https://example.com/winner"
+                  }]
+                },
+                {
+                  "label":"Alt Laptop",
+                  "value":"$749",
+                  "detail":"Runner up",
+                  "imageUrl":"https://example.com/alt.jpg",
+                  "actions":[{
+                    "storeName":"Alt Store",
+                    "label":"$749 · View offer",
+                    "availability":"Limited",
+                    "url":"https://example.com/alt"
+                  }]
+                }
+              ],
+              "metrics":[]
+            }
+          }],
+          "sources":[]
+        }
+        """);
+
+        var html = new ArzlyReportHtmlRenderer().Render(document.RootElement);
+
+        Assert.Contains("Winner Laptop", html, StringComparison.Ordinal);
+        Assert.Contains("Alt Laptop", html, StringComparison.Ordinal);
+        Assert.Contains("Also consider", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"products\"", html, StringComparison.Ordinal);
+    }
 }

@@ -352,9 +352,9 @@ class WorkflowRepository {
           .toList(),
       approval: approval,
       finalResponse: row.finalResponse,
-      report: _report(row),
+      report: _report(row, approval),
       renderedResult: _renderedResult(row),
-      resultContract: _resultContract(row),
+      resultContract: _resultContract(row, approval),
       localWorkflowId: row.localWorkflowId,
       createdAtUtc: row.createdAtUtc,
       updatedAtUtc: row.updatedAtUtc,
@@ -362,11 +362,10 @@ class WorkflowRepository {
     );
   }
 
-  ArzlyReport? _report(WorkflowRunRow row) {
-    if (row.resultDocumentJson != null) {
-      return _reportMapper.fromJsonString(row.resultDocumentJson);
-    }
-    return _reportMapper.fromJsonString(row.finalResponse);
+  ArzlyReport? _report(WorkflowRunRow row, ApprovalSnapshot? approval) {
+    return _reportMapper.fromJsonString(row.resultDocumentJson) ??
+        _reportMapper.fromJsonString(row.finalResponse) ??
+        _reportMapper.fromJsonString(approval?.currentContent);
   }
 
   RenderedWorkflowResult? _renderedResult(WorkflowRunRow row) {
@@ -376,14 +375,14 @@ class WorkflowRepository {
     return RenderedWorkflowResult(mediaType: mediaType, content: content);
   }
 
-  ResultContract? _resultContract(WorkflowRunRow row) {
+  ResultContract? _resultContract(WorkflowRunRow row, ApprovalSnapshot? approval) {
     if (row.resultContractKey != null && row.resultContractVersion != null) {
       return ResultContract(
         key: row.resultContractKey!,
         version: row.resultContractVersion!,
       );
     }
-    final report = _report(row);
+    final report = _report(row, approval);
     if (report == null) return null;
     return ResultContract(key: report.schema, version: report.version);
   }

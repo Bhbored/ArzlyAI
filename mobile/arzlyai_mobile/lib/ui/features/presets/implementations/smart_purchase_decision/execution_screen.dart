@@ -8,7 +8,6 @@ import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
-import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_loading.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_status.dart';
@@ -30,7 +29,7 @@ class _SmartPurchaseExecutionScreenState
     final run = ref.watch(activeRunProvider);
     final theme = ShadTheme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('Execution', style: theme.textTheme.h4)),
+      appBar: AppBar(title: Text('Finding options', style: theme.textTheme.h4)),
       body: run.when(
         data: (value) {
           if (value == null) {
@@ -42,9 +41,7 @@ class _SmartPurchaseExecutionScreenState
               if (!mounted || _consumed == token) return;
               if (value.status == WorkflowRunStatus.waitingForApproval) {
                 _consumed = token;
-                ref
-                    .read(reviewDraftTempProvider.notifier)
-                    .update(value.approval?.currentContent ?? '');
+                ref.read(reviewDraftTempProvider.notifier).clear();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (_) => reviewScreenForPreset(value.presetKey),
@@ -73,21 +70,18 @@ class _SmartPurchaseExecutionScreenState
                     title: node.displayName,
                     child: Row(
                       children: [
-                        if (node.isRunning)
+                        if (node.isRunning ||
+                            node.status == WorkflowNodeStatus.running)
                           const AppLoadingIndicator(small: true)
                         else
                           Text(
-                            node.status.wireValue,
+                            _friendlyStatus(node.displayName, node.status),
                             style: theme.textTheme.muted,
                           ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              AppButton.ghost(
-                label: 'Recover',
-                onPressed: () => ref.read(activeRunProvider.notifier).recover(),
               ),
             ],
           );
@@ -102,5 +96,13 @@ class _SmartPurchaseExecutionScreenState
         },
       ),
     );
+  }
+
+  String _friendlyStatus(String displayName, WorkflowNodeStatus status) {
+    if (status == WorkflowNodeStatus.completed) return 'Done';
+    if (status == WorkflowNodeStatus.failed) return 'Failed';
+    if (status == WorkflowNodeStatus.waitingForApproval) return 'Needs you';
+    if (status == WorkflowNodeStatus.running) return 'Working…';
+    return displayName;
   }
 }

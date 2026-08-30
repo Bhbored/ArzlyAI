@@ -11,6 +11,7 @@ class AppWorkflowGraph extends StatelessWidget {
     required this.connections,
     this.nodeStatuses = const {},
     this.onNodeTap,
+    this.isNodeTapEnabled,
     super.key,
   });
 
@@ -18,6 +19,8 @@ class AppWorkflowGraph extends StatelessWidget {
   final List<WorkflowConnection> connections;
   final Map<String, WorkflowNodeStatus> nodeStatuses;
   final void Function(WorkflowNode node, WorkflowNodeStatus? status)? onNodeTap;
+  final bool Function(WorkflowNode node, WorkflowNodeStatus? status)?
+      isNodeTapEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +81,9 @@ class AppWorkflowGraph extends StatelessWidget {
                 ),
                 ...ordered.map((node) {
                   final rect = nodeRects[node.id]!;
+                  final status = nodeStatuses[node.id];
+                  final tapEnabled = onNodeTap != null &&
+                      (isNodeTapEnabled?.call(node, status) ?? true);
                   return Positioned(
                     left: rect.left,
                     top: rect.top,
@@ -85,10 +91,10 @@ class AppWorkflowGraph extends StatelessWidget {
                     height: rect.height,
                     child: _WorkflowNodeTile(
                       node: node,
-                      status: nodeStatuses[node.id],
-                      onTap: onNodeTap == null
-                          ? null
-                          : () => onNodeTap!(node, nodeStatuses[node.id]),
+                      status: status,
+                      onTap: tapEnabled
+                          ? () => onNodeTap!(node, status)
+                          : null,
                     ),
                   );
                 }),

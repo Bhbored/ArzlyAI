@@ -1,19 +1,19 @@
 {
   "id": "00000000-0000-0000-0001-000000000010",
   "key": "smart-purchase-decision",
-  "name": "Smart Buy Lab",
-  "description": "Research and compare consumer products.",
-  "version": 1,
-  "inputSchemaJson": "{\"version\":1,\"fields\":[{\"key\":\"purchaseGoal\",\"label\":\"What are you buying?\",\"type\":\"multilineText\",\"required\":true,\"maxLength\":2000},{\"key\":\"countryCode\",\"label\":\"Market\",\"type\":\"country\",\"required\":true},{\"key\":\"currencyCode\",\"label\":\"Currency\",\"type\":\"currency\",\"required\":true},{\"key\":\"candidateSeeds\",\"label\":\"Products or URLs already considered\",\"type\":\"candidateList\",\"required\":false,\"maximumItems\":5}]}",
+  "name": "Smart Buy",
+  "description": "Tell us what you want to buy and get a clear recommendation with real store links.",
+  "version": 4,
+  "inputSchemaJson": "{\"version\":1,\"fields\":[{\"key\":\"purchaseGoal\",\"label\":\"What are you buying?\",\"type\":\"multilineText\",\"required\":true,\"maxLength\":2000},{\"key\":\"budget\",\"label\":\"Budget (optional)\",\"type\":\"decimal\",\"required\":false,\"minimum\":0},{\"key\":\"notes\",\"label\":\"Anything else that matters?\",\"type\":\"multilineText\",\"required\":false,\"maxLength\":2000},{\"key\":\"countryCode\",\"label\":\"Where are you shopping?\",\"type\":\"country\",\"required\":true},{\"key\":\"currencyCode\",\"label\":\"Currency\",\"type\":\"currency\",\"required\":true}]}",
   "resultContract": {
     "key": "arzly.report",
-    "version": 1
+    "version": 4
   },
   "agents": [
     {
-      "key": "purchase-brief-architect",
-      "name": "Purchase Brief Architect",
-      "systemPrompt": "Build measurable criteria.",
+      "key": "understand-request",
+      "name": "Understand Request",
+      "systemPrompt": "Restate the shopper request in plain language.",
       "isSystemPromptEditable": false,
       "modelConfiguration": {
         "provider": "openai",
@@ -25,25 +25,25 @@
             "displayName": "GPT-5 mini"
           }
         ],
-        "isModelEditable": true,
+        "isModelEditable": false,
         "temperature": 0.2,
         "minimumTemperature": 0.0,
         "maximumTemperature": 1.0,
-        "isTemperatureEditable": true
+        "isTemperatureEditable": false
       },
       "harness": {
         "planningEnabled": false,
         "todoTrackingEnabled": false,
         "contextCompactionEnabled": true,
         "requiresToolApproval": false,
-        "maximumIterations": 4,
+        "maximumIterations": 3,
         "webSearchEnabled": false
       }
     },
     {
-      "key": "market-researcher",
-      "name": "Market Researcher",
-      "systemPrompt": "Research candidates.",
+      "key": "shop-and-recommend",
+      "name": "Shop and Recommend",
+      "systemPrompt": "Search and recommend products.",
       "isSystemPromptEditable": false,
       "modelConfiguration": {
         "provider": "openai",
@@ -72,52 +72,44 @@
     }
   ],
   "workflow": {
-    "key": "research-score-and-recommend",
+    "key": "confirm-and-recommend",
     "nodes": [
       {
         "id": "00000000-0000-0000-0001-000000000021",
-        "key": "purchase-brief-architect",
-        "displayName": "Build Purchase Brief",
+        "key": "understand-request",
+        "displayName": "Understand request",
         "type": "Agent",
         "position": 1,
         "requiresHumanApproval": false
       },
       {
         "id": "00000000-0000-0000-0001-000000000022",
-        "key": "confirm-requirements",
-        "displayName": "Confirm Requirements",
+        "key": "confirm-request",
+        "displayName": "Confirm",
         "type": "HumanApproval",
         "position": 2,
         "requiresHumanApproval": true,
-        "configurationJson": "{\"acceptLabel\":\"Confirm and research\",\"editLabel\":\"Update criteria\",\"rejectLabel\":\"Cancel\"}"
+        "configurationJson": "{\"acceptLabel\":\"Confirm\",\"editLabel\":\"That's not quite right\",\"rejectLabel\":\"Cancel\"}"
       },
       {
         "id": "00000000-0000-0000-0001-000000000023",
-        "key": "market-researcher",
-        "displayName": "Research Candidates",
+        "key": "shop-and-recommend",
+        "displayName": "Search and compare",
         "type": "Agent",
         "position": 3,
         "requiresHumanApproval": false
       },
       {
         "id": "00000000-0000-0000-0001-000000000024",
-        "key": "decision.weighted-score",
-        "displayName": "Score Candidates",
-        "type": "Operation",
-        "position": 4,
-        "requiresHumanApproval": false
-      },
-      {
-        "id": "00000000-0000-0000-0001-000000000025",
-        "key": "review-recommendation",
-        "displayName": "Review Recommendation",
+        "key": "review-pick",
+        "displayName": "Your pick",
         "type": "HumanApproval",
-        "position": 5,
+        "position": 4,
         "requiresHumanApproval": true,
-        "configurationJson": "{\"acceptLabel\":\"Save decision\",\"editLabel\":\"Revise explanation\",\"rejectLabel\":\"Discard\"}",
+        "configurationJson": "{\"acceptLabel\":\"Looks good\",\"editLabel\":\"Try a different search\",\"rejectLabel\":\"Discard\"}",
         "resultContract": {
           "key": "arzly.report",
-          "version": 1
+          "version": 4
         }
       }
     ],
@@ -136,11 +128,6 @@
         "id": "00000000-0000-0000-0001-000000000033",
         "sourceNodeId": "00000000-0000-0000-0001-000000000023",
         "targetNodeId": "00000000-0000-0000-0001-000000000024"
-      },
-      {
-        "id": "00000000-0000-0000-0001-000000000034",
-        "sourceNodeId": "00000000-0000-0000-0001-000000000024",
-        "targetNodeId": "00000000-0000-0000-0001-000000000025"
       }
     ]
   },

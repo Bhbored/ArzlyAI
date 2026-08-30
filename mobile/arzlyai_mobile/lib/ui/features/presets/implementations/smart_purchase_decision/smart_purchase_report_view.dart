@@ -3,9 +3,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/domain/entities/report/arzly_report.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
-import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/purchase_decision_report_text.dart';
+import 'package:arzlyai_mobile/domain/mappers/report/arzly_report_mapper.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_report_panel.dart';
-import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/smart_purchase_decision/smart_purchase_review_content.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_report_webview.dart';
 
 class SmartPurchaseReportView extends StatelessWidget {
@@ -38,33 +38,45 @@ class SmartPurchaseReportView extends StatelessWidget {
         },
       );
     }
-    final report = run.report;
+    final report = _resolvedReport(run);
     if (report != null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (report.title.isNotEmpty)
-            Text(report.title, style: theme.textTheme.h4),
-          if (report.title.isNotEmpty) SizedBox(height: context.spaceMedium),
-          SmartPurchaseReportPanel(report: report),
-        ],
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (report.title.isNotEmpty)
+              Text(report.title, style: theme.textTheme.h4),
+            if (report.title.isNotEmpty) SizedBox(height: context.spaceMedium),
+            SmartPurchaseReportPanel(report: report),
+          ],
+        ),
       );
     }
-    final fallback = run.finalResponse ?? '';
+    final fallback =
+        run.finalResponse ?? run.approval?.currentContent ?? '';
     if (fallback.trim().isEmpty) {
       return Text(
         'No decision report available.',
         style: theme.textTheme.p,
       );
     }
-    final structured = PurchaseDecisionReportText.structuredBody(
-      context,
-      fallback,
-    );
-    if (structured != null) {
-      return AppCard.standard(child: structured);
+    if (SmartPurchaseReviewContent.looksLikePurchaseDecisionReport(fallback) ||
+        SmartPurchaseReviewContent.looksLikeStructuredJson(fallback)) {
+      return Text(
+        'Could not render this recommendation. Try a different search.',
+        style: theme.textTheme.p,
+      );
     }
-    return SelectableText(fallback, style: theme.textTheme.p);
+    return SingleChildScrollView(
+      child: Text(fallback, style: theme.textTheme.p),
+    );
+  }
+
+  ArzlyReport? _resolvedReport(WorkflowRun run) {
+    const mapper = ArzlyReportMapper();
+    return run.report ??
+        mapper.fromJsonString(run.approval?.currentContent) ??
+        mapper.fromJsonString(run.finalResponse);
   }
 }
 
