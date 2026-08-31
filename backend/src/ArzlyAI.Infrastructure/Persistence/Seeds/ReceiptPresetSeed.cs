@@ -8,8 +8,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Seeds;
 
 public static class ReceiptPresetSeed
 {
+    public const string PresetKey = "receipt-intelligence";
     public const int TargetVersion = 1;
-    public static readonly string[] PresetKeys =
+    public static readonly string[] LegacyPresetKeys =
     [
         "receipt-monthly-spending",
         "receipt-weekly-budget",
@@ -20,25 +21,6 @@ public static class ReceiptPresetSeed
         "receipt-savings-tracker"
     ];
 
-    private static readonly IReadOnlyDictionary<string, (string Name, string Description, string Mode)> Catalog =
-        new Dictionary<string, (string, string, string)>(StringComparer.Ordinal)
-        {
-            ["receipt-monthly-spending"] = ("Monthly Receipt Spending",
-                "Summarize this month's receipt spending by category and merchant.", "monthly-spending"),
-            ["receipt-weekly-budget"] = ("Weekly Receipt Budget",
-                "Compare this week's receipt spending with a budget.", "weekly-budget"),
-            ["receipt-quarterly-tax"] = ("Quarterly Receipt Tax",
-                "Prepare a quarterly receipt summary and tax estimate.", "quarterly-tax"),
-            ["receipt-yearly-review"] = ("Yearly Receipt Review",
-                "Review receipt spending trends across the year.", "yearly-review"),
-            ["receipt-category-dive"] = ("Receipt Category Dive",
-                "Analyze receipt spending for one category.", "category-dive"),
-            ["receipt-anomaly-detector"] = ("Receipt Anomaly Detector",
-                "Highlight statistically unusual receipt amounts.", "anomaly-detector"),
-            ["receipt-savings-tracker"] = ("Receipt Savings Tracker",
-                "Track receipt spending against a savings budget.", "savings-tracker")
-        };
-
     public static async Task SeedAsync(ArzlyDbContext dbContext, CancellationToken cancellationToken)
     {
         using var operation = Operation.Time("ReceiptPresetSeed.Seed");
@@ -47,44 +29,46 @@ public static class ReceiptPresetSeed
             .SingleAsync(item => item.Provider.Key == "openai" && item.Key == "gpt-5-mini",
                 cancellationToken);
 
-        foreach (var key in PresetKeys)
+        var currentPreset = await dbContext.Presets
+            .Where(preset => preset.Key == PresetKey)
+            .OrderByDescending(preset => preset.Version)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (currentPreset is null)
         {
-            if (await dbContext.Presets.AnyAsync(
-                    preset => preset.Key == key && preset.Version >= TargetVersion,
-                    cancellationToken))
-                continue;
-            if (await dbContext.Presets.AnyAsync(preset => preset.Key == key, cancellationToken))
-                throw new InvalidOperationException(
-                    $"Receipt preset '{key}' requires an explicit version upgrade.");
-
-            dbContext.Add(CreatePreset(key, model, integrations));
+            dbContext.Add(CreatePreset(model, integrations));
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+        else if (currentPreset.Version < TargetVersion)
+        {
+            throw new InvalidOperationException(
+                $"Preset '{PresetKey}' requires an explicit version upgrade.");
+        }
+
+        await dbContext.Presets
+            .Where(preset => LegacyPresetKeys.Contains(preset.Key) && preset.IsPublished)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(preset => preset.IsPublished, false),
+                cancellationToken);
     }
 
     public static PresetDefinition CreatePreset(
-        string key,
         ModelDefinition model,
         IReadOnlyDictionary<string, IntegrationDefinition> integrations)
     {
-        if (!Catalog.TryGetValue(key, out var catalog))
-            throw new ArgumentException($"Unknown receipt preset '{key}'.", nameof(key));
         foreach (var integrationKey in RequiredIntegrationKeys)
             if (!integrations.ContainsKey(integrationKey))
                 throw new ArgumentException($"Integration '{integrationKey}' is required.",
                     nameof(integrations));
 
-        var ordinal = Array.IndexOf(PresetKeys, key) + 1;
-        var prefix = 2000 + ordinal * 100;
         Guid Id(int suffix) => Guid.Parse(
-            $"00000000-0000-0000-0002-{(prefix + suffix).ToString().PadLeft(12, '0')}");
+            $"00000000-0000-0000-0004-{suffix.ToString().PadLeft(12, '0')}");
 
         var preset = new PresetDefinition
         {
             Id = Id(0),
-            Key = key,
-            Name = catalog.Name,
-            Description = catalog.Description,
+            Key = PresetKey,
+            Name = "Receipt Intelligence",
+            Description = "Turn a receipt sheet into the spending insight you need, from budgets and taxes to trends and anomalies.",
             Version = TargetVersion,
             IsPublished = true,
             InputSchemaJson = InputSchema,
@@ -163,7 +147,7 @@ public static class ReceiptPresetSeed
                 """{"spreadsheetId":"$.inputs.spreadsheetId","range":"$.inputs.sourceRange","maximumRows":"$.literal.1000"}"""),
             Step(Id(12), workflow, 2, WorkflowNodeType.Operation, "receipt.analyze",
                 "Normalize and analyze receipts",
-                $$"""{"rowsJson":"$.steps[0].output","analysisMode":"$.literal.{{catalog.Mode}}","columnMappingJson":"$.inputs.columnMappingJson","asOfDate":"$.inputs.asOfDate?","currencyCode":"$.inputs.currencyCode","budget":"$.inputs.budget?","taxRate":"$.inputs.taxRate?","category":"$.inputs.category?"}"""),
+                """{"rowsJson":"$.steps[0].output","analysisMode":"$.inputs.analysisMode","columnMappingJson":"$.inputs.columnMappingJson","asOfDate":"$.inputs.asOfDate?","currencyCode":"$.inputs.currencyCode","budget":"$.inputs.budget?","taxRate":"$.inputs.taxRate?","category":"$.inputs.category?"}"""),
             Step(Id(13), workflow, 3, WorkflowNodeType.Agent, reportAgent.Key,
                 reportAgent.Name, """{"analysis":"$.steps[1].output"}"""),
             Step(Id(14), workflow, 4, WorkflowNodeType.Integration, "google.sheets.report",
@@ -172,7 +156,7 @@ public static class ReceiptPresetSeed
                 """{"when":{"input":"deliveryMode","equalsAny":["sheets","both"]}}"""),
             Step(Id(15), workflow, 5, WorkflowNodeType.Integration, "google.gmail.send-html",
                 "Email receipt report",
-                $$"""{"deliveryMode":"$.inputs.deliveryMode?","recipient":"$.inputs.recipientEmail?","subject":"$.literal.{{catalog.Name}}","reportJson":"$.steps[2].output"}""",
+                """{"deliveryMode":"$.inputs.deliveryMode?","recipient":"$.inputs.recipientEmail?","subject":"$.literal.Your receipt intelligence report","reportJson":"$.steps[2].output"}""",
                 """{"when":{"input":"deliveryMode","equalsAny":["email","both"]}}"""),
             Step(Id(16), workflow, 6, WorkflowNodeType.Agent, finalAgent.Key,
                 finalAgent.Name, """{"report":"$.steps[2].output"}""", contractKey: "arzly.report",
@@ -274,7 +258,7 @@ public static class ReceiptPresetSeed
         "is not a public citation. Never output receipt rows, credentials, markdown, or HTML. Return only JSON.";
 
     private const string InputSchema = """
-{"version":1,"fields":[{"key":"spreadsheetId","label":"Receipt spreadsheet","type":"text","required":true},{"key":"sourceRange","label":"Receipt range","type":"text","required":true},{"key":"columnMappingJson","label":"Column mapping","type":"multilineText","required":true,"maxLength":2000},{"key":"asOfDate","label":"Report date","type":"date","required":true},{"key":"currencyCode","label":"Currency","type":"currency","required":true},{"key":"budget","label":"Budget","type":"decimal","required":false,"minimum":0},{"key":"taxRate","label":"Tax rate","type":"decimal","required":false,"minimum":0,"maximum":1},{"key":"category","label":"Category","type":"text","required":false},{"key":"deliveryMode","label":"Delivery","type":"select","required":false,"options":[{"value":"preview","label":"Preview only"},{"value":"sheets","label":"Google Sheets"},{"value":"email","label":"Email"},{"value":"both","label":"Sheets and email"}]},{"key":"reportTabTitle","label":"Report tab","type":"text","required":false},{"key":"recipientEmail","label":"Recipient email","type":"email","required":false}]}
+{"version":2,"presentation":{"layout":"guided","primaryField":"analysisMode"},"fields":[{"key":"analysisMode","label":"What do you want to learn?","type":"selectCards","required":true,"defaultValue":"monthly-spending","options":[{"value":"monthly-spending","label":"Monthly snapshot","description":"See where this month's money went.","iconKey":"calendar-month"},{"value":"weekly-budget","label":"Weekly budget","description":"Compare this week with your spending limit.","iconKey":"wallet","requiresFields":["budget"]},{"value":"quarterly-tax","label":"Quarterly tax view","description":"Organize quarterly totals and estimate tax.","iconKey":"receipt-tax","requiresFields":["taxRate"]},{"value":"yearly-review","label":"Year in review","description":"Spot spending patterns across the year.","iconKey":"chart-trend"},{"value":"category-dive","label":"Category deep dive","description":"Focus on one spending category.","iconKey":"tag","requiresFields":["category"]},{"value":"anomaly-detector","label":"Unusual spending","description":"Find amounts that stand out from the norm.","iconKey":"alert-circle"},{"value":"savings-tracker","label":"Savings tracker","description":"Measure spending against a savings budget.","iconKey":"piggy-bank","requiresFields":["budget"]}]},{"key":"spreadsheetId","label":"Receipt spreadsheet","type":"text","required":true},{"key":"sourceRange","label":"Receipt range","type":"text","required":true},{"key":"columnMappingJson","label":"Column mapping","type":"multilineText","required":true,"maxLength":2000},{"key":"asOfDate","label":"Report date","type":"date","required":true},{"key":"currencyCode","label":"Currency","type":"currency","required":true},{"key":"budget","label":"Budget","type":"decimal","required":false,"minimum":0,"visibleWhen":{"field":"analysisMode","equalsAny":["weekly-budget","savings-tracker"]}},{"key":"taxRate","label":"Tax rate","type":"decimal","required":false,"minimum":0,"maximum":1,"visibleWhen":{"field":"analysisMode","equalsAny":["quarterly-tax"]}},{"key":"category","label":"Category","type":"text","required":false,"visibleWhen":{"field":"analysisMode","equalsAny":["category-dive"]}},{"key":"deliveryMode","label":"Delivery","type":"select","required":false,"defaultValue":"preview","options":[{"value":"preview","label":"Preview only"},{"value":"sheets","label":"Google Sheets"},{"value":"email","label":"Email"},{"value":"both","label":"Sheets and email"}]},{"key":"reportTabTitle","label":"Report tab","type":"text","required":false,"visibleWhen":{"field":"deliveryMode","equalsAny":["sheets","both"]}},{"key":"recipientEmail","label":"Recipient email","type":"email","required":false,"visibleWhen":{"field":"deliveryMode","equalsAny":["email","both"]}}]}
 """;
 
     private const string ReportSchema = """

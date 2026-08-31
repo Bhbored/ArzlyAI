@@ -28,7 +28,7 @@ sealed class RunConfigState with _$RunConfigState {
   }) = _RunConfigState;
 }
 
-@Riverpod()
+@Riverpod(keepAlive: true)
 class RunConfigTemp extends _$RunConfigTemp {
   @override
   RunConfigState build() => const RunConfigState();

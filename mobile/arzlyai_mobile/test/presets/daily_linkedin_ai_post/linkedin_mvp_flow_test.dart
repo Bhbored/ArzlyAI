@@ -42,7 +42,7 @@ void main() {
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(store, ConnectorCredentialRepository(db)),
+      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
       envelopes,
       const ProviderModelMapper(),
     );

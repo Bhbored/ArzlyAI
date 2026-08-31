@@ -59,6 +59,6 @@ String integrationSettingsHint(String integrationKey) {
 Set<String> connectorKeysForIntegrations(Iterable<String> integrationKeys) {
   return {
     for (final integrationKey in integrationKeys)
-      if (connectorKeyForIntegration(integrationKey) case final key?) key,
+      ?connectorKeyForIntegration(integrationKey),
   };
 }

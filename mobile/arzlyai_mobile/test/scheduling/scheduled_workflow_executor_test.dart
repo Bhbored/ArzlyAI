@@ -66,7 +66,7 @@ void main() {
     credentialStore = MemoryCredentialStore();
     credentialRepository = CredentialRepository(
       credentialStore,
-      ConnectorCredentialRepository(db),
+      ConnectorCredentialRepository(credentialStore, legacyDatabase: db),
     );
     envelopeService = FakeEnvelopeService();
     notifications = RecordingNotifications();
@@ -312,6 +312,7 @@ class RecordingNotifications extends LocalNotificationService {
   Future<void> showDraftReady({
     required String localWorkflowId,
     required String runId,
+    String presetName = 'LinkedIn',
   }) async {
     lastDraftReadyRunId = runId;
     lastDraftReadyAction = NotificationActions.review;
@@ -321,6 +322,7 @@ class RecordingNotifications extends LocalNotificationService {
   Future<void> showSkippedReview({
     required String localWorkflowId,
     required String runId,
+    String presetName = 'LinkedIn',
   }) async {
     lastSkippedRunId = runId;
   }
@@ -329,13 +331,17 @@ class RecordingNotifications extends LocalNotificationService {
   Future<void> showTapToRun({
     required String localWorkflowId,
     String? message,
+    String presetName = 'ArzlyAI workflow',
   }) async {
     tapToRunShown = true;
     tapToRunMessage = message;
   }
 
   @override
-  Future<void> scheduleReminder(WorkflowSchedule schedule) async {}
+  Future<void> scheduleReminder(
+    WorkflowSchedule schedule, {
+    String presetName = 'ArzlyAI workflow',
+  }) async {}
 }
 
 class RecordingScheduler extends WorkflowScheduler {

@@ -36,7 +36,7 @@ void main() {
     repository = ProviderModelRepository(
       db,
       service,
-      CredentialRepository(store, ConnectorCredentialRepository(db)),
+      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
       envelopes,
       const ProviderModelMapper(),
     );

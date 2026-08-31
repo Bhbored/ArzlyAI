@@ -20,7 +20,7 @@ final class RunConfigTempProvider
         argument: null,
         retry: null,
         name: r'runConfigTempProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -41,7 +41,7 @@ final class RunConfigTempProvider
   }
 }
 
-String _$runConfigTempHash() => r'367d6177a4c06588eb5dd514301499b1207d21c1';
+String _$runConfigTempHash() => r'e75be5d102ca13d6cabf9c0a3b023a63567222b5';
 
 abstract class _$RunConfigTemp extends $Notifier<RunConfigState> {
   RunConfigState build();

@@ -26,6 +26,7 @@ public sealed class ArzlyDbContext(DbContextOptions<ArzlyDbContext> options) : D
         await LinkedInPresetSeed.SeedAsync(this, cancellationToken);
         await SmartPurchaseDecisionPresetSeed.SeedAsync(this, cancellationToken);
         await BrainDumpToActionPresetSeed.SeedAsync(this, cancellationToken);
+        await ReceiptPresetSeed.SeedAsync(this, cancellationToken);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

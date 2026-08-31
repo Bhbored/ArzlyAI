@@ -80,7 +80,7 @@ public sealed class ReceiptBackendTests
     }
 
     [Fact]
-    public void CreatePreset_ForAllKeys_UsesPublishedVersionedGenericGraph()
+    public void CreatePreset_UsesOnePublishedConfigurableGraph()
     {
         var provider = new ProviderDefinition
         {
@@ -107,29 +107,34 @@ public sealed class ReceiptBackendTests
                 IsEnabled = true
             }).ToDictionary(item => item.Key, StringComparer.Ordinal);
 
-        var presets = ReceiptPresetSeed.PresetKeys
-            .Select(key => ReceiptPresetSeed.CreatePreset(key, model, integrations)).ToList();
+        var preset = ReceiptPresetSeed.CreatePreset(model, integrations);
 
-        Assert.Equal(7, presets.Count);
-        Assert.All(presets, preset =>
-        {
-            Assert.True(preset.IsPublished);
-            Assert.Equal(ReceiptPresetSeed.TargetVersion, preset.Version);
-            Assert.Equal(("arzly.report", 4), (preset.ResultContractKey, preset.ResultContractVersion));
-            Assert.Equal(6, preset.Workflow.Steps.Count);
-            Assert.Equal(5, preset.Workflow.Connections.Count);
-            Assert.Equal(3, preset.Integrations.Count);
-            Assert.Contains(preset.Workflow.Steps,
-                step => step.ReferenceKey == ReceiptAnalysisOperation.OperationKey);
-            Assert.Equal("receipt-report-result",
-                preset.Workflow.Steps.OrderBy(step => step.Position).Last().ReferenceKey);
-        });
-        Assert.Equal(7, presets.Select(preset => preset.Id).Distinct().Count());
-        var recreated = ReceiptPresetSeed.CreatePreset(
-            ReceiptPresetSeed.PresetKeys[0], model, integrations);
-        Assert.Equal(presets[0].Id, recreated.Id);
+        Assert.Equal(ReceiptPresetSeed.PresetKey, preset.Key);
+        Assert.Equal(7, ReceiptPresetSeed.LegacyPresetKeys.Length);
+        Assert.True(preset.IsPublished);
+        Assert.Equal(ReceiptPresetSeed.TargetVersion, preset.Version);
+        Assert.Equal(("arzly.report", 4), (preset.ResultContractKey, preset.ResultContractVersion));
+        Assert.Equal(6, preset.Workflow.Steps.Count);
+        Assert.Equal(5, preset.Workflow.Connections.Count);
+        Assert.Equal(3, preset.Integrations.Count);
+        var analysisStep = Assert.Single(preset.Workflow.Steps,
+            step => step.ReferenceKey == ReceiptAnalysisOperation.OperationKey);
+        Assert.Contains("$.inputs.analysisMode", analysisStep.InputMappingJson,
+            StringComparison.Ordinal);
+        Assert.Equal("receipt-report-result",
+            preset.Workflow.Steps.OrderBy(step => step.Position).Last().ReferenceKey);
+
+        using var schema = JsonDocument.Parse(preset.InputSchemaJson!);
+        Assert.Equal(2, schema.RootElement.GetProperty("version").GetInt32());
+        var modeField = schema.RootElement.GetProperty("fields").EnumerateArray()
+            .Single(field => field.GetProperty("key").GetString() == "analysisMode");
+        Assert.Equal("selectCards", modeField.GetProperty("type").GetString());
+        Assert.Equal(7, modeField.GetProperty("options").GetArrayLength());
+
+        var recreated = ReceiptPresetSeed.CreatePreset(model, integrations);
+        Assert.Equal(preset.Id, recreated.Id);
         Assert.Equal(
-            presets[0].Workflow.Steps.OrderBy(step => step.Position).Select(step => step.Id),
+            preset.Workflow.Steps.OrderBy(step => step.Position).Select(step => step.Id),
             recreated.Workflow.Steps.OrderBy(step => step.Position).Select(step => step.Id));
     }
 

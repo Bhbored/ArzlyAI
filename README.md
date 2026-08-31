@@ -32,6 +32,7 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 - `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
 - `smart-purchase-decision` preset with plain-language confirmation, web search, and shopper-friendly recommendations.
 - `brain-dump-to-action` preset with brain-dump planning, human review, and optional Google Tasks/Calendar/Gmail sync.
+- `receipt-intelligence` preset with seven client-selectable receipt analysis modes and optional Sheets/Gmail delivery.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
 - SignalR node-status events, rate limits, health probes, and structured logging.
 - Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
@@ -45,6 +46,7 @@ Flutter SQLite will be the source of truth for user workflow instances, history,
 - [LinkedIn preset](docs/presets/linkedin-preset.md)
 - [Smart Buy preset](docs/presets/smart-purchase-decision.md)
 - [Brain Dump to Action preset](docs/presets/brain-dump-to-action.md)
+- [Flutter Receipt Intelligence handoff](docs/presets/flutter-receipt-intelligence-handoff.md)
 - [Flutter Smart Buy Lab HTML report handoff](docs/presets/flutter-smart-purchase-html-report.md)
 - [Flutter workflow timeout and realtime handoff](docs/presets/flutter-workflow-execution-timeout.md)
 - [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
