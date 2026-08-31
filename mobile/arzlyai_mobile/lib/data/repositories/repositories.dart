@@ -1,9 +1,8 @@
-export 'connectors/connector_auth_launcher.dart';
-export 'connectors/connector_repository.dart' hide retry;
 export 'credentials/connector_credential_repository.dart' hide retry;
 export 'credentials/credential_repository.dart' hide retry;
 export 'credentials/credential_store.dart';
 export 'geo/country_repository.dart' hide retry;
+export 'google/google_native_auth_repository.dart';
 export 'preset/preset_repository.dart' hide retry;
 export 'provider/provider_model_repository.dart' hide retry;
 export 'settings/ai_settings_repository.dart' hide retry;

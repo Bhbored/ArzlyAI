@@ -22,10 +22,9 @@ abstract final class LinkedInConnectorFields {
   static const all = [accessToken, authorUrn];
 }
 
-abstract final class GoogleOAuthConnectorFields {
+abstract final class GoogleEnvelopeFields {
   static const accessToken = 'accessToken';
   static const email = 'email';
 
-  static const required = [accessToken];
   static const all = [accessToken, email];
 }

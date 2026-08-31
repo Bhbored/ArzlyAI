@@ -4,6 +4,7 @@ import 'package:arzlyai_mobile/core/constants/ai_providers.dart';
 import 'package:arzlyai_mobile/core/crypto/credential_envelope_service.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/core/google/google_auth_exceptions.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
@@ -91,8 +92,10 @@ class ScheduledWorkflowExecutor {
       final keys = details.workflowStartCredentialKeys(
         overrideProviders: overrides.map((item) => item.provider ?? ''),
       );
-      final credentials =
-          await credentialRepository.readForEnvelopeKeysWithConnectors(keys);
+      final credentials = await credentialRepository.readForEnvelopeKeysWithConnectors(
+        keys,
+        interactive: false,
+      );
       final missing = credentialRepository.missingEnvelopeKeys(
         keys,
         credentials,
@@ -106,14 +109,25 @@ class ScheduledWorkflowExecutor {
       final configuration = await scheduleRepository.getConfiguration(
         localWorkflowId,
       );
-      final inputs = _scheduledWorkflowInputs(
+      final rawInputs = _scheduledWorkflowInputs(
         instance: instance,
         configuration: configuration,
       );
+      final resolved = resolveReceiptWorkflowStart(
+        presetKey: instance.presetKey,
+        inputs: rawInputs,
+      );
+      if (isReceiptWorkflowKey(instance.presetKey) && resolved == null) {
+        throw StateError(
+          'Receipt workflow needs reconfiguration before it can run.',
+        );
+      }
+      final startPresetKey = resolved?.presetKey ?? instance.presetKey;
+      final inputs = resolved?.inputs ?? rawInputs;
 
       final dto = await workflowService.start(
         StartWorkflowRequest(
-          presetKey: instance.presetKey,
+          presetKey: startPresetKey,
           inputs: inputs,
           agentOverrides: overrides,
           credentials: envelope,
@@ -196,6 +210,9 @@ class ScheduledWorkflowExecutor {
   }
 
   String _sanitize(Object error) {
+    if (error is GoogleAuthorizationInteractionRequired) {
+      return 'Reopen the app to authorize Google services, then run again.';
+    }
     if (error is ApiException) return error.userMessage;
     if (error is StateError) return error.message;
     return 'Workflow could not run in the background.';

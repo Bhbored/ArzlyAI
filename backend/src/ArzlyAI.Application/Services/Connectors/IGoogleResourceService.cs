@@ -1,20 +1,21 @@
 using ArzlyAI.Application.DTOs.Connectors;
+using ArzlyAI.Application.Security;
 
 namespace ArzlyAI.Application.Services.Connectors;
 
 public interface IGoogleResourceService
 {
     Task<IReadOnlyList<GoogleSpreadsheetResponse>> ListSpreadsheetsAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<GoogleSheetTabResponse>> ListTabsAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         string spreadsheetId,
         CancellationToken cancellationToken);
 
     Task<GoogleSheetHeadersResponse> ListHeadersAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         string spreadsheetId,
         string tabTitle,
         CancellationToken cancellationToken);

@@ -10,6 +10,7 @@ export 'app_integration_card.dart';
 export 'app_loading.dart';
 export 'app_live_workflow_graph.dart';
 export 'app_model_select.dart';
+export 'app_preset_catalog_card.dart';
 export 'app_report_webview.dart';
 export 'app_run_result_panel.dart';
 export 'app_status.dart';

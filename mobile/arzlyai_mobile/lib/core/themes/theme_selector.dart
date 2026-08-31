@@ -37,7 +37,7 @@ class ThemeSelector {
       primary: AppColors.primaryLight,
       primaryForeground: AppColors.primaryForegroundLight,
       secondary: AppColors.secondaryLight,
-      secondaryForeground: AppColors.foreground,
+      secondaryForeground: AppColors.secondaryForegroundLight,
       muted: AppColors.mutedLight,
       mutedForeground: AppColors.mutedForegroundLight,
       accent: AppColors.accentLight,

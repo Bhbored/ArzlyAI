@@ -44,20 +44,22 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
+    final cardForeground = theme.colorScheme.cardForeground;
     final card = ShadCard(
       title: title == null
           ? null
           : Text(
               title!,
-              style: theme.textTheme.h4.copyWith(
-                color: theme.colorScheme.cardForeground,
-              ),
+              style: theme.textTheme.h4.copyWith(color: cardForeground),
             ),
-      child: DefaultTextStyle(
-        style: theme.textTheme.p.copyWith(
-          color: theme.colorScheme.cardForeground,
+      child: ShadTheme.merge(
+        data: ShadThemeData(
+          colorScheme: theme.colorScheme.copyWith(foreground: cardForeground),
         ),
-        child: child,
+        child: DefaultTextStyle(
+          style: theme.textTheme.p.copyWith(color: cardForeground),
+          child: child,
+        ),
       ),
     );
     if (variant == AppCardVariant.interactive) {

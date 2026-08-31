@@ -21,9 +21,6 @@ using ArzlyAI.Application.Services.Workflows.Execution;
 using ArzlyAI.Application.Services.Workflows.Operations;
 using ArzlyAI.Application.Services.Workflows.Rendering;
 using ArzlyAI.Infrastructure.Agents;
-using ArzlyAI.Infrastructure.Configuration;
-using ArzlyAI.Infrastructure.Connectors.LinkedIn;
-using ArzlyAI.Infrastructure.Connectors.Nango;
 using ArzlyAI.Infrastructure.Health;
 using ArzlyAI.Infrastructure.Integrations.Google;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
@@ -222,8 +219,6 @@ public static class DIContainer
 
     private static IServiceCollection RegisterInfrastructureServices(this IServiceCollection services)
     {
-        services.AddOptions<NangoOptions>()
-            .BindConfiguration(NangoOptions.SectionName);
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICredentialEnvelopeProtector, EphemeralCredentialEnvelopeProtector>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
@@ -242,23 +237,11 @@ public static class DIContainer
             client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
         services.AddHttpClient<IAgentRuntime, DeepSeekAgentRuntime>(client =>
             client.BaseAddress = new Uri("https://api.deepseek.com/"));
-        services.AddHttpClient<INangoConnectorClient, NangoConnectorClient>((serviceProvider, client) =>
-        {
-            var settings = serviceProvider.GetRequiredService<
-                Microsoft.Extensions.Options.IOptions<NangoOptions>>().Value;
-            client.BaseAddress = new Uri(
-                string.IsNullOrWhiteSpace(settings.BaseUrl)
-                    ? "https://api.nango.dev/"
-                    : $"{settings.BaseUrl.TrimEnd('/')}/");
-        });
-        services.AddHttpClient<ILinkedInIdentityClient, LinkedInIdentityClient>(client =>
-            client.BaseAddress = new Uri("https://api.linkedin.com/"));
         services.AddHttpClient<IGoogleSheetsClient, GoogleSheetsClient>();
         services.AddHttpClient<IGmailClient, GmailClient>();
         services.AddHttpClient<IGoogleTasksClient, GoogleTasksClient>();
         services.AddHttpClient<IGoogleCalendarClient, GoogleCalendarClient>();
         services.AddScoped<IGoogleResourceService, GoogleResourceService>();
-        services.AddScoped<IConnectorBroker, NangoConnectorBroker>();
         return services;
     }
 

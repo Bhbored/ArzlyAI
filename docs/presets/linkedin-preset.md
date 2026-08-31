@@ -6,8 +6,8 @@ For the online model selector implementation, use the copy-ready
 [`flutter-openai-model-catalog-prompt.md`](flutter-openai-model-catalog-prompt.md).
 For the request-an-edit regeneration behavior, use
 [`flutter-linkedin-edit-regeneration-prompt.md`](flutter-linkedin-edit-regeneration-prompt.md).
-LinkedIn OAuth brokerage is documented in
-[`../connectors/nango-linkedin.md`](../connectors/nango-linkedin.md).
+Direct LinkedIn OAuth is intentionally deferred. The publishing handler remains implemented,
+but the connector session endpoint supports only Google connectors for now.
 
 `daily-linkedin-ai-post` is the first complete ArzlyAI preset. It accepts a topic, generates a LinkedIn draft, pauses for the user to accept, edit, or reject it, and publishes only approved content.
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
+import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/services/reports/report_export_service.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/receipt_workflows/receipt_report_view.dart';
@@ -15,16 +17,16 @@ class ReceiptResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final runAsync = ref.watch(activeRunProvider);
+    final schema = ref.watch(presetDetailsProvider).value?.inputSchema;
+    final analysisMode =
+        ref.watch(runConfigTempProvider).inputs['analysisMode']?.trim() ?? '';
     final theme = ShadTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          runAsync.maybeWhen(
-            data: (run) =>
-                receiptMetadataForKey(run?.presetKey ?? '')?.shortTitle ??
-                'Receipt report',
-            orElse: () => 'Receipt report',
-          ),
+          analysisMode.isEmpty
+              ? 'Receipt report'
+              : receiptModeShortTitle(schema, analysisMode),
           style: theme.textTheme.h4,
         ),
         actions: runAsync.maybeWhen(

@@ -61,13 +61,7 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
         status == WorkflowRunStatus.expired;
   }
 
-  WorkflowNode? _entryNode(PresetDetails preset) {
-    final entry = preset.primaryWorkflowAgent();
-    if (entry == null) return null;
-    return preset.workflow.nodes
-        .where((node) => node.key == entry.key)
-        .firstOrNull;
-  }
+  WorkflowNode? _entryNode(PresetDetails preset) => preset.entryWorkflowNode();
 
   Agent? _configureDefaultsAgent(PresetDetails preset) =>
       preset.configurableWorkflowAgent() ?? preset.primaryWorkflowAgent();
@@ -112,11 +106,9 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     ).push(MaterialPageRoute(builder: (_) => resultScreenForPreset(presetKey)));
   }
 
-  bool _isEntryAgent(PresetDetails preset, WorkflowNode node) {
-    final entry = preset.primaryWorkflowAgent();
-    final entryNode = _entryNode(preset);
-    return entry != null &&
-        (node.id == entryNode?.id || node.key == entry.key);
+  bool _isEntryNode(PresetDetails preset, WorkflowNode node) {
+    final entryNode = preset.entryWorkflowNode();
+    return entryNode != null && node.id == entryNode.id;
   }
 
   bool _isNodeTapEnabled(
@@ -126,7 +118,7 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
   ) {
     if (node.type == 'Agent' && status == WorkflowNodeStatus.completed) {
       final run = ref.read(activeRunProvider).value;
-      if (_isEntryAgent(preset, node) &&
+      if (_isEntryNode(preset, node) &&
           (run == null || _isTerminal(run.status))) {
         return true;
       }
@@ -144,11 +136,9 @@ class _PresetDetailsScreenState extends ConsumerState<PresetDetailsScreen> {
     if (ref.read(workflowTransportProvider).isProcessing) return;
     final run = ref.read(activeRunProvider).value;
     final transport = ref.read(workflowTransportProvider);
-    final entry = preset.primaryWorkflowAgent();
-    final entryNode = _entryNode(preset);
+    final entryNode = preset.entryWorkflowNode();
 
-    if (entry != null &&
-        (node.id == entryNode?.id || node.key == entry.key)) {
+    if (entryNode != null && node.id == entryNode.id) {
       if (run == null || _isTerminal(run.status)) {
         _openConfigure(preset);
       }

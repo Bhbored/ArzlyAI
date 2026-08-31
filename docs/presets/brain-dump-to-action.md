@@ -98,4 +98,4 @@ Brain dumps are personal. SQLite stores configuration and schedule metadata only
 - Time estimates are model judgment, not a timer.
 - Google Tasks/Calendar use default list/`primary` unless the user typed a list title.
 - OS background scheduling is best-effort.
-- Users must reconnect each Google connector after adding scopes in Nango.
+- Users must reconnect a Google connector after its requested OAuth scopes change.

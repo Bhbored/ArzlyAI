@@ -34,7 +34,11 @@ import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_adapter.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_repository.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 Map<String, dynamic> fixtureJson(String name) {
   return jsonDecode(
@@ -320,16 +324,69 @@ class ForcedOfflineMode extends OfflineMode {
 
 Future<void> seedLinkedInConnector(
   AppDatabase db, {
-  MemoryCredentialStore? store,
+  required MemoryCredentialStore store,
 }) {
-  final credentialStore = store ?? MemoryCredentialStore();
   return ConnectorCredentialRepository(
-    credentialStore,
+    store,
     legacyDatabase: db,
   ).saveFields(ConnectorKeys.linkedin, {
     LinkedInConnectorFields.accessToken: 'li-token',
     LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
   });
+}
+
+GoogleNativeAuthRepository noopGoogleNativeAuthRepository() {
+  return GoogleNativeAuthRepository(_NoopGoogleNativeAuthAdapter());
+}
+
+CredentialRepository testCredentialRepository(
+  CredentialStore store,
+  AppDatabase db,
+) {
+  return CredentialRepository(
+    store,
+    ConnectorCredentialRepository(store, legacyDatabase: db),
+    noopGoogleNativeAuthRepository(),
+  );
+}
+
+final class _NoopGoogleNativeAuthAdapter implements GoogleNativeAuthAdapter {
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<GoogleSignInAccount?> attemptLightweightAuthentication() async => null;
+
+  @override
+  Future<GoogleSignInAccount> authenticate({
+    List<String> scopeHint = const [],
+  }) {
+    throw UnsupportedError('Google auth is disabled in this test.');
+  }
+
+  @override
+  Future<String?> authorizationForScopes(
+    GoogleSignInAccount account,
+    List<String> scopes,
+  ) async =>
+      null;
+
+  @override
+  Future<String> authorizeScopes(
+    GoogleSignInAccount account,
+    List<String> scopes,
+  ) {
+    throw UnsupportedError('Google auth is disabled in this test.');
+  }
+
+  @override
+  Future<void> disconnect() async {}
+
+  @override
+  String? accountDisplayName(GoogleSignInAccount account) => account.displayName;
+
+  @override
+  String? accountEmail(GoogleSignInAccount account) => account.email;
 }
 
 ApiException notFound() {

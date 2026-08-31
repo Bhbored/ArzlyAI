@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 
 class BrandIcon extends StatelessWidget {
   const BrandIcon._({
@@ -22,13 +22,37 @@ class BrandIcon extends StatelessWidget {
     );
   }
 
-  factory BrandIcon.google({double size = 40, Key? key}) {
+  factory BrandIcon.connector(String connectorKey, {double size = 40, Key? key}) {
     return BrandIcon._(
       key: key,
-      assetPath: 'assets/icons/connectors/google.svg',
-      backgroundColor: const Color(0xFFFFFFFF),
+      assetPath: _connectorAsset(connectorKey),
+      backgroundColor: _connectorBackground(connectorKey),
       monochrome: false,
       size: size,
+    );
+  }
+
+  factory BrandIcon.google({double size = 40, Key? key}) {
+    return BrandIcon.connector(ConnectorKeys.googleSheets, size: size, key: key);
+  }
+
+  factory BrandIcon.googleSheets({double size = 40, Key? key}) {
+    return BrandIcon.connector(ConnectorKeys.googleSheets, size: size, key: key);
+  }
+
+  factory BrandIcon.gmail({double size = 40, Key? key}) {
+    return BrandIcon.connector(ConnectorKeys.gmail, size: size, key: key);
+  }
+
+  factory BrandIcon.googleTasks({double size = 40, Key? key}) {
+    return BrandIcon.connector(ConnectorKeys.googleTasks, size: size, key: key);
+  }
+
+  factory BrandIcon.googleCalendar({double size = 40, Key? key}) {
+    return BrandIcon.connector(
+      ConnectorKeys.googleCalendar,
+      size: size,
+      key: key,
     );
   }
 
@@ -50,7 +74,7 @@ class BrandIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconSize = size * 0.52;
+    final iconSize = size * (monochrome ? 0.52 : 0.72);
     return Container(
       width: size,
       height: size,
@@ -63,6 +87,7 @@ class BrandIcon extends StatelessWidget {
         assetPath,
         width: iconSize,
         height: iconSize,
+        fit: BoxFit.contain,
         colorFilter: monochrome && tintColor != null
             ? ColorFilter.mode(tintColor!, BlendMode.srcIn)
             : null,
@@ -75,6 +100,28 @@ class BrandIcon extends StatelessWidget {
         'gemini' => 'gemini',
         _ => providerKey,
       }}.svg';
+
+  static String _connectorAsset(String connectorKey) =>
+      switch (connectorKey) {
+        ConnectorKeys.linkedin => 'assets/icons/connectors/linkedin.svg',
+        ConnectorKeys.googleSheets =>
+          'assets/icons/connectors/google_sheets.svg',
+        ConnectorKeys.gmail => 'assets/icons/connectors/gmail.svg',
+        ConnectorKeys.googleTasks => 'assets/icons/connectors/google_tasks.svg',
+        ConnectorKeys.googleCalendar =>
+          'assets/icons/connectors/google_calendar.svg',
+        _ => 'assets/icons/connectors/google.svg',
+      };
+
+  static Color _connectorBackground(String connectorKey) =>
+      switch (connectorKey) {
+        ConnectorKeys.linkedin => const Color(0xFF0A66C2),
+        ConnectorKeys.googleSheets => const Color(0xFFE6F4EA),
+        ConnectorKeys.gmail => const Color(0xFFFFFFFF),
+        ConnectorKeys.googleTasks => const Color(0xFFE8F0FE),
+        ConnectorKeys.googleCalendar => const Color(0xFFFFFFFF),
+        _ => const Color(0xFFFFFFFF),
+      };
 
   static Color _providerBackground(String providerKey) => switch (providerKey) {
     'openai' => const Color(0xFF0D0D0D),

@@ -27,6 +27,7 @@ public sealed class ArzlyDbContext(DbContextOptions<ArzlyDbContext> options) : D
         await SmartPurchaseDecisionPresetSeed.SeedAsync(this, cancellationToken);
         await BrainDumpToActionPresetSeed.SeedAsync(this, cancellationToken);
         await ReceiptPresetSeed.SeedAsync(this, cancellationToken);
+        await GoogleIntegrationSchemaSeed.SeedAsync(this, cancellationToken);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

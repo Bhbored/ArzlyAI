@@ -66,8 +66,9 @@ void main() {
     );
     await tester.pump();
     await tester.tap(find.text('Daily LinkedIn AI Post'));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open preset'));
+    await tester.pumpAndSettle();
     expect(find.text('Review Content'), findsOneWidget);
     expect(
       find.text('Tap a step to configure or view details.'),

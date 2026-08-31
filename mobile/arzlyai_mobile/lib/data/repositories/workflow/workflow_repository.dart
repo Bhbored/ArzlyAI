@@ -8,6 +8,8 @@ import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_run_privacy.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_workflow_migration.dart'
+    as receipt_migration;
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
@@ -389,5 +391,9 @@ class WorkflowRepository {
     final report = _report(row, approval);
     if (report == null) return null;
     return ResultContract(key: report.schema, version: report.version);
+  }
+
+  Future<void> migrateLegacyReceiptWorkflows() {
+    return receipt_migration.migrateLegacyReceiptWorkflows(_db);
   }
 }

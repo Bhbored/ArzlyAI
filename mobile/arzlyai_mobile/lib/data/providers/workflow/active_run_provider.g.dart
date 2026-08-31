@@ -33,7 +33,7 @@ final class ActiveRunProvider
   ActiveRun create() => ActiveRun();
 }
 
-String _$activeRunHash() => r'fd6f4598849a3feb6365fcf6e3f83b15a4301b3a';
+String _$activeRunHash() => r'7ea236b65b62c313a277d59d0e28354e4f9f2004';
 
 abstract class _$ActiveRun extends $AsyncNotifier<WorkflowRun?> {
   FutureOr<WorkflowRun?> build();

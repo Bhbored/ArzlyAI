@@ -15,7 +15,6 @@ import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dar
 import 'package:arzlyai_mobile/data/providers/temp/review_draft_temp.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
@@ -34,7 +33,7 @@ void main() {
     addTearDown(db.close);
     final store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(db);
+    await seedLinkedInConnector(db, store: store);
     final workflows = FakeWorkflowService();
     final hub = FakeHub();
     final envelopes = FakeEnvelopeService();
@@ -42,7 +41,7 @@ void main() {
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
+      testCredentialRepository(store, db),
       envelopes,
       const ProviderModelMapper(),
     );
@@ -68,12 +67,17 @@ void main() {
           credentialEnvelopeServiceProvider.overrideWithValue(envelopes),
           internetConnectionProvider.overrideWithValue(true),
           offlineModeProvider.overrideWith(OnlineMode.new),
+          credentialRepositoryProvider.overrideWithValue(
+            testCredentialRepository(store, db),
+          ),
         ],
         child: testApp(home: const PresetCatalogScreen()),
       ),
     );
     await tester.pump();
     await tester.tap(find.text('Daily LinkedIn AI Post'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open preset'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('AI Content Writer'), 300);
     await tester.tap(find.text('AI Content Writer'));

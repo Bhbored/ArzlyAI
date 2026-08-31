@@ -26,7 +26,6 @@ import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/notifications/local_notification_service.dart';
 import 'package:arzlyai_mobile/core/network/services/preset/preset_service.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/workflow_schedule.dart';
 import '../helpers/fakes.dart';
 
@@ -64,9 +63,9 @@ void main() {
       const PresetMapper(),
     );
     credentialStore = MemoryCredentialStore();
-    credentialRepository = CredentialRepository(
+    credentialRepository = testCredentialRepository(
       credentialStore,
-      ConnectorCredentialRepository(credentialStore, legacyDatabase: db),
+      db,
     );
     envelopeService = FakeEnvelopeService();
     notifications = RecordingNotifications();
@@ -95,7 +94,7 @@ void main() {
     localWorkflowId = instance.id;
 
     credentialStore.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(db);
+    await seedLinkedInConnector(db, store: credentialStore);
 
     final due = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
     await scheduleRepository.upsert(

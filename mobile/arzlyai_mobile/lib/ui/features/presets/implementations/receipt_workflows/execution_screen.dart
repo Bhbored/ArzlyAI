@@ -5,6 +5,8 @@ import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
+import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
+import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/receipt_workflows/receipt_workflow_metadata.dart';
 import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
@@ -28,16 +30,15 @@ class _ReceiptExecutionScreenState
   Widget build(BuildContext context) {
     final run = ref.watch(activeRunProvider);
     final theme = ShadTheme.of(context);
-    final metadata = run.value == null
-        ? null
-        : receiptMetadataForKey(run.value!.presetKey);
+    final schema = ref.watch(presetDetailsProvider).value?.inputSchema;
+    final analysisMode =
+        ref.watch(runConfigTempProvider).inputs['analysisMode']?.trim() ?? '';
+    final title = analysisMode.isEmpty
+        ? 'Analyzing receipts'
+        : receiptModeShortTitle(schema, analysisMode);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          metadata == null ? 'Analyzing receipts' : metadata.shortTitle,
-          style: theme.textTheme.h4,
-        ),
-      ),
+      appBar: AppBar(title: Text(title, style: theme.textTheme.h4)),
       body: run.when(
         data: (value) {
           if (value == null) {
@@ -50,7 +51,8 @@ class _ReceiptExecutionScreenState
               _consumed = token;
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (_) => resultScreenForPreset(value.presetKey),
+                  builder: (_) =>
+                      resultScreenForPreset(presetKeyForRunNavigation(value.presetKey)),
                 ),
               );
             });

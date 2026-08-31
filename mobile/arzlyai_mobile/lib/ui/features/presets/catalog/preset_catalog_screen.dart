@@ -8,7 +8,7 @@ import 'package:arzlyai_mobile/data/providers/selection/selected_preset_key_prov
 import 'package:arzlyai_mobile/ui/features/presets/details/preset_details_screen.dart';
 import 'package:arzlyai_mobile/ui/features/settings/settings_screen.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
-import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
+import 'package:arzlyai_mobile/ui/shared/widgets/app_preset_catalog_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_status.dart';
 
 class PresetCatalogScreen extends ConsumerWidget {
@@ -44,9 +44,11 @@ class PresetCatalogScreen extends ConsumerWidget {
             separatorBuilder: (_, _) => SizedBox(height: context.spaceSmall),
             itemBuilder: (context, index) {
               final item = items[index];
-              return AppCard.interactive(
-                title: item.name,
-                onPressed: () {
+              return AppPresetCatalogCard(
+                presetKey: item.key,
+                name: item.name,
+                description: item.description,
+                onOpen: () {
                   ref.read(selectedPresetKeyProvider.notifier).update(item.key);
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -54,7 +56,6 @@ class PresetCatalogScreen extends ConsumerWidget {
                     ),
                   );
                 },
-                child: Text(item.description, style: theme.textTheme.muted),
               );
             },
           );

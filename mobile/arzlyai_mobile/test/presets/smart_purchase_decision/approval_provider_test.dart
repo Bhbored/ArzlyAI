@@ -17,7 +17,6 @@ import 'package:arzlyai_mobile/data/providers/offline/offline_mode_provider.dart
 import 'package:arzlyai_mobile/data/providers/preset/preset_details_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
@@ -106,7 +105,7 @@ void main() {
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
+      testCredentialRepository(store, db),
       envelopes,
       const ProviderModelMapper(),
     );

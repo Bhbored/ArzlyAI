@@ -1,60 +1,56 @@
 using ArzlyAI.Application.Abstractions;
 using ArzlyAI.Application.DTOs.Connectors;
+using ArzlyAI.Application.Security;
 using SerilogTimings;
 
 namespace ArzlyAI.Application.Services.Connectors;
 
 public sealed class GoogleResourceService(
-    IConnectorBroker connectorBroker,
+    ICredentialEnvelopeProtector credentialsProtector,
     IGoogleSheetsClient sheetsClient) : IGoogleResourceService
 {
     public async Task<IReadOnlyList<GoogleSpreadsheetResponse>> ListSpreadsheetsAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         CancellationToken cancellationToken)
     {
-        using var operation = Operation.Time("GoogleResourceService.ListSpreadsheets");
+        using var operation = Operation.Time("GoogleResourceService.ListSpreadsheetsWithCredentials");
         return await sheetsClient.ListSpreadsheetsAsync(
-            await GetAccessTokenAsync(deviceId, cancellationToken),
+            GetAccessToken(credentials),
             cancellationToken);
     }
 
     public async Task<IReadOnlyList<GoogleSheetTabResponse>> ListTabsAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         string spreadsheetId,
         CancellationToken cancellationToken)
     {
-        using var operation = Operation.Time("GoogleResourceService.ListTabs");
+        using var operation = Operation.Time("GoogleResourceService.ListTabsWithCredentials");
         return await sheetsClient.ListTabsAsync(
             spreadsheetId,
-            await GetAccessTokenAsync(deviceId, cancellationToken),
+            GetAccessToken(credentials),
             cancellationToken);
     }
 
     public async Task<GoogleSheetHeadersResponse> ListHeadersAsync(
-        Guid deviceId,
+        CredentialEnvelope credentials,
         string spreadsheetId,
         string tabTitle,
         CancellationToken cancellationToken)
     {
-        using var operation = Operation.Time("GoogleResourceService.ListHeaders");
+        using var operation = Operation.Time("GoogleResourceService.ListHeadersWithCredentials");
         var headers = await sheetsClient.ListHeadersAsync(
             spreadsheetId,
             tabTitle,
-            await GetAccessTokenAsync(deviceId, cancellationToken),
+            GetAccessToken(credentials),
             cancellationToken);
         return new GoogleSheetHeadersResponse(headers);
     }
 
-    private async Task<string> GetAccessTokenAsync(
-        Guid deviceId,
-        CancellationToken cancellationToken)
+    private string GetAccessToken(CredentialEnvelope credentials)
     {
-        var credentials = await connectorBroker.GetCredentialsAsync(
-            "google-sheets",
-            deviceId,
-            cancellationToken);
-        return credentials?.GetValueOrDefault("google.accessToken")
+        var decrypted = credentialsProtector.Decrypt(credentials);
+        return decrypted.GetValueOrDefault("google.accessToken")
             ?? throw new UnauthorizedAccessException(
-                "A connected Google Sheets account is required.");
+                "A Google access token is required.");
     }
 }

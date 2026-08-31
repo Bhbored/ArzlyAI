@@ -7,6 +7,7 @@ import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_r
 import 'package:arzlyai_mobile/core/network/services/preset/preset_service.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/mappers/preset/preset_mapper.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_workflow_migration.dart';
 import 'package:arzlyai_mobile/infrastructor/db/database.dart';
 
 part 'preset_repository.g.dart';
@@ -58,6 +59,7 @@ class PresetRepository {
             fetchedAtUtc: DateTime.now().toUtc(),
           ),
         );
+    await migrateLegacyReceiptWorkflows(_db);
     return dtos.map(_mapper.summaryFromDto).toList();
   }
 

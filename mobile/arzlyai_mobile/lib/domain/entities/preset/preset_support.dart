@@ -24,6 +24,12 @@ extension PresetDetailsSupport on PresetDetails {
     return null;
   }
 
+  WorkflowNode? entryWorkflowNode() {
+    final ordered = [...workflow.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
+    return ordered.firstOrNull;
+  }
+
   Agent? configurableWorkflowAgent() {
     final ordered = [...workflow.nodes]
       ..sort((a, b) => a.position.compareTo(b.position));
@@ -306,10 +312,41 @@ extension PresetDetailsSupport on PresetDetails {
 
 extension PresetInputSchemaSupport on PresetInputSchema {
   String? primaryInputKey() {
+    final primary = presentation?.primaryField?.trim();
+    if (primary != null && primary.isNotEmpty) return primary;
     for (final field in fields) {
       if (field.required) return field.key;
     }
     return fields.firstOrNull?.key;
+  }
+
+  PresetInputField? fieldForKey(String key) {
+    return fields.where((field) => field.key == key).firstOrNull;
+  }
+
+  PresetInputField? get analysisModeField => fieldForKey('analysisMode');
+
+  List<PresetInputFieldOption> get analysisModeOptions =>
+      analysisModeField?.options ?? const [];
+
+  PresetInputFieldOption? analysisModeOption(String value) {
+    return analysisModeOptions
+        .where((option) => option.value == value)
+        .firstOrNull;
+  }
+
+  bool isFieldVisible(PresetInputField field, Map<String, String> inputs) {
+    final when = field.visibleWhen;
+    if (when == null) return true;
+    final current = inputs[when.field]?.trim() ?? '';
+    return when.equalsAny.contains(current);
+  }
+
+  Set<String> activeRequiresFields(Map<String, String> inputs) {
+    final mode = inputs['analysisMode']?.trim() ?? '';
+    final option = analysisModeOption(mode);
+    if (option == null) return {};
+    return option.requiresFields.toSet();
   }
 }
 

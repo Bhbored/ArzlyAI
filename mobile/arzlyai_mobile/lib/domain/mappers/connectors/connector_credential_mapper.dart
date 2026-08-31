@@ -11,8 +11,8 @@ class ConnectorCredentialMapper {
     String connectorKey,
     Map<String, String> apiValues,
   ) {
-    final fieldNames = _allFieldsFor(connectorKey);
-    final requiredFields = _requiredFieldsFor(connectorKey);
+    if (connectorKey != ConnectorKeys.linkedin) return null;
+    final fieldNames = LinkedInConnectorFields.all;
     final integrationKey = integrationKeyForConnector(connectorKey);
     final fields = <String, String>{};
     for (final fieldName in fieldNames) {
@@ -23,7 +23,7 @@ class ConnectorCredentialMapper {
       final value = apiValues[envelopeKey]?.trim() ?? '';
       if (value.isNotEmpty) fields[fieldName] = value;
     }
-    if (requiredFields.any((field) => fields[field]?.isEmpty ?? true)) {
+    if (fieldNames.any((field) => fields[field]?.isEmpty ?? true)) {
       return null;
     }
     return fields;
@@ -31,22 +31,4 @@ class ConnectorCredentialMapper {
 
   String integrationKey(String connectorKey) =>
       integrationKeyForConnector(connectorKey);
-
-  List<String> _requiredFieldsFor(String connectorKey) => switch (connectorKey) {
-    ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-    ConnectorKeys.googleSheets ||
-    ConnectorKeys.gmail ||
-    ConnectorKeys.googleTasks ||
-    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.required,
-    _ => const <String>[],
-  };
-
-  List<String> _allFieldsFor(String connectorKey) => switch (connectorKey) {
-    ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-    ConnectorKeys.googleSheets ||
-    ConnectorKeys.gmail ||
-    ConnectorKeys.googleTasks ||
-    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.all,
-    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
-  };
 }

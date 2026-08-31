@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 abstract final class ApiConfig {
   static const String defaultOrigin = String.fromEnvironment(
     'ARZLYAI_API_ORIGIN',
-    defaultValue: 'https://10.0.2.2:7029',
+    // defaultValue: 'https://10.0.2.2:7029',
+    defaultValue: 'https://192.168.131.233:7029',
   );
 
   static const String defaultBaseUrl = '$defaultOrigin/api/v1/';

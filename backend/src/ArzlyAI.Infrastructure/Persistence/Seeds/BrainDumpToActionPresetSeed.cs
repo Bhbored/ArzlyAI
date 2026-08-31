@@ -231,8 +231,9 @@ public static class BrainDumpToActionPresetSeed
             DisplayName = name,
             Description = description,
             IsEnabled = true,
-            CredentialSchemaJson =
-            """{"type":"oauth2AccessToken","fields":["google.accessToken","google.email"]}"""
+            CredentialSchemaJson = key == "google.gmail.send-html"
+                ? """{"type":"oauth2AccessToken","fields":["google.accessToken","google.email"]}"""
+                : """{"type":"oauth2AccessToken","fields":["google.accessToken"]}"""
         };
 
     private const string ReviewApproval =

@@ -2,8 +2,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/domain/mappers/provider/provider_model_mapper.dart';
@@ -36,7 +34,7 @@ void main() {
     repository = ProviderModelRepository(
       db,
       service,
-      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
+      testCredentialRepository(store, db),
       envelopes,
       const ProviderModelMapper(),
     );

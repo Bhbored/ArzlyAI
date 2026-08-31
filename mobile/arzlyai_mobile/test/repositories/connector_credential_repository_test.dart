@@ -45,21 +45,20 @@ void main() {
     expect(await repository.isConnected(ConnectorKeys.linkedin), isFalse);
   });
 
-  test('save stores Gmail access token securely', () async {
-    await repository.saveFields(ConnectorKeys.gmail, {
-      GoogleOAuthConnectorFields.accessToken: 'google-token',
-      GoogleOAuthConnectorFields.email: 'person@example.com',
-    });
+  test('clearLegacyGoogleCredentials removes stored Google token fields', () async {
+    await storage.setValue('connector.gmail.accessToken', 'legacy-token');
+    await storage.setValue('connector.gmail.refreshToken', 'legacy-refresh');
+    await storage.setValue('connector.gmail.email', 'person@example.com');
+    await storage.setValue(
+      'connector.gmail.expiresAtUtc',
+      '2026-08-31T14:00:00.0000000+00:00',
+    );
 
-    expect(await repository.isConnected(ConnectorKeys.gmail), isTrue);
-    expect(await repository.readEnvelopeValues(ConnectorKeys.gmail), {
-      integrationFieldEnvelopeKey('google.gmail.send-html', 'accessToken'):
-          'google-token',
-      integrationFieldEnvelopeKey('google.gmail.send-html', 'email'):
-          'person@example.com',
-    });
-    expect(storage.values.values, contains('google-token'));
-    expect(await db.select(db.connectorCredentials).get(), isEmpty);
+    await repository.clearLegacyGoogleCredentials();
+
+    expect(storage.values.containsKey('connector.gmail.accessToken'), isFalse);
+    expect(storage.values.containsKey('connector.gmail.refreshToken'), isFalse);
+    expect(storage.values.containsKey('connector.gmail.email'), isFalse);
   });
 
   test('read migrates legacy plaintext rows into secure storage', () async {

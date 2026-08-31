@@ -53,9 +53,7 @@ Flutter SQLite will be the source of truth for user workflow instances, history,
 - [Flutter client scheduling and notifications](docs/presets/flutter-client-scheduling-notifications.md)
 - [Flutter online OpenAI model-catalog prompt](docs/presets/flutter-openai-model-catalog-prompt.md)
 - [Flutter LinkedIn edit-regeneration prompt](docs/presets/flutter-linkedin-edit-regeneration-prompt.md)
-- [Nango LinkedIn connector](docs/connectors/nango-linkedin.md)
-- [Nango Google connector](docs/connectors/nango-google.md)
-- [Flutter Nango connector prompt](docs/connectors/flutter-nango-connector-prompt.md)
+- [Native Google authorization (Flutter)](docs/connectors/google-oauth.md)
 - [Contributor instructions](AGENTS.md)
 
 ## Backend Development
@@ -81,10 +79,9 @@ Operational endpoints:
 | `GET` | `/api/v1/presets/{key}` | Complete preset graph |
 | `GET` | `/api/v1/providers` | Supported AI provider catalog |
 | `POST` | `/api/v1/providers/{provider}/models` | List usable account models and UI capabilities using an encrypted `{provider}.apiKey` |
-| `POST` | `/api/v1/connectors/{connectorKey}/session` | Start a device-scoped Nango connect session |
-| `GET` | `/api/v1/connectors/{connectorKey}/status` | Read device connector status |
-| `GET` | `/api/v1/connectors/{connectorKey}/credentials` | Fetch mapped connector credentials from Nango |
-| `DELETE` | `/api/v1/connectors/{connectorKey}` | Disconnect the device connector |
+| `POST` | `/api/v1/connectors/google-sheets/resources/spreadsheets/query` | List spreadsheets using encrypted `google.accessToken` |
+| `POST` | `/api/v1/connectors/google-sheets/resources/spreadsheets/{spreadsheetId}/tabs/query` | List sheet tabs for a spreadsheet |
+| `POST` | `/api/v1/connectors/google-sheets/resources/spreadsheets/{spreadsheetId}/tabs/{tabTitle}/headers/query` | Read header row for a tab |
 | `POST` | `/api/v1/workflows/runs` | Start a preset run |
 | `GET` | `/api/v1/workflows/runs/{runId}` | Retrieve an ephemeral run |
 | `POST` | `/api/v1/workflows/runs/{runId}/approval` | Accept, edit, or reject output |
@@ -118,7 +115,7 @@ flutter test
 flutter run
 ```
 
-Implement the first client against [the Flutter plan](docs/presets/flutter-linkedin-client-plan.md). Keep secrets out of SQLite, logs, analytics, and URLs.
+Implement the client against [the Flutter plan](docs/presets/flutter-linkedin-client-plan.md). Google account authorization is native via `google_sign_in`; configure Android/iOS OAuth clients as described in [Native Google authorization](docs/connectors/google-oauth.md). Pass the Web client ID at build time with `--dart-define=GOOGLE_SERVER_CLIENT_ID=...`. Keep secrets out of SQLite, logs, analytics, and URLs.
 
 ## Admin Development
 

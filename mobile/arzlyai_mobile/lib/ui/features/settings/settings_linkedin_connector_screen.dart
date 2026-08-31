@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
-import 'package:arzlyai_mobile/ui/shared/widgets/app_connector_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/brand_icon.dart';
 
 class SettingsLinkedInConnectorScreen extends ConsumerWidget {
@@ -32,7 +31,7 @@ class SettingsLinkedInConnectorScreen extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'OAuth tokens stay on this device.',
+                      'Coming later',
                       style: theme.textTheme.muted.copyWith(
                         color: theme.colorScheme.mutedForeground,
                       ),
@@ -44,13 +43,12 @@ class SettingsLinkedInConnectorScreen extends ConsumerWidget {
           ),
           SizedBox(height: context.spaceMedium),
           Text(
-            'Authorize through LinkedIn in your browser. ArzlyAI uses Nango to broker OAuth — access tokens stay on your device.',
+            'Direct LinkedIn OAuth is not available yet. Daily LinkedIn AI Post '
+            'cannot publish until this connector ships.',
             style: theme.textTheme.muted.copyWith(
               color: theme.colorScheme.mutedForeground,
             ),
           ),
-          SizedBox(height: context.spaceMedium),
-          AppConnectorCard.linkedin(compact: true),
         ],
       ),
     );

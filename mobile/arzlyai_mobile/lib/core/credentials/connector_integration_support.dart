@@ -38,13 +38,13 @@ String connectorSettingsHint(String connectorKey) => switch (connectorKey) {
   ConnectorKeys.linkedin =>
     'Connect LinkedIn in Settings before you publish.',
   ConnectorKeys.googleSheets =>
-    'Connect Google Sheets in Settings before you run receipt presets.',
+    'Authorize Google Sheets in Settings before you run receipt presets.',
   ConnectorKeys.gmail =>
-    'Connect Gmail in Settings before you enable email delivery.',
+    'Authorize Gmail in Settings before you enable email delivery.',
   ConnectorKeys.googleTasks =>
-    'Connect Google Tasks in Settings before you enable task sync.',
+    'Authorize Google Tasks in Settings before you enable task sync.',
   ConnectorKeys.googleCalendar =>
-    'Connect Google Calendar in Settings before you enable calendar sync.',
+    'Authorize Google Calendar in Settings before you enable calendar sync.',
   _ => 'Add required credentials in Settings before you run this preset.',
 };
 

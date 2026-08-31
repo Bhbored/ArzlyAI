@@ -16,6 +16,8 @@ import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_androi
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_sign_in_auth_adapter.dart';
 import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
@@ -84,10 +86,19 @@ class WorkflowSchedulingComposition {
       securityService,
       CredentialEnvelopeBuilder(),
     );
-    final credentialStore = CredentialStore(SecureStorageAndroid());
+    final secureStorage = SecureStorageAndroid();
+    final credentialStore = CredentialStore(secureStorage);
+    final googleAuth = GoogleNativeAuthRepository(GoogleSignInAuthAdapter());
+    await googleAuth.initialize();
+    final connectorCredentials = ConnectorCredentialRepository(
+      credentialStore,
+      legacyDatabase: db,
+    );
+    await connectorCredentials.clearLegacyGoogleCredentials();
     final credentialRepository = CredentialRepository(
       credentialStore,
-      ConnectorCredentialRepository(credentialStore, legacyDatabase: db),
+      connectorCredentials,
+      googleAuth,
     );
     final workflowRepository = WorkflowRepository(
       db,

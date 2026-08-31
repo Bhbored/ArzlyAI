@@ -8,6 +8,7 @@ import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception_extensions.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/agent_override_request.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/start_workflow_request.dart';
@@ -101,13 +102,22 @@ class ActiveRun extends _$ActiveRun {
       if (missingStart.isNotEmpty) {
         throw StateError('Missing credentials: ${missingStart.join(', ')}');
       }
+      final resolved = resolveReceiptWorkflowStart(
+        presetKey: details.key,
+        inputs: effectiveInputs,
+      );
+      if (isReceiptWorkflowKey(details.key) && resolved == null) {
+        throw StateError('Receipt workflow needs reconfiguration.');
+      }
+      final startPresetKey = resolved?.presetKey ?? details.key;
+      final startInputs = resolved?.inputs ?? effectiveInputs;
       final envelope = await ref
           .read(credentialEnvelopeServiceProvider)
           .encrypt(startCredentials);
       instance = await ref
           .read(workflowRepositoryProvider)
           .createInstance(
-            presetKey: details.key,
+            presetKey: startPresetKey,
             presetVersion: details.version,
             name: details.name,
             topic: primaryInput.trim(),
@@ -122,8 +132,8 @@ class ActiveRun extends _$ActiveRun {
           .read(workflowServiceProvider)
           .start(
             StartWorkflowRequest(
-              presetKey: details.key,
-              inputs: effectiveInputs,
+              presetKey: startPresetKey,
+              inputs: startInputs,
               agentOverrides: overrides,
               credentials: envelope,
             ),

@@ -32,6 +32,9 @@ class ConnectorCredentialRepository {
     ).every((field) => fields[field]?.trim().isNotEmpty ?? false);
   }
 
+  Future<Map<String, String>> readFields(String connectorKey) =>
+      _readFields(connectorKey);
+
   Future<Map<String, String>> readEnvelopeValues(String connectorKey) async {
     final fields = await _readFields(connectorKey);
     final integrationKey = integrationKeyForConnector(connectorKey);
@@ -64,6 +67,20 @@ class ConnectorCredentialRepository {
       await _store.deleteValue(_storageKey(connectorKey, field));
     }
     await _deleteLegacyConnector(connectorKey);
+  }
+
+  Future<void> clearLegacyGoogleCredentials() async {
+    const legacyFields = [
+      ...GoogleEnvelopeFields.all,
+      'refreshToken',
+      'expiresAtUtc',
+    ];
+    for (final connectorKey in ConnectorKeys.googleConnectors) {
+      for (final field in legacyFields) {
+        await _store.deleteValue(_storageKey(connectorKey, field));
+      }
+      await _deleteLegacyConnector(connectorKey);
+    }
   }
 
   Future<Map<String, String>> _readFields(String connectorKey) async {
@@ -112,21 +129,17 @@ class ConnectorCredentialRepository {
   List<String> _requiredFieldsFor(String connectorKey) {
     return switch (connectorKey) {
       ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-      ConnectorKeys.googleSheets ||
-      ConnectorKeys.gmail ||
-      ConnectorKeys.googleTasks ||
-      ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.required,
-      _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+      _ => throw ArgumentError(
+        'Unsupported connector key for local storage: $connectorKey',
+      ),
     };
   }
 
   List<String> _allFieldsFor(String connectorKey) => switch (connectorKey) {
     ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-    ConnectorKeys.googleSheets ||
-    ConnectorKeys.gmail ||
-    ConnectorKeys.googleTasks ||
-    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.all,
-    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+    _ => throw ArgumentError(
+      'Unsupported connector key for local storage: $connectorKey',
+    ),
   };
 
   String _storageKey(String connectorKey, String field) =>

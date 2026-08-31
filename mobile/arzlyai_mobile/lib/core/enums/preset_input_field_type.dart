@@ -5,6 +5,10 @@ enum PresetInputFieldType {
   country,
   currency,
   candidateList,
+  selectCards,
+  select,
+  date,
+  email,
   unknown;
 
   static PresetInputFieldType parse(String? value) {
@@ -15,6 +19,10 @@ enum PresetInputFieldType {
       'country' => PresetInputFieldType.country,
       'currency' => PresetInputFieldType.currency,
       'candidateList' => PresetInputFieldType.candidateList,
+      'selectCards' => PresetInputFieldType.selectCards,
+      'select' => PresetInputFieldType.select,
+      'date' => PresetInputFieldType.date,
+      'email' => PresetInputFieldType.email,
       _ => PresetInputFieldType.unknown,
     };
   }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
+import 'package:arzlyai_mobile/core/enums/preset_input_field_type.dart';
 import 'package:arzlyai_mobile/core/geo/country_currency.dart';
 import 'package:arzlyai_mobile/data/providers/connectors/google_resource_providers.dart';
 import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
@@ -14,15 +15,16 @@ import 'package:arzlyai_mobile/data/providers/temp/google_sheet_selection_temp.d
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/domain/entities/connectors/google_sheet_headers.dart';
+import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
+import 'package:arzlyai_mobile/ui/features/presets/implementations/receipt_workflows/preset_key.dart';
 import 'package:arzlyai_mobile/ui/features/presets/implementations/receipt_workflows/receipt_workflow_metadata.dart';
 import 'package:arzlyai_mobile/ui/features/presets/preset_run_router.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_button.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_model_select.dart';
-import 'package:arzlyai_mobile/ui/shared/widgets/app_schedule_section.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_status.dart';
 import 'package:arzlyai_mobile/ui/validators/app_validators.dart';
 
@@ -51,8 +53,14 @@ class _ReceiptConfigureRunScreenState
   }
 
   void _seedDefaults() {
+    final details = ref.read(presetDetailsProvider).value;
+    final schema = details?.inputSchema;
+    if (schema == null) return;
+
     ref.read(googleSheetSelectionTempProvider.notifier).clear();
     final current = ref.read(runConfigTempProvider);
+    if (current.inputs.containsKey('analysisMode')) return;
+
     final country =
         PlatformDispatcher.instance.locale.countryCode?.toUpperCase() ?? 'US';
     final today = DateTime.now();
@@ -60,23 +68,25 @@ class _ReceiptConfigureRunScreenState
         '${today.year.toString().padLeft(4, '0')}-'
         '${today.month.toString().padLeft(2, '0')}-'
         '${today.day.toString().padLeft(2, '0')}';
+
+    final inputs = <String, String>{'range': 'A:Z', 'asOfDate': date};
+    for (final field in schema.fields) {
+      if (field.key == 'spreadsheetId' ||
+          field.key == 'sourceRange' ||
+          field.key == 'columnMappingJson') {
+        continue;
+      }
+      final defaultValue = field.defaultValue?.trim();
+      if (defaultValue != null && defaultValue.isNotEmpty) {
+        inputs[field.key] = defaultValue;
+      } else if (field.type == PresetInputFieldType.currency) {
+        inputs[field.key] = currencyCodeForCountry(country);
+      }
+    }
+
     ref
         .read(runConfigTempProvider.notifier)
-        .update(
-          current.copyWith(
-            inputs: {
-              'range': 'A:Z',
-              'asOfDate': date,
-              'currencyCode': currencyCodeForCountry(country),
-              'includeCharts': 'true',
-              'includeTrends': 'true',
-              'includeCategoryBreakdown': 'true',
-              'reportTabTitle': 'Receipt Report',
-              'recipientEmail': '',
-              'deliveryMode': 'preview',
-            },
-          ),
-        );
+        .update(current.copyWith(inputs: inputs));
   }
 
   void _syncModelSelection(List<ProviderModel> models, Agent agent) {
@@ -131,32 +141,32 @@ class _ReceiptConfigureRunScreenState
   @override
   Widget build(BuildContext context) {
     final details = ref.watch(presetDetailsProvider).value;
-    final metadata = details == null
-        ? null
-        : receiptMetadataForKey(details.key);
+    final schema = details?.inputSchema;
     final theme = ShadTheme.of(context);
-    if (metadata == null) {
+    if (details == null || schema == null || schema.analysisModeField == null) {
       return const Scaffold(
         body: AppStatus.error(message: 'Receipt preset is unavailable.'),
       );
     }
     final config = ref.watch(runConfigTempProvider);
-    final agent = details?.configurableWorkflowAgent();
+    final agent = details.configurableWorkflowAgent();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(metadata.shortTitle, style: theme.textTheme.h4),
-      ),
+      appBar: AppBar(title: Text(details.name, style: theme.textTheme.h4)),
       body: ListView(
         padding: EdgeInsets.all(context.paddingMedium),
         children: [
-          Text(metadata.description, style: theme.textTheme.p),
+          Text(details.description, style: theme.textTheme.p),
+          SizedBox(height: context.spaceMedium),
+          _analysisGoalCard(schema, config),
           SizedBox(height: context.spaceMedium),
           _sourceCard(),
           SizedBox(height: context.spaceMedium),
-          _analysisCard(metadata),
+          _modeSpecificCard(schema, config),
           SizedBox(height: context.spaceMedium),
-          _reportCard(),
+          _reportDateCard(config),
+          SizedBox(height: context.spaceMedium),
+          _deliveryCard(schema, config),
           if (agent != null && agent.modelConfiguration.isModelEditable) ...[
             SizedBox(height: context.spaceMedium),
             AppCard.standard(
@@ -191,16 +201,190 @@ class _ReceiptConfigureRunScreenState
               ),
             ),
           ],
-          SizedBox(height: context.spaceMedium),
-          const AppScheduleSection(),
           SizedBox(height: context.spaceLarge),
           AppButton.primary(
             label: ref.watch(activeRunProvider).isLoading
                 ? 'Running…'
-                : 'Run preview',
+                : 'Run',
             onPressed: ref.watch(activeRunProvider).isLoading
                 ? null
-                : () => _start(details!, metadata, config),
+                : () => _start(details, schema, config),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _analysisGoalCard(PresetInputSchema schema, RunConfigState config) {
+    final field = schema.analysisModeField!;
+    final selected = config.inputs['analysisMode']?.trim() ?? '';
+    return AppCard.standard(
+      title: field.label,
+      child: Column(
+        children: [
+          for (final option in field.options)
+            Padding(
+              padding: EdgeInsets.only(bottom: context.spaceSmall),
+              child: _AnalysisModeCard(
+                option: option,
+                selected: selected == option.value,
+                onSelected: () => _updateInput('analysisMode', option.value),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeSpecificCard(PresetInputSchema schema, RunConfigState config) {
+    final fields = schema.fields.where(
+      (field) =>
+          field.key != 'analysisMode' &&
+          field.key != 'spreadsheetId' &&
+          field.key != 'sourceRange' &&
+          field.key != 'columnMappingJson' &&
+          field.key != 'asOfDate' &&
+          field.key != 'currencyCode' &&
+          field.key != 'deliveryMode' &&
+          field.key != 'reportTabTitle' &&
+          field.key != 'recipientEmail' &&
+          schema.isFieldVisible(field, config.inputs),
+    );
+    if (fields.isEmpty) return const SizedBox.shrink();
+
+    return AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      child: AppCard.standard(
+        key: ValueKey(config.inputs['analysisMode'] ?? ''),
+        title: 'Analysis details',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final field in fields) _schemaField(field, config),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _reportDateCard(RunConfigState config) {
+    final theme = ShadTheme.of(context);
+    final selectedDate = DateTime.tryParse(config.inputs['asOfDate'] ?? '');
+    return AppCard.standard(
+      title: 'Report date and currency',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Report date', style: theme.textTheme.small),
+          SizedBox(height: context.spaceSmall / 2),
+          ShadDatePicker(
+            selected: selectedDate,
+            onChanged: (date) {
+              if (date == null) return;
+              _updateInput(
+                'asOfDate',
+                '${date.year.toString().padLeft(4, '0')}-'
+                    '${date.month.toString().padLeft(2, '0')}-'
+                    '${date.day.toString().padLeft(2, '0')}',
+              );
+            },
+          ),
+          SizedBox(height: context.spaceMedium),
+          Text('Currency code', style: theme.textTheme.small),
+          SizedBox(height: context.spaceSmall / 2),
+          ShadInput(
+            initialValue: config.inputs['currencyCode'] ?? 'USD',
+            placeholder: const Text('USD'),
+            onChanged: (value) =>
+                _updateInput('currencyCode', value.toUpperCase()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _deliveryCard(PresetInputSchema schema, RunConfigState config) {
+    final deliveryField = schema.fieldForKey('deliveryMode');
+    if (deliveryField == null) return const SizedBox.shrink();
+    final theme = ShadTheme.of(context);
+    final deliveryMode = config.inputs['deliveryMode']?.trim() ?? 'preview';
+
+    return AppCard.standard(
+      title: deliveryField.label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ShadSelect<String>(
+            key: ValueKey(deliveryMode),
+            initialValue: deliveryMode,
+            placeholder: const Text('Preview only'),
+            selectedOptionBuilder: (context, value) {
+              final option = deliveryField.options
+                  .where((item) => item.value == value)
+                  .firstOrNull;
+              return Text(option?.label ?? value);
+            },
+            onChanged: (value) {
+              if (value == null) return;
+              _updateInput('deliveryMode', value);
+            },
+            options: deliveryField.options
+                .map(
+                  (option) => ShadOption(
+                    value: option.value,
+                    child: Text(option.label),
+                  ),
+                )
+                .toList(),
+          ),
+          if (schema.fieldForKey('reportTabTitle') case final reportTabField?
+              when schema.isFieldVisible(reportTabField, config.inputs)) ...[
+            SizedBox(height: context.spaceMedium),
+            Text('Report tab', style: theme.textTheme.small),
+            SizedBox(height: context.spaceSmall / 2),
+            ShadInput(
+              initialValue: config.inputs['reportTabTitle'] ?? 'Receipt Report',
+              placeholder: const Text('Receipt Report'),
+              onChanged: (value) => _updateInput('reportTabTitle', value),
+            ),
+          ],
+          if (schema.fieldForKey('recipientEmail') case final recipientField?
+              when schema.isFieldVisible(recipientField, config.inputs)) ...[
+            SizedBox(height: context.spaceMedium),
+            Text('Recipient email', style: theme.textTheme.small),
+            SizedBox(height: context.spaceSmall / 2),
+            ShadInput(
+              initialValue: config.inputs['recipientEmail'] ?? '',
+              keyboardType: TextInputType.emailAddress,
+              placeholder: const Text('name@example.com'),
+              onChanged: (value) => _updateInput('recipientEmail', value),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _schemaField(PresetInputField field, RunConfigState config) {
+    final theme = ShadTheme.of(context);
+    final value = config.inputs[field.key] ?? '';
+    return Padding(
+      padding: EdgeInsets.only(bottom: context.spaceMedium),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(field.label, style: theme.textTheme.small),
+          SizedBox(height: context.spaceSmall / 2),
+          ShadInput(
+            key: ValueKey('${field.key}:$value'),
+            initialValue: value,
+            keyboardType: field.type == PresetInputFieldType.decimal
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : null,
+            placeholder: Text(field.label),
+            onChanged: (next) => _updateInput(field.key, next),
           ),
         ],
       ),
@@ -377,140 +561,6 @@ class _ReceiptConfigureRunScreenState
     );
   }
 
-  Widget _analysisCard(ReceiptWorkflowMetadata metadata) {
-    final theme = ShadTheme.of(context);
-    final config = ref.watch(runConfigTempProvider);
-    final selectedDate = DateTime.tryParse(config.inputs['asOfDate'] ?? '');
-    return AppCard.standard(
-      title: 'Analysis',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Report date', style: theme.textTheme.small),
-          SizedBox(height: context.spaceSmall / 2),
-          ShadDatePicker(
-            selected: selectedDate,
-            onChanged: (date) {
-              if (date == null) return;
-              _updateInput(
-                'asOfDate',
-                '${date.year.toString().padLeft(4, '0')}-'
-                    '${date.month.toString().padLeft(2, '0')}-'
-                    '${date.day.toString().padLeft(2, '0')}',
-              );
-            },
-          ),
-          SizedBox(height: context.spaceMedium),
-          Text('Currency code', style: theme.textTheme.small),
-          SizedBox(height: context.spaceSmall / 2),
-          ShadInput(
-            initialValue: config.inputs['currencyCode'] ?? 'USD',
-            placeholder: const Text('USD'),
-            onChanged: (value) =>
-                _updateInput('currencyCode', value.toUpperCase()),
-          ),
-          if (metadata.requiresBudget) ...[
-            SizedBox(height: context.spaceMedium),
-            Text(
-              metadata.mode == 'savings-tracker'
-                  ? 'Monthly spending target'
-                  : 'Weekly budget',
-              style: theme.textTheme.small,
-            ),
-            SizedBox(height: context.spaceSmall / 2),
-            ShadInput(
-              initialValue: config.inputs['budget'] ?? '',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              placeholder: const Text('0.00'),
-              onChanged: (value) => _updateInput('budget', value),
-            ),
-          ],
-          if (metadata.requiresTaxRate) ...[
-            SizedBox(height: context.spaceMedium),
-            Text('Tax rate (0–1)', style: theme.textTheme.small),
-            SizedBox(height: context.spaceSmall / 2),
-            ShadInput(
-              initialValue: config.inputs['taxRate'] ?? '',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              placeholder: const Text('0.20'),
-              onChanged: (value) => _updateInput('taxRate', value),
-            ),
-          ],
-          if (metadata.requiresCategory) ...[
-            SizedBox(height: context.spaceMedium),
-            Text('Category', style: theme.textTheme.small),
-            SizedBox(height: context.spaceSmall / 2),
-            ShadInput(
-              initialValue: config.inputs['category'] ?? '',
-              placeholder: const Text('Food'),
-              onChanged: (value) => _updateInput('category', value),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _reportCard() {
-    final theme = ShadTheme.of(context);
-    final inputs = ref.watch(runConfigTempProvider).inputs;
-    return AppCard.standard(
-      title: 'Report preferences',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ShadCheckbox(
-            value: inputs['includeCharts'] == 'true',
-            onChanged: (value) =>
-                _updateInput('includeCharts', value.toString()),
-            label: const Text('Include charts'),
-          ),
-          SizedBox(height: context.spaceSmall),
-          ShadCheckbox(
-            value: inputs['includeTrends'] == 'true',
-            onChanged: (value) =>
-                _updateInput('includeTrends', value.toString()),
-            label: const Text('Include trends'),
-          ),
-          SizedBox(height: context.spaceSmall),
-          ShadCheckbox(
-            value: inputs['includeCategoryBreakdown'] == 'true',
-            onChanged: (value) =>
-                _updateInput('includeCategoryBreakdown', value.toString()),
-            label: const Text('Include category breakdown'),
-          ),
-          SizedBox(height: context.spaceMedium),
-          Text('Future Google Sheets report tab', style: theme.textTheme.small),
-          SizedBox(height: context.spaceSmall / 2),
-          ShadInput(
-            initialValue: inputs['reportTabTitle'] ?? '',
-            placeholder: const Text('Receipt Report'),
-            onChanged: (value) => _updateInput('reportTabTitle', value),
-          ),
-          SizedBox(height: context.spaceMedium),
-          Text('Future Gmail recipient', style: theme.textTheme.small),
-          SizedBox(height: context.spaceSmall / 2),
-          ShadInput(
-            initialValue: inputs['recipientEmail'] ?? '',
-            keyboardType: TextInputType.emailAddress,
-            placeholder: const Text('name@example.com'),
-            onChanged: (value) => _updateInput('recipientEmail', value),
-          ),
-          SizedBox(height: context.spaceSmall),
-          Text(
-            'This on-demand run is preview only. Delivery settings are saved '
-            'for a later scheduling release.',
-            style: theme.textTheme.muted,
-          ),
-        ],
-      ),
-    );
-  }
-
   void _updateInput(String key, String value) {
     final current = ref.read(runConfigTempProvider);
     final inputs = Map<String, String>.from(current.inputs)..[key] = value;
@@ -521,14 +571,14 @@ class _ReceiptConfigureRunScreenState
 
   Future<void> _start(
     PresetDetails details,
-    ReceiptWorkflowMetadata metadata,
+    PresetInputSchema schema,
     RunConfigState config,
   ) async {
     setState(() => _error = null);
     final prepared = prepareReceiptRunConfig(
       config: config,
       selection: ref.read(googleSheetSelectionTempProvider),
-      metadata: metadata,
+      schema: schema,
       details: details,
     );
     if (prepared.error != null) {
@@ -542,7 +592,7 @@ class _ReceiptConfigureRunScreenState
       setState(() => _error = '${runState.error}');
       return;
     }
-    final execution = executionScreenForPreset(details.key);
+    final execution = executionScreenForPreset(ReceiptIntelligencePreset.key);
     if (execution == null) {
       Navigator.of(context).pop();
       return;
@@ -559,6 +609,90 @@ class _ReceiptConfigureRunScreenState
   }
 }
 
+class _AnalysisModeCard extends StatelessWidget {
+  const _AnalysisModeCard({
+    required this.option,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final PresetInputFieldOption option;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: option.label,
+      child: Material(
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.12)
+            : theme.colorScheme.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(context.borderRadiusMedium),
+          side: BorderSide(
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.border,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: onSelected,
+          borderRadius: BorderRadius.circular(context.borderRadiusMedium),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: EdgeInsets.all(context.paddingMedium),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    receiptAnalysisModeIcon(option.iconKey),
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.mutedForeground,
+                  ),
+                  SizedBox(width: context.spaceSmall),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          option.label,
+                          style: theme.textTheme.p.copyWith(
+                            color: theme.colorScheme.cardForeground,
+                          ),
+                        ),
+                        if (option.description case final description?)
+                          Text(
+                            description,
+                            style: theme.textTheme.muted.copyWith(
+                              color: theme.colorScheme.mutedForeground,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    selected ? LucideIcons.circleCheck : LucideIcons.circle,
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.mutedForeground,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 @immutable
 class ReceiptConfigPreparation {
   const ReceiptConfigPreparation.success(this.config) : error = null;
@@ -572,9 +706,18 @@ class ReceiptConfigPreparation {
 ReceiptConfigPreparation prepareReceiptRunConfig({
   required RunConfigState config,
   required GoogleSheetSelectionState selection,
-  required ReceiptWorkflowMetadata metadata,
+  required PresetInputSchema schema,
   required PresetDetails details,
 }) {
+  final analysisMode = config.inputs['analysisMode']?.trim() ?? '';
+  if (analysisMode.isEmpty) {
+    return const ReceiptConfigPreparation.failure('Choose an analysis goal');
+  }
+  final modeOption = schema.analysisModeOption(analysisMode);
+  if (modeOption == null) {
+    return const ReceiptConfigPreparation.failure('Choose a valid analysis goal');
+  }
+
   final spreadsheetId = selection.spreadsheetId?.trim() ?? '';
   if (spreadsheetId.isEmpty) {
     return const ReceiptConfigPreparation.failure('Select a spreadsheet');
@@ -605,42 +748,58 @@ ReceiptConfigPreparation prepareReceiptRunConfig({
       'Enter a three-letter currency code',
     );
   }
-  if (metadata.requiresBudget) {
-    final budget = config.inputs['budget']?.trim() ?? '';
-    final value = double.tryParse(budget);
-    if (value == null || value <= 0) {
-      return const ReceiptConfigPreparation.failure(
-        'Enter a budget greater than zero',
-      );
+
+  for (final fieldKey in modeOption.requiresFields) {
+    final field = schema.fieldForKey(fieldKey);
+    final label = field?.label ?? humanizePresetToken(fieldKey);
+    final value = config.inputs[fieldKey]?.trim() ?? '';
+    if (fieldKey == 'budget') {
+      final parsed = double.tryParse(value);
+      if (parsed == null || parsed <= 0) {
+        return ReceiptConfigPreparation.failure(
+          'Enter a $label greater than zero',
+        );
+      }
+    } else if (fieldKey == 'taxRate') {
+      final parsed = double.tryParse(value);
+      if (parsed == null || parsed < 0 || parsed > 1) {
+        return const ReceiptConfigPreparation.failure(
+          'Enter a tax rate between 0 and 1',
+        );
+      }
+    } else if (AppValidators.requiredNonEmpty(value) != null) {
+      return ReceiptConfigPreparation.failure('Enter $label');
     }
   }
-  if (metadata.requiresTaxRate) {
-    final rate = double.tryParse(config.inputs['taxRate']?.trim() ?? '');
-    if (rate == null || rate < 0 || rate > 1) {
-      return const ReceiptConfigPreparation.failure(
-        'Enter a tax rate between 0 and 1',
-      );
-    }
-  }
-  if (metadata.requiresCategory &&
-      AppValidators.requiredNonEmpty(config.inputs['category'] ?? '') != null) {
-    return const ReceiptConfigPreparation.failure('Enter a category');
-  }
+
+  final deliveryMode = config.inputs['deliveryMode']?.trim().isNotEmpty == true
+      ? config.inputs['deliveryMode']!.trim()
+      : 'preview';
   final recipient = config.inputs['recipientEmail']?.trim() ?? '';
-  if (recipient.isNotEmpty &&
-      !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(recipient)) {
-    return const ReceiptConfigPreparation.failure(
-      'Enter a valid Gmail recipient',
-    );
+  if (deliveryMode == 'email' || deliveryMode == 'both') {
+    if (recipient.isEmpty ||
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(recipient)) {
+      return const ReceiptConfigPreparation.failure(
+        'Enter a valid recipient email',
+      );
+    }
   }
+
   final inputs = Map<String, String>.from(config.inputs)
     ..remove('range')
+    ..['analysisMode'] = analysisMode
     ..['spreadsheetId'] = spreadsheetId
     ..['sourceRange'] = receiptSourceRange(tabTitle, range)
     ..['columnMappingJson'] = receiptColumnMappingJson(mapping)
     ..['asOfDate'] = asOfDate
     ..['currencyCode'] = currency
-    ..['deliveryMode'] = 'preview';
+    ..['deliveryMode'] = deliveryMode;
+
+  for (final inactive
+      in receiptInactiveInputKeys(schema: schema, inputs: inputs)) {
+    inputs.remove(inactive);
+  }
+
   for (final key in ['budget', 'taxRate', 'category', 'recipientEmail']) {
     final value = inputs[key]?.trim() ?? '';
     if (value.isEmpty) {
@@ -649,6 +808,12 @@ ReceiptConfigPreparation prepareReceiptRunConfig({
       inputs[key] = value;
     }
   }
+
+  if (schema.fieldForKey('reportTabTitle') case final reportTabField?
+      when !schema.isFieldVisible(reportTabField, inputs)) {
+    inputs.remove('reportTabTitle');
+  }
+
   final agent = details.configurableWorkflowAgent();
   final overrides = Map<String, AgentOverrideDraft>.from(config.agentOverrides);
   if (agent != null) {
@@ -663,9 +828,10 @@ ReceiptConfigPreparation prepareReceiptRunConfig({
       ),
     );
   }
+
   return ReceiptConfigPreparation.success(
     config.copyWith(
-      topic: metadata.title,
+      topic: modeOption.label,
       inputs: inputs,
       agentOverrides: overrides,
     ),

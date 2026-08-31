@@ -149,7 +149,7 @@ void main() {
     final session = ConnectorSessionResponse.fromJson(
       _networkFixture('connector_session.json'),
     );
-    expect(session.connectUrl, contains('nango.dev'));
+    expect(session.connectUrl, contains('accounts.google.com'));
     expect(session.sessionToken, isNotEmpty);
 
     final status = ConnectorStatusResponse.fromJson(

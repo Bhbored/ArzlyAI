@@ -31,19 +31,10 @@ void main() {
     );
   });
 
-  test('localFields maps Google OAuth token and optional email', () {
+  test('localFields ignores Google connector keys', () {
     expect(
       mapper.localFields(ConnectorKeys.gmail, {
         'google.accessToken': 'google-token',
-        'google.email': 'person@example.com',
-      }),
-      {
-        GoogleOAuthConnectorFields.accessToken: 'google-token',
-        GoogleOAuthConnectorFields.email: 'person@example.com',
-      },
-    );
-    expect(
-      mapper.localFields(ConnectorKeys.googleTasks, {
         'google.email': 'person@example.com',
       }),
       isNull,

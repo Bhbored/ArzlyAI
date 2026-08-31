@@ -22,7 +22,6 @@ import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/active_run_provider.dart';
 import 'package:arzlyai_mobile/data/providers/workflow/workflow_transport_provider.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/providers/settings/ai_settings_provider.dart';
@@ -69,6 +68,9 @@ ProviderContainer _container({
         offlineMode ? ForcedOfflineMode.new : OnlineMode.new,
       ),
       presetDetailsProvider.overrideWith(() => SeededDetails(fixtureDetails())),
+      credentialRepositoryProvider.overrideWithValue(
+        testCredentialRepository(store, db),
+      ),
     ],
   );
 }
@@ -86,14 +88,14 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     store = MemoryCredentialStore();
     store.values[providerCredentialEnvelopeKey('openai')] = 'sk-test';
-    await seedLinkedInConnector(db);
+    await seedLinkedInConnector(db, store: store);
     envelopes = FakeEnvelopeService();
     hub = FakeHub();
     providerModelRepo = ProviderModelRepository(
       db,
       FakeProviderModelService()
         ..modelsResult = fixtureProviderModelResponses(),
-      CredentialRepository(store, ConnectorCredentialRepository(store, legacyDatabase: db)),
+      testCredentialRepository(store, db),
       envelopes,
       const ProviderModelMapper(),
     );
