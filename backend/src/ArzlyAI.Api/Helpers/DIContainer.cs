@@ -25,6 +25,7 @@ using ArzlyAI.Infrastructure.Configuration;
 using ArzlyAI.Infrastructure.Connectors.LinkedIn;
 using ArzlyAI.Infrastructure.Connectors.Nango;
 using ArzlyAI.Infrastructure.Health;
+using ArzlyAI.Infrastructure.Integrations.Google;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
 using ArzlyAI.Infrastructure.Persistence;
 using ArzlyAI.Infrastructure.Persistence.Interceptors;
@@ -252,6 +253,11 @@ public static class DIContainer
         });
         services.AddHttpClient<ILinkedInIdentityClient, LinkedInIdentityClient>(client =>
             client.BaseAddress = new Uri("https://api.linkedin.com/"));
+        services.AddHttpClient<IGoogleSheetsClient, GoogleSheetsClient>();
+        services.AddHttpClient<IGmailClient, GmailClient>();
+        services.AddHttpClient<IGoogleTasksClient, GoogleTasksClient>();
+        services.AddHttpClient<IGoogleCalendarClient, GoogleCalendarClient>();
+        services.AddScoped<IGoogleResourceService, GoogleResourceService>();
         services.AddScoped<IConnectorBroker, NangoConnectorBroker>();
         return services;
     }
@@ -261,6 +267,12 @@ public static class DIContainer
         services.AddHttpClient<ILinkedInPublisher, LinkedInPublisher>(client =>
             client.BaseAddress = new Uri("https://api.linkedin.com/"));
         services.AddScoped<IIntegrationHandler, LinkedInPostsIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsReadIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsWriteIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleSheetsReportIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GmailHtmlIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleTasksCreateIntegrationHandler>();
+        services.AddScoped<IIntegrationHandler, GoogleCalendarCreateEventsIntegrationHandler>();
         return services;
     }
 

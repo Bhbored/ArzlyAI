@@ -2636,6 +2636,42 @@ class $SchedulesTable extends Schedules
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _recurrenceJsonMeta = const VerificationMeta(
+    'recurrenceJson',
+  );
+  @override
+  late final GeneratedColumn<String> recurrenceJson = GeneratedColumn<String>(
+    'recurrence_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('{}'),
+  );
+  static const VerificationMeta _workflowInputsJsonMeta =
+      const VerificationMeta('workflowInputsJson');
+  @override
+  late final GeneratedColumn<String> workflowInputsJson =
+      GeneratedColumn<String>(
+        'workflow_inputs_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('{}'),
+      );
+  static const VerificationMeta _presetNameMeta = const VerificationMeta(
+    'presetName',
+  );
+  @override
+  late final GeneratedColumn<String> presetName = GeneratedColumn<String>(
+    'preset_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ArzlyAI'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     localWorkflowId,
@@ -2648,6 +2684,9 @@ class $SchedulesTable extends Schedules
     lastSucceededAtUtc,
     lastOutcome,
     failureMessage,
+    recurrenceJson,
+    workflowInputsJson,
+    presetName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2753,6 +2792,30 @@ class $SchedulesTable extends Schedules
         ),
       );
     }
+    if (data.containsKey('recurrence_json')) {
+      context.handle(
+        _recurrenceJsonMeta,
+        recurrenceJson.isAcceptableOrUnknown(
+          data['recurrence_json']!,
+          _recurrenceJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('workflow_inputs_json')) {
+      context.handle(
+        _workflowInputsJsonMeta,
+        workflowInputsJson.isAcceptableOrUnknown(
+          data['workflow_inputs_json']!,
+          _workflowInputsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('preset_name')) {
+      context.handle(
+        _presetNameMeta,
+        presetName.isAcceptableOrUnknown(data['preset_name']!, _presetNameMeta),
+      );
+    }
     return context;
   }
 
@@ -2802,6 +2865,18 @@ class $SchedulesTable extends Schedules
         DriftSqlType.string,
         data['${effectivePrefix}failure_message'],
       ),
+      recurrenceJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recurrence_json'],
+      )!,
+      workflowInputsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workflow_inputs_json'],
+      )!,
+      presetName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preset_name'],
+      )!,
     );
   }
 
@@ -2822,6 +2897,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   final DateTime? lastSucceededAtUtc;
   final String? lastOutcome;
   final String? failureMessage;
+  final String recurrenceJson;
+  final String workflowInputsJson;
+  final String presetName;
   const Schedule({
     required this.localWorkflowId,
     required this.localTime,
@@ -2833,6 +2911,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     this.lastSucceededAtUtc,
     this.lastOutcome,
     this.failureMessage,
+    required this.recurrenceJson,
+    required this.workflowInputsJson,
+    required this.presetName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2857,6 +2938,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     if (!nullToAbsent || failureMessage != null) {
       map['failure_message'] = Variable<String>(failureMessage);
     }
+    map['recurrence_json'] = Variable<String>(recurrenceJson);
+    map['workflow_inputs_json'] = Variable<String>(workflowInputsJson);
+    map['preset_name'] = Variable<String>(presetName);
     return map;
   }
 
@@ -2882,6 +2966,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       failureMessage: failureMessage == null && nullToAbsent
           ? const Value.absent()
           : Value(failureMessage),
+      recurrenceJson: Value(recurrenceJson),
+      workflowInputsJson: Value(workflowInputsJson),
+      presetName: Value(presetName),
     );
   }
 
@@ -2905,6 +2992,11 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       ),
       lastOutcome: serializer.fromJson<String?>(json['lastOutcome']),
       failureMessage: serializer.fromJson<String?>(json['failureMessage']),
+      recurrenceJson: serializer.fromJson<String>(json['recurrenceJson']),
+      workflowInputsJson: serializer.fromJson<String>(
+        json['workflowInputsJson'],
+      ),
+      presetName: serializer.fromJson<String>(json['presetName']),
     );
   }
   @override
@@ -2921,6 +3013,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       'lastSucceededAtUtc': serializer.toJson<DateTime?>(lastSucceededAtUtc),
       'lastOutcome': serializer.toJson<String?>(lastOutcome),
       'failureMessage': serializer.toJson<String?>(failureMessage),
+      'recurrenceJson': serializer.toJson<String>(recurrenceJson),
+      'workflowInputsJson': serializer.toJson<String>(workflowInputsJson),
+      'presetName': serializer.toJson<String>(presetName),
     };
   }
 
@@ -2935,6 +3030,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
     Value<String?> lastOutcome = const Value.absent(),
     Value<String?> failureMessage = const Value.absent(),
+    String? recurrenceJson,
+    String? workflowInputsJson,
+    String? presetName,
   }) => Schedule(
     localWorkflowId: localWorkflowId ?? this.localWorkflowId,
     localTime: localTime ?? this.localTime,
@@ -2954,6 +3052,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     failureMessage: failureMessage.present
         ? failureMessage.value
         : this.failureMessage,
+    recurrenceJson: recurrenceJson ?? this.recurrenceJson,
+    workflowInputsJson: workflowInputsJson ?? this.workflowInputsJson,
+    presetName: presetName ?? this.presetName,
   );
   Schedule copyWithCompanion(SchedulesCompanion data) {
     return Schedule(
@@ -2983,6 +3084,15 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       failureMessage: data.failureMessage.present
           ? data.failureMessage.value
           : this.failureMessage,
+      recurrenceJson: data.recurrenceJson.present
+          ? data.recurrenceJson.value
+          : this.recurrenceJson,
+      workflowInputsJson: data.workflowInputsJson.present
+          ? data.workflowInputsJson.value
+          : this.workflowInputsJson,
+      presetName: data.presetName.present
+          ? data.presetName.value
+          : this.presetName,
     );
   }
 
@@ -2998,7 +3108,10 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           ..write('lastAttemptAtUtc: $lastAttemptAtUtc, ')
           ..write('lastSucceededAtUtc: $lastSucceededAtUtc, ')
           ..write('lastOutcome: $lastOutcome, ')
-          ..write('failureMessage: $failureMessage')
+          ..write('failureMessage: $failureMessage, ')
+          ..write('recurrenceJson: $recurrenceJson, ')
+          ..write('workflowInputsJson: $workflowInputsJson, ')
+          ..write('presetName: $presetName')
           ..write(')'))
         .toString();
   }
@@ -3015,6 +3128,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     lastSucceededAtUtc,
     lastOutcome,
     failureMessage,
+    recurrenceJson,
+    workflowInputsJson,
+    presetName,
   );
   @override
   bool operator ==(Object other) =>
@@ -3029,7 +3145,10 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           other.lastAttemptAtUtc == this.lastAttemptAtUtc &&
           other.lastSucceededAtUtc == this.lastSucceededAtUtc &&
           other.lastOutcome == this.lastOutcome &&
-          other.failureMessage == this.failureMessage);
+          other.failureMessage == this.failureMessage &&
+          other.recurrenceJson == this.recurrenceJson &&
+          other.workflowInputsJson == this.workflowInputsJson &&
+          other.presetName == this.presetName);
 }
 
 class SchedulesCompanion extends UpdateCompanion<Schedule> {
@@ -3043,6 +3162,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
   final Value<DateTime?> lastSucceededAtUtc;
   final Value<String?> lastOutcome;
   final Value<String?> failureMessage;
+  final Value<String> recurrenceJson;
+  final Value<String> workflowInputsJson;
+  final Value<String> presetName;
   final Value<int> rowid;
   const SchedulesCompanion({
     this.localWorkflowId = const Value.absent(),
@@ -3055,6 +3177,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.lastSucceededAtUtc = const Value.absent(),
     this.lastOutcome = const Value.absent(),
     this.failureMessage = const Value.absent(),
+    this.recurrenceJson = const Value.absent(),
+    this.workflowInputsJson = const Value.absent(),
+    this.presetName = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SchedulesCompanion.insert({
@@ -3068,6 +3193,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.lastSucceededAtUtc = const Value.absent(),
     this.lastOutcome = const Value.absent(),
     this.failureMessage = const Value.absent(),
+    this.recurrenceJson = const Value.absent(),
+    this.workflowInputsJson = const Value.absent(),
+    this.presetName = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : localWorkflowId = Value(localWorkflowId),
        localTime = Value(localTime),
@@ -3084,6 +3212,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Expression<DateTime>? lastSucceededAtUtc,
     Expression<String>? lastOutcome,
     Expression<String>? failureMessage,
+    Expression<String>? recurrenceJson,
+    Expression<String>? workflowInputsJson,
+    Expression<String>? presetName,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3098,6 +3229,10 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
         'last_succeeded_at_utc': lastSucceededAtUtc,
       if (lastOutcome != null) 'last_outcome': lastOutcome,
       if (failureMessage != null) 'failure_message': failureMessage,
+      if (recurrenceJson != null) 'recurrence_json': recurrenceJson,
+      if (workflowInputsJson != null)
+        'workflow_inputs_json': workflowInputsJson,
+      if (presetName != null) 'preset_name': presetName,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3113,6 +3248,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Value<DateTime?>? lastSucceededAtUtc,
     Value<String?>? lastOutcome,
     Value<String?>? failureMessage,
+    Value<String>? recurrenceJson,
+    Value<String>? workflowInputsJson,
+    Value<String>? presetName,
     Value<int>? rowid,
   }) {
     return SchedulesCompanion(
@@ -3126,6 +3264,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       lastSucceededAtUtc: lastSucceededAtUtc ?? this.lastSucceededAtUtc,
       lastOutcome: lastOutcome ?? this.lastOutcome,
       failureMessage: failureMessage ?? this.failureMessage,
+      recurrenceJson: recurrenceJson ?? this.recurrenceJson,
+      workflowInputsJson: workflowInputsJson ?? this.workflowInputsJson,
+      presetName: presetName ?? this.presetName,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3165,6 +3306,15 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     if (failureMessage.present) {
       map['failure_message'] = Variable<String>(failureMessage.value);
     }
+    if (recurrenceJson.present) {
+      map['recurrence_json'] = Variable<String>(recurrenceJson.value);
+    }
+    if (workflowInputsJson.present) {
+      map['workflow_inputs_json'] = Variable<String>(workflowInputsJson.value);
+    }
+    if (presetName.present) {
+      map['preset_name'] = Variable<String>(presetName.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3184,6 +3334,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
           ..write('lastSucceededAtUtc: $lastSucceededAtUtc, ')
           ..write('lastOutcome: $lastOutcome, ')
           ..write('failureMessage: $failureMessage, ')
+          ..write('recurrenceJson: $recurrenceJson, ')
+          ..write('workflowInputsJson: $workflowInputsJson, ')
+          ..write('presetName: $presetName, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5317,6 +5470,9 @@ typedef $$SchedulesTableCreateCompanionBuilder =
       Value<DateTime?> lastSucceededAtUtc,
       Value<String?> lastOutcome,
       Value<String?> failureMessage,
+      Value<String> recurrenceJson,
+      Value<String> workflowInputsJson,
+      Value<String> presetName,
       Value<int> rowid,
     });
 typedef $$SchedulesTableUpdateCompanionBuilder =
@@ -5331,6 +5487,9 @@ typedef $$SchedulesTableUpdateCompanionBuilder =
       Value<DateTime?> lastSucceededAtUtc,
       Value<String?> lastOutcome,
       Value<String?> failureMessage,
+      Value<String> recurrenceJson,
+      Value<String> workflowInputsJson,
+      Value<String> presetName,
       Value<int> rowid,
     });
 
@@ -5390,6 +5549,21 @@ class $$SchedulesTableFilterComposer
 
   ColumnFilters<String> get failureMessage => $composableBuilder(
     column: $table.failureMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recurrenceJson => $composableBuilder(
+    column: $table.recurrenceJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workflowInputsJson => $composableBuilder(
+    column: $table.workflowInputsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get presetName => $composableBuilder(
+    column: $table.presetName,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -5452,6 +5626,21 @@ class $$SchedulesTableOrderingComposer
     column: $table.failureMessage,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get recurrenceJson => $composableBuilder(
+    column: $table.recurrenceJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workflowInputsJson => $composableBuilder(
+    column: $table.workflowInputsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get presetName => $composableBuilder(
+    column: $table.presetName,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SchedulesTableAnnotationComposer
@@ -5508,6 +5697,21 @@ class $$SchedulesTableAnnotationComposer
     column: $table.failureMessage,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get recurrenceJson => $composableBuilder(
+    column: $table.recurrenceJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get workflowInputsJson => $composableBuilder(
+    column: $table.workflowInputsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get presetName => $composableBuilder(
+    column: $table.presetName,
+    builder: (column) => column,
+  );
 }
 
 class $$SchedulesTableTableManager
@@ -5548,6 +5752,9 @@ class $$SchedulesTableTableManager
                 Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
                 Value<String?> lastOutcome = const Value.absent(),
                 Value<String?> failureMessage = const Value.absent(),
+                Value<String> recurrenceJson = const Value.absent(),
+                Value<String> workflowInputsJson = const Value.absent(),
+                Value<String> presetName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SchedulesCompanion(
                 localWorkflowId: localWorkflowId,
@@ -5560,6 +5767,9 @@ class $$SchedulesTableTableManager
                 lastSucceededAtUtc: lastSucceededAtUtc,
                 lastOutcome: lastOutcome,
                 failureMessage: failureMessage,
+                recurrenceJson: recurrenceJson,
+                workflowInputsJson: workflowInputsJson,
+                presetName: presetName,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5574,6 +5784,9 @@ class $$SchedulesTableTableManager
                 Value<DateTime?> lastSucceededAtUtc = const Value.absent(),
                 Value<String?> lastOutcome = const Value.absent(),
                 Value<String?> failureMessage = const Value.absent(),
+                Value<String> recurrenceJson = const Value.absent(),
+                Value<String> workflowInputsJson = const Value.absent(),
+                Value<String> presetName = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SchedulesCompanion.insert(
                 localWorkflowId: localWorkflowId,
@@ -5586,6 +5799,9 @@ class $$SchedulesTableTableManager
                 lastSucceededAtUtc: lastSucceededAtUtc,
                 lastOutcome: lastOutcome,
                 failureMessage: failureMessage,
+                recurrenceJson: recurrenceJson,
+                workflowInputsJson: workflowInputsJson,
+                presetName: presetName,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

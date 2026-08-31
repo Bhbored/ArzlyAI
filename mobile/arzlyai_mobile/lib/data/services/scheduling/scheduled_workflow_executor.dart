@@ -14,6 +14,10 @@ import 'package:arzlyai_mobile/data/repositories/preset/preset_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/data/services/scheduling/workflow_scheduler.dart';
+import 'package:arzlyai_mobile/core/workflow/brain_dump_preset_privacy.dart';
+import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
+import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
+import 'package:arzlyai_mobile/domain/entities/scheduling/scheduled_workflow_configuration.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 
@@ -87,7 +91,8 @@ class ScheduledWorkflowExecutor {
       final keys = details.workflowStartCredentialKeys(
         overrideProviders: overrides.map((item) => item.provider ?? ''),
       );
-      final credentials = await credentialRepository.readForEnvelopeKeys(keys);
+      final credentials =
+          await credentialRepository.readForEnvelopeKeysWithConnectors(keys);
       final missing = credentialRepository.missingEnvelopeKeys(
         keys,
         credentials,
@@ -98,10 +103,18 @@ class ScheduledWorkflowExecutor {
 
       final envelope = await envelopeService.encrypt(credentials);
 
+      final configuration = await scheduleRepository.getConfiguration(
+        localWorkflowId,
+      );
+      final inputs = _scheduledWorkflowInputs(
+        instance: instance,
+        configuration: configuration,
+      );
+
       final dto = await workflowService.start(
         StartWorkflowRequest(
           presetKey: instance.presetKey,
-          inputs: {'topic': instance.topic.trim()},
+          inputs: inputs,
           agentOverrides: overrides,
           credentials: envelope,
         ),
@@ -186,5 +199,18 @@ class ScheduledWorkflowExecutor {
     if (error is ApiException) return error.userMessage;
     if (error is StateError) return error.message;
     return 'Workflow could not run in the background.';
+  }
+
+  Map<String, String> _scheduledWorkflowInputs({
+    required WorkflowInstance instance,
+    required ScheduledWorkflowConfiguration? configuration,
+  }) {
+    final stored = configuration?.inputs ?? const {};
+    if (stored.isNotEmpty) return Map<String, String>.from(stored);
+    if (isBrainDumpWorkflowKey(instance.presetKey) ||
+        isReceiptWorkflowKey(instance.presetKey)) {
+      return {'topic': instance.topic.trim()};
+    }
+    return {'topic': instance.topic.trim()};
   }
 }

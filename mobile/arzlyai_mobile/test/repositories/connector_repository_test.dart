@@ -125,14 +125,14 @@ void main() {
     },
   );
 
-  test('syncCredentials stores Google token in secure storage', () async {
+  test('syncCredentials stores Gmail token in secure storage', () async {
     final repository = _repository(
       db,
       storage,
       onRequest: (options) async {
         return Response(
           requestOptions: options,
-          data: _fixture('connector_credentials_google.json'),
+          data: _fixture('connector_credentials_gmail.json'),
           statusCode: 200,
         );
       },
@@ -142,12 +142,13 @@ void main() {
       legacyDatabase: db,
     );
 
-    await repository.syncCredentials(ConnectorKeys.google);
+    await repository.syncCredentials(ConnectorKeys.gmail);
 
-    expect(await local.readEnvelopeValues(ConnectorKeys.google), {
-      integrationFieldEnvelopeKey('google', 'accessToken'):
+    expect(await local.readEnvelopeValues(ConnectorKeys.gmail), {
+      integrationFieldEnvelopeKey('google.gmail.send-html', 'accessToken'):
           'google-access-token',
-      integrationFieldEnvelopeKey('google', 'email'): 'person@example.com',
+      integrationFieldEnvelopeKey('google.gmail.send-html', 'email'):
+          'person@example.com',
     });
     expect(await db.select(db.connectorCredentials).get(), isEmpty);
   });

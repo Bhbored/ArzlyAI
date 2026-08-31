@@ -45,16 +45,18 @@ void main() {
     expect(await repository.isConnected(ConnectorKeys.linkedin), isFalse);
   });
 
-  test('save stores Google access token securely', () async {
-    await repository.saveFields(ConnectorKeys.google, {
-      GoogleConnectorFields.accessToken: 'google-token',
-      GoogleConnectorFields.email: 'person@example.com',
+  test('save stores Gmail access token securely', () async {
+    await repository.saveFields(ConnectorKeys.gmail, {
+      GoogleOAuthConnectorFields.accessToken: 'google-token',
+      GoogleOAuthConnectorFields.email: 'person@example.com',
     });
 
-    expect(await repository.isConnected(ConnectorKeys.google), isTrue);
-    expect(await repository.readEnvelopeValues(ConnectorKeys.google), {
-      integrationFieldEnvelopeKey('google', 'accessToken'): 'google-token',
-      integrationFieldEnvelopeKey('google', 'email'): 'person@example.com',
+    expect(await repository.isConnected(ConnectorKeys.gmail), isTrue);
+    expect(await repository.readEnvelopeValues(ConnectorKeys.gmail), {
+      integrationFieldEnvelopeKey('google.gmail.send-html', 'accessToken'):
+          'google-token',
+      integrationFieldEnvelopeKey('google.gmail.send-html', 'email'):
+          'person@example.com',
     });
     expect(storage.values.values, contains('google-token'));
     expect(await db.select(db.connectorCredentials).get(), isEmpty);

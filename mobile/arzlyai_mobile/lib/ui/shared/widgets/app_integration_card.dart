@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
-import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/ui/shared/widgets/app_card.dart';
@@ -19,8 +19,6 @@ class AppIntegrationCard extends StatelessWidget {
     final credentialType = humanizePresetToken(
       _credentialTypeRaw(integration.credentialSchemaJson),
     );
-    final isLinkedInConnector =
-        integration.key.split('.').first == ConnectorKeys.linkedin;
 
     return AppCard.standard(
       title: integration.name,
@@ -39,9 +37,7 @@ class AppIntegrationCard extends StatelessWidget {
           _DetailRow(label: 'Credential type', value: credentialType),
           SizedBox(height: context.spaceSmall),
           Text(
-            isLinkedInConnector
-                ? 'Connect LinkedIn in Settings before you publish.'
-                : 'Add required credentials in Settings before you run this preset.',
+            integrationSettingsHint(integration.key),
             style: theme.textTheme.muted.copyWith(
               color: theme.colorScheme.mutedForeground,
             ),

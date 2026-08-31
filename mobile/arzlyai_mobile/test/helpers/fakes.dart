@@ -318,8 +318,15 @@ class ForcedOfflineMode extends OfflineMode {
   Future<bool> build() async => true;
 }
 
-Future<void> seedLinkedInConnector(AppDatabase db) {
-  return ConnectorCredentialRepository(db).saveFields(ConnectorKeys.linkedin, {
+Future<void> seedLinkedInConnector(
+  AppDatabase db, {
+  MemoryCredentialStore? store,
+}) {
+  final credentialStore = store ?? MemoryCredentialStore();
+  return ConnectorCredentialRepository(
+    credentialStore,
+    legacyDatabase: db,
+  ).saveFields(ConnectorKeys.linkedin, {
     LinkedInConnectorFields.accessToken: 'li-token',
     LinkedInConnectorFields.authorUrn: 'urn:li:person:1',
   });

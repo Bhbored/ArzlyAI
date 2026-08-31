@@ -354,7 +354,7 @@ final class ScheduleControllerProvider
 }
 
 String _$scheduleControllerHash() =>
-    r'2e107588d7e2f1b6589d7b07964ea649b9139e06';
+    r'8e2f3b5c1c5a39fb39b99ff029b6a1da25f34342';
 
 final class ScheduleControllerFamily extends $Family
     with

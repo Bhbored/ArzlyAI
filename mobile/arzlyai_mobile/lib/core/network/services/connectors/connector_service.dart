@@ -117,7 +117,7 @@ class ConnectorService {
 
   Future<List<GoogleSpreadsheetResponse>> listGoogleSpreadsheets() async {
     final data = await _getGoogleResource(
-      'connectors/google/resources/spreadsheets',
+      'connectors/google-sheets/resources/spreadsheets',
     );
     return (data as List<dynamic>)
         .map(
@@ -132,7 +132,7 @@ class ConnectorService {
   ) async {
     final id = Uri.encodeComponent(spreadsheetId);
     final data = await _getGoogleResource(
-      'connectors/google/resources/spreadsheets/$id/tabs',
+      'connectors/google-sheets/resources/spreadsheets/$id/tabs',
     );
     return (data as List<dynamic>)
         .map(
@@ -149,7 +149,7 @@ class ConnectorService {
     final id = Uri.encodeComponent(spreadsheetId);
     final title = Uri.encodeComponent(tabTitle);
     final data = await _getGoogleResource(
-      'connectors/google/resources/spreadsheets/$id/tabs/$title/headers',
+      'connectors/google-sheets/resources/spreadsheets/$id/tabs/$title/headers',
     );
     return GoogleSheetHeadersResponse.fromJson(data as Map<String, dynamic>);
   }

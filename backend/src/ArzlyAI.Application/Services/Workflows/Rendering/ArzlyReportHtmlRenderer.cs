@@ -12,17 +12,26 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
 
     public string Render(JsonElement document)
     {
-        var title = Text(document, "title", "Your purchase decision");
+        var kind = Text(document, "kind", "purchaseDecision");
+        var title = Text(document, "title", kind == "actionPlan" ? "Your action plan" : "Your purchase decision");
         var summary = Text(document, "summary", string.Empty);
         var generatedAt = Text(document, "generatedAtUtc", string.Empty);
         var blocks = Blocks(document);
-        var recommendation = blocks.FirstOrDefault(block => Type(block) == "recommendation");
         var content = new StringBuilder();
 
-        if (recommendation.ValueKind == JsonValueKind.Object)
-            AppendRecommendation(content, recommendation, summary);
+        if (kind == "purchaseDecision")
+        {
+            var recommendation = blocks.FirstOrDefault(block => Type(block) == "recommendation");
+            if (recommendation.ValueKind == JsonValueKind.Object)
+                AppendRecommendation(content, recommendation, summary);
+        }
 
-        var renderedTypes = new HashSet<string>(StringComparer.Ordinal) { "recommendation", "sourceList" };
+        var renderedTypes = new HashSet<string>(StringComparer.Ordinal)
+        {
+            kind == "purchaseDecision" ? "recommendation" : string.Empty,
+            "sourceList"
+        };
+        renderedTypes.Remove(string.Empty);
         foreach (var block in blocks)
         {
             var type = Type(block);
@@ -39,10 +48,14 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
                     AppendDisclosure(content, block, "See options that did not make the cut");
                     break;
                 case "riskCallout":
+                case "priorityCallout":
                     AppendCompactSection(content, block, "caution");
                     break;
                 case "prosCons":
                 case "nextSteps":
+                case "quickWins":
+                case "projects":
+                case "schedule":
                     AppendCompactSection(content, block, string.Empty);
                     break;
                 default:
@@ -52,9 +65,21 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
         }
 
         var sources = RenderSources(document);
+        var eyebrow = kind switch
+        {
+            "financeReport" => "ArzlyAI · Receipt Intelligence",
+            "actionPlan" => "ArzlyAI · Action Plan",
+            _ => "ArzlyAI · Smart Buy"
+        };
+        var dateLabel = kind switch
+        {
+            "financeReport" => "Report snapshot",
+            "actionPlan" => "Plan snapshot",
+            _ => "Research snapshot"
+        };
         var date = string.IsNullOrWhiteSpace(generatedAt)
             ? string.Empty
-            : $"<div class=\"date\">Research snapshot · {Encode(generatedAt)}</div>";
+            : $"<div class=\"date\">{dateLabel} · {Encode(generatedAt)}</div>";
 
         return $$$"""
 <!doctype html>
@@ -81,7 +106,7 @@ public sealed class ArzlyReportHtmlRenderer : IWorkflowResultRenderer
   </style>
 </head>
 <body><a class="skip" href="#decision">Skip to decision</a><main>
-  <header class="masthead"><div class="eyebrow">ArzlyAI · Smart Buy</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
+  <header class="masthead"><div class="eyebrow">{{{eyebrow}}}</div><h1>{{{Encode(title)}}}</h1><div class="lead">{{{Encode(summary)}}}</div>{{{date}}}</header>
   <div id="decision">{{{content}}}</div>{{{sources}}}
 </main></body>
 </html>

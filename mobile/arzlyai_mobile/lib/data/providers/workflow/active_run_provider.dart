@@ -23,11 +23,10 @@ import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 import 'package:arzlyai_mobile/domain/entities/provider/provider_model.dart';
 import 'package:arzlyai_mobile/data/providers/selection/selected_run_id_provider.dart';
 import 'package:arzlyai_mobile/data/providers/temp/run_config_temp.dart';
-import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/providers/models/provider_models_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/provider/provider_model_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/workflow/schedule_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/workflow/workflow_repository.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run.dart';
 import 'package:arzlyai_mobile/domain/entities/workflow/workflow_run_support.dart';
@@ -92,7 +91,7 @@ class ActiveRun extends _$ActiveRun {
       final startKeys = details.workflowStartCredentialKeys(
         overrideProviders: overrides.map((item) => item.provider ?? ''),
       );
-      final startCredentials = await credentialRepo.readForEnvelopeKeys(
+      final startCredentials = await credentialRepo.readForEnvelopeKeysWithConnectors(
         startKeys,
       );
       final missingStart = credentialRepo.missingEnvelopeKeys(
@@ -497,10 +496,12 @@ class ActiveRun extends _$ActiveRun {
       throw StateError('Preset details are required');
     }
     final overrideProviders = await _overrideProvidersForRun(current);
+    final workflowInputs = await _workflowInputsForRun(current);
     final keys = details.approvalCredentialKeys(
       run: current,
       decision: decision,
       overrideProvidersByAgent: overrideProviders,
+      workflowInputs: workflowInputs,
     );
     if (keys.isEmpty) {
       return SubmitApprovalRequest(
@@ -508,20 +509,7 @@ class ActiveRun extends _$ActiveRun {
         editedContent: editedContent,
       );
     }
-    final credentials = await credentialRepo.readForEnvelopeKeys(keys);
-    final approvalIndex = current.waitingApprovalIndex();
-    if (decision == ApprovalDecision.accept &&
-        approvalIndex != null &&
-        current.hasRemainingIntegrationAfterApproval(approvalIndex)) {
-      final linkedIn = await ref
-          .read(connectorCredentialRepositoryProvider)
-          .readEnvelopeValues(ConnectorKeys.linkedin);
-      for (final entry in linkedIn.entries) {
-        if (entry.value.trim().isNotEmpty) {
-          credentials[entry.key] = entry.value;
-        }
-      }
-    }
+    final credentials = await credentialRepo.readForEnvelopeKeysWithConnectors(keys);
     final missing = credentialRepo.missingEnvelopeKeys(keys, credentials);
     if (missing.isNotEmpty) {
       throw StateError('Missing credentials: ${missing.join(', ')}');
@@ -534,6 +522,25 @@ class ActiveRun extends _$ActiveRun {
       editedContent: editedContent,
       credentials: envelope,
     );
+  }
+
+  Future<Map<String, String>> _workflowInputsForRun(WorkflowRun run) async {
+    var localWorkflowId = run.localWorkflowId?.trim();
+    if (localWorkflowId == null || localWorkflowId.isEmpty) {
+      final persisted = await ref
+          .read(workflowRepositoryProvider)
+          .getLocalRun(run.runId);
+      localWorkflowId = persisted?.localWorkflowId?.trim();
+    }
+    if (localWorkflowId != null && localWorkflowId.isNotEmpty) {
+      final configuration = await ref
+          .read(scheduleRepositoryProvider)
+          .getConfiguration(localWorkflowId);
+      if (configuration != null && configuration.inputs.isNotEmpty) {
+        return configuration.inputs;
+      }
+    }
+    return Map<String, String>.from(ref.read(runConfigTempProvider).inputs);
   }
 
   Future<Map<String, String>> _overrideProvidersForRun(WorkflowRun run) async {

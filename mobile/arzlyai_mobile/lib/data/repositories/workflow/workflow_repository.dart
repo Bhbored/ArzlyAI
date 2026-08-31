@@ -7,6 +7,7 @@ import 'package:arzlyai_mobile/core/enums/workflow_node_status.dart';
 import 'package:arzlyai_mobile/core/enums/workflow_run_status.dart';
 import 'package:arzlyai_mobile/core/exceptions/api_exception.dart';
 import 'package:arzlyai_mobile/core/workflow/workflow_reconciliation.dart';
+import 'package:arzlyai_mobile/core/workflow/workflow_run_privacy.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/workflow/workflow_run_response.dart';
 import 'package:arzlyai_mobile/core/network/services/workflow/workflow_service.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
@@ -265,42 +266,45 @@ class WorkflowRepository {
 
   Future<void> _upsertRun(WorkflowRun run) async {
     final now = run.updatedAtUtc ?? DateTime.now().toUtc();
+    final persisted = stripPrivateWorkflowRunForPersistence(run);
     await _db
         .into(_db.workflowRuns)
         .insertOnConflictUpdate(
           WorkflowRunsCompanion.insert(
-            runId: run.runId,
-            localWorkflowId: run.localWorkflowId ?? '',
-            presetKey: run.presetKey,
-            status: run.status.wireValue,
+            runId: persisted.runId,
+            localWorkflowId: persisted.localWorkflowId ?? '',
+            presetKey: persisted.presetKey,
+            status: persisted.status.wireValue,
             approvalSnapshotJson: Value(
-              run.approval == null
+              persisted.approval == null
                   ? null
                   : jsonEncode({
-                      'originalContent': run.approval!.originalContent,
-                      'currentContent': run.approval!.currentContent,
-                      'wasEdited': run.approval!.wasEdited,
+                      'originalContent': persisted.approval!.originalContent,
+                      'currentContent': persisted.approval!.currentContent,
+                      'wasEdited': persisted.approval!.wasEdited,
                     }),
             ),
-            finalResponse: Value(run.finalResponse),
+            finalResponse: Value(persisted.finalResponse),
             resultDocumentJson: Value(
-              run.report == null ? null : _reportMapper.toJsonString(run.report!),
+              persisted.report == null
+                  ? null
+                  : _reportMapper.toJsonString(persisted.report!),
             ),
-            resultContractKey: Value(run.resultContract?.key),
-            resultContractVersion: Value(run.resultContract?.version),
-            renderedResultMediaType: Value(run.renderedResult?.mediaType),
-            renderedResultContent: Value(run.renderedResult?.content),
-            createdAtUtc: run.createdAtUtc ?? now,
+            resultContractKey: Value(persisted.resultContract?.key),
+            resultContractVersion: Value(persisted.resultContract?.version),
+            renderedResultMediaType: Value(persisted.renderedResult?.mediaType),
+            renderedResultContent: Value(persisted.renderedResult?.content),
+            createdAtUtc: persisted.createdAtUtc ?? now,
             updatedAtUtc: now,
-            expiryUtc: Value(run.expiryUtc),
+            expiryUtc: Value(persisted.expiryUtc),
           ),
         );
-    for (final node in run.nodes) {
+    for (final node in persisted.nodes) {
       await _db
           .into(_db.workflowNodeRuns)
           .insertOnConflictUpdate(
             WorkflowNodeRunsCompanion.insert(
-              runId: run.runId,
+              runId: persisted.runId,
               nodeId: node.nodeId,
               nodeKey: node.nodeKey,
               displayName: node.displayName,

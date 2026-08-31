@@ -22,6 +22,16 @@ class BrandIcon extends StatelessWidget {
     );
   }
 
+  factory BrandIcon.google({double size = 40, Key? key}) {
+    return BrandIcon._(
+      key: key,
+      assetPath: 'assets/icons/connectors/google.svg',
+      backgroundColor: const Color(0xFFFFFFFF),
+      monochrome: false,
+      size: size,
+    );
+  }
+
   factory BrandIcon.linkedin({double size = 40, Key? key}) {
     return BrandIcon._(
       key: key,

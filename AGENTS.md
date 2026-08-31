@@ -56,6 +56,7 @@ A preset contains agents, Harness policies, workflow nodes/connections, and inte
 | --- | --- | --- |
 | `daily-linkedin-ai-post` | `generate-and-publish` | Writer -> review/edit -> passthrough publisher -> `linkedin.posts`. Publishes only approved text. |
 | `smart-purchase-decision` | `confirm-and-recommend` | Brief -> confirmation -> web search -> recommendation -> review. |
+| `brain-dump-to-action` | `compile-and-sync` | Planner -> review -> optional Google Tasks/Calendar/Gmail sync. |
 
 ## Git and Security
 

@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_occurrence_calculator.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_outcomes.dart';
 import 'package:arzlyai_mobile/core/scheduling/schedule_task_keys.dart';
+import 'package:arzlyai_mobile/core/workflow/brain_dump_preset_privacy.dart';
 import 'package:arzlyai_mobile/core/workflow/receipt_preset_privacy.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/workflow_schedule.dart';
 import 'package:arzlyai_mobile/domain/entities/scheduling/schedule_recurrence.dart';
@@ -232,9 +233,13 @@ WHERE local_workflow_id = ?
     final instance = await (_db.select(
       _db.workflowInstances,
     )..where((row) => row.id.equals(localWorkflowId))).getSingleOrNull();
-    final persistedMessage = isReceiptWorkflowKey(instance?.presetKey ?? '')
-        ? 'Receipt workflow could not run in the background.'
-        : message;
+    final persistedMessage = switch (instance?.presetKey ?? '') {
+      final key when isReceiptWorkflowKey(key) =>
+        'Receipt workflow could not run in the background.',
+      final key when isBrainDumpWorkflowKey(key) =>
+        'Brain dump workflow could not run in the background.',
+      _ => message,
+    };
     await (_db.update(
       _db.schedules,
     )..where((t) => t.localWorkflowId.equals(localWorkflowId))).write(

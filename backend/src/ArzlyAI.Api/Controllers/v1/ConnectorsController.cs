@@ -72,7 +72,7 @@ public sealed class ConnectorsController(
         return deleted ? NoContent() : NotFound();
     }
 
-    [HttpGet("google/resources/spreadsheets")]
+    [HttpGet("google-sheets/resources/spreadsheets")]
     public async Task<ActionResult<IReadOnlyList<GoogleSpreadsheetResponse>>> ListGoogleSpreadsheets(
         [FromHeader(Name = "X-Device-Id")] string? deviceId,
         CancellationToken cancellationToken)
@@ -83,7 +83,7 @@ public sealed class ConnectorsController(
             cancellationToken));
     }
 
-    [HttpGet("google/resources/spreadsheets/{spreadsheetId}/tabs")]
+    [HttpGet("google-sheets/resources/spreadsheets/{spreadsheetId}/tabs")]
     public async Task<ActionResult<IReadOnlyList<GoogleSheetTabResponse>>> ListGoogleTabs(
         string spreadsheetId,
         [FromHeader(Name = "X-Device-Id")] string? deviceId,
@@ -96,7 +96,7 @@ public sealed class ConnectorsController(
             cancellationToken));
     }
 
-    [HttpGet("google/resources/spreadsheets/{spreadsheetId}/tabs/{tabTitle}/headers")]
+    [HttpGet("google-sheets/resources/spreadsheets/{spreadsheetId}/tabs/{tabTitle}/headers")]
     public async Task<ActionResult<GoogleSheetHeadersResponse>> ListGoogleHeaders(
         string spreadsheetId,
         string tabTitle,

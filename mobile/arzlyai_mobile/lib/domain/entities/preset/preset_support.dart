@@ -1,6 +1,7 @@
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_schema.dart';
 import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
+import 'package:arzlyai_mobile/core/workflow/brain_dump_preset_privacy.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
@@ -158,14 +159,39 @@ extension PresetDetailsSupport on PresetDetails {
         .where((provider) => provider.isNotEmpty)
         .map(providerCredentialEnvelopeKey)
         .toSet();
-    if (keys.isNotEmpty) return keys.toList(growable: false);
-    return envelopeKeysForPhase(CredentialPhase.workflowStart);
+    if (keys.isEmpty) {
+      keys.addAll(envelopeKeysForPhase(CredentialPhase.workflowStart));
+    }
+    keys.addAll(_startupIntegrationCredentialKeys());
+    return keys.toList(growable: false);
+  }
+
+  List<String> _startupIntegrationCredentialKeys() {
+    final ordered = [...workflow.nodes]
+      ..sort((a, b) => a.position.compareTo(b.position));
+    final keys = <String>{};
+    for (final node in ordered) {
+      if (node.type == 'HumanApproval') break;
+      if (node.type != 'Integration') continue;
+      final integration = integrations
+          .where((item) => item.key == node.key)
+          .firstOrNull;
+      if (integration == null) continue;
+      keys.addAll(
+        envelopeKeysForIntegration(
+          integration.key,
+          integration.credentialSchemaJson,
+        ),
+      );
+    }
+    return keys.toList(growable: false);
   }
 
   List<String> approvalCredentialKeys({
     required WorkflowRun run,
     required ApprovalDecision decision,
     Map<String, String> overrideProvidersByAgent = const {},
+    Map<String, String> workflowInputs = const {},
   }) {
     switch (decision) {
       case ApprovalDecision.reject:
@@ -184,6 +210,9 @@ extension PresetDetailsSupport on PresetDetails {
         final approvalIndex = run.waitingApprovalIndex();
         if (approvalIndex == null) return [];
         if (!run.hasRemainingWorkAfterApproval(approvalIndex)) return [];
+        if (isBrainDumpWorkflowKey(key)) {
+          return _brainDumpAcceptCredentialKeys(workflowInputs);
+        }
         if (run.hasRemainingIntegrationAfterApproval(approvalIndex)) {
           return envelopeKeysForPhase(CredentialPhase.approval);
         }
@@ -200,6 +229,28 @@ extension PresetDetailsSupport on PresetDetails {
           overrideProvidersByAgent,
         );
     }
+  }
+
+  List<String> _brainDumpAcceptCredentialKeys(Map<String, String> workflowInputs) {
+    if (!brainDumpSyncEnabled(workflowInputs)) return [];
+    final keys = <String>{};
+    for (final integration in integrations) {
+      final enabled = switch (integration.key) {
+        'google.tasks.create' => workflowInputs['syncTasks'] == 'true',
+        'google.calendar.create-events' =>
+          workflowInputs['syncCalendar'] == 'true',
+        'google.gmail.send-html' => workflowInputs['sendEmail'] == 'true',
+        _ => false,
+      };
+      if (!enabled) continue;
+      keys.addAll(
+        envelopeKeysForIntegration(
+          integration.key,
+          integration.credentialSchemaJson,
+        ),
+      );
+    }
+    return keys.toList(growable: false);
   }
 
   List<String> _modelCredentialKeysForAgents(

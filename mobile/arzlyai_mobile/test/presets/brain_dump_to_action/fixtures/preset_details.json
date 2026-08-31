@@ -1,0 +1,162 @@
+{
+  "id": "00000000-0000-0000-0003-000000000000",
+  "key": "brain-dump-to-action",
+  "name": "Brain Dump to Action",
+  "description": "Turn scattered thoughts into a structured action plan and optional Google sync.",
+  "version": 1,
+  "inputSchemaJson": "{\"version\":1,\"fields\":[{\"key\":\"brainDump\",\"label\":\"Brain dump\",\"type\":\"multilineText\",\"required\":true},{\"key\":\"asOfDate\",\"label\":\"Plan date\",\"type\":\"text\",\"required\":true},{\"key\":\"workingHoursStart\",\"label\":\"Work day starts\",\"type\":\"text\",\"required\":true},{\"key\":\"workingHoursEnd\",\"label\":\"Work day ends\",\"type\":\"text\",\"required\":true},{\"key\":\"syncTasks\",\"label\":\"Sync tasks\",\"type\":\"text\",\"required\":false},{\"key\":\"syncCalendar\",\"label\":\"Sync calendar\",\"type\":\"text\",\"required\":false},{\"key\":\"sendEmail\",\"label\":\"Send email\",\"type\":\"text\",\"required\":false}]}",
+  "resultContract": {
+    "key": "arzly.report",
+    "version": 4
+  },
+  "agents": [
+    {
+      "key": "plan-compiler",
+      "name": "Plan Compiler",
+      "systemPrompt": "Compile an action plan.",
+      "isSystemPromptEditable": false,
+      "modelConfiguration": {
+        "provider": "openai",
+        "selectedModel": "gpt-5-mini",
+        "availableModels": [
+          {
+            "provider": "openai",
+            "model": "gpt-5-mini",
+            "displayName": "GPT-5 mini"
+          }
+        ],
+        "isModelEditable": true,
+        "temperature": 0.3,
+        "minimumTemperature": 0.0,
+        "maximumTemperature": 1.0,
+        "isTemperatureEditable": true
+      },
+      "harness": {
+        "planningEnabled": false,
+        "todoTrackingEnabled": false,
+        "contextCompactionEnabled": true,
+        "requiresToolApproval": false,
+        "maximumIterations": 3,
+        "webSearchEnabled": false
+      }
+    },
+    {
+      "key": "plan-result",
+      "name": "Action Plan",
+      "systemPrompt": "Passthrough.",
+      "isSystemPromptEditable": false,
+      "modelConfiguration": {
+        "provider": "openai",
+        "selectedModel": "gpt-5-mini",
+        "availableModels": [],
+        "isModelEditable": false,
+        "temperature": 0.0,
+        "minimumTemperature": 0.0,
+        "maximumTemperature": 0.0,
+        "isTemperatureEditable": false
+      },
+      "harness": {
+        "planningEnabled": false,
+        "todoTrackingEnabled": false,
+        "contextCompactionEnabled": false,
+        "requiresToolApproval": false,
+        "maximumIterations": 1,
+        "webSearchEnabled": false
+      }
+    }
+  ],
+  "workflow": {
+    "key": "compile-and-sync",
+    "nodes": [
+      {
+        "id": "00000000-0000-0000-0003-000000000011",
+        "key": "plan-compiler",
+        "displayName": "Plan Compiler",
+        "type": "Agent",
+        "position": 1,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000012",
+        "key": "review-plan",
+        "displayName": "Review plan",
+        "type": "HumanApproval",
+        "position": 2,
+        "requiresHumanApproval": true,
+        "configurationJson": "{\"acceptLabel\":\"Approve and sync\",\"editLabel\":\"Revise plan\",\"rejectLabel\":\"Discard\"}",
+        "resultContract": {
+          "key": "arzly.report",
+          "version": 4
+        }
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000013",
+        "key": "google.tasks.create",
+        "displayName": "Sync Google Tasks",
+        "type": "Integration",
+        "position": 3,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000014",
+        "key": "google.calendar.create-events",
+        "displayName": "Create calendar events",
+        "type": "Integration",
+        "position": 4,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000015",
+        "key": "google.gmail.send-html",
+        "displayName": "Email action plan",
+        "type": "Integration",
+        "position": 5,
+        "requiresHumanApproval": false
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000016",
+        "key": "plan-result",
+        "displayName": "Action Plan",
+        "type": "Agent",
+        "position": 6,
+        "requiresHumanApproval": false,
+        "resultContract": {
+          "key": "arzly.report",
+          "version": 4
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "00000000-0000-0000-0003-000000000020",
+        "sourceNodeId": "00000000-0000-0000-0003-000000000011",
+        "targetNodeId": "00000000-0000-0000-0003-000000000012"
+      },
+      {
+        "id": "00000000-0000-0000-0003-000000000021",
+        "sourceNodeId": "00000000-0000-0000-0003-000000000012",
+        "targetNodeId": "00000000-0000-0000-0003-000000000013"
+      }
+    ]
+  },
+  "integrations": [
+    {
+      "key": "google.tasks.create",
+      "name": "Google Tasks Create",
+      "description": "Create tasks from an approved action plan.",
+      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\",\"google.email\"]}"
+    },
+    {
+      "key": "google.calendar.create-events",
+      "name": "Google Calendar Events",
+      "description": "Create calendar events from an approved action plan.",
+      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\",\"google.email\"]}"
+    },
+    {
+      "key": "google.gmail.send-html",
+      "name": "Gmail HTML",
+      "description": "Send an HTML action plan with Gmail.",
+      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\",\"google.email\"]}"
+    }
+  ]
+}

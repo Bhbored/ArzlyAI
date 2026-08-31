@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
@@ -33,7 +34,7 @@ class ConnectorCredentialRepository {
 
   Future<Map<String, String>> readEnvelopeValues(String connectorKey) async {
     final fields = await _readFields(connectorKey);
-    final integrationKey = _integrationKey(connectorKey);
+    final integrationKey = integrationKeyForConnector(connectorKey);
     return {
       for (final field in _allFieldsFor(connectorKey))
         if (fields[field]?.trim().isNotEmpty ?? false)
@@ -111,20 +112,20 @@ class ConnectorCredentialRepository {
   List<String> _requiredFieldsFor(String connectorKey) {
     return switch (connectorKey) {
       ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-      ConnectorKeys.google => GoogleConnectorFields.required,
+      ConnectorKeys.googleSheets ||
+      ConnectorKeys.gmail ||
+      ConnectorKeys.googleTasks ||
+      ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.required,
       _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
     };
   }
 
   List<String> _allFieldsFor(String connectorKey) => switch (connectorKey) {
     ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-    ConnectorKeys.google => GoogleConnectorFields.all,
-    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
-  };
-
-  String _integrationKey(String connectorKey) => switch (connectorKey) {
-    ConnectorKeys.linkedin => 'linkedin.posts',
-    ConnectorKeys.google => 'google',
+    ConnectorKeys.googleSheets ||
+    ConnectorKeys.gmail ||
+    ConnectorKeys.googleTasks ||
+    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.all,
     _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
   };
 

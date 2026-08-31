@@ -1,8 +1,18 @@
 abstract final class ConnectorKeys {
   static const linkedin = 'linkedin';
-  static const google = 'google';
+  static const googleSheets = 'google-sheets';
+  static const gmail = 'gmail';
+  static const googleTasks = 'google-tasks';
+  static const googleCalendar = 'google-calendar';
 
-  static const all = [linkedin, google];
+  static const googleConnectors = [
+    googleSheets,
+    gmail,
+    googleTasks,
+    googleCalendar,
+  ];
+
+  static const all = [linkedin, ...googleConnectors];
 }
 
 abstract final class LinkedInConnectorFields {
@@ -12,7 +22,7 @@ abstract final class LinkedInConnectorFields {
   static const all = [accessToken, authorUrn];
 }
 
-abstract final class GoogleConnectorFields {
+abstract final class GoogleOAuthConnectorFields {
   static const accessToken = 'accessToken';
   static const email = 'email';
 

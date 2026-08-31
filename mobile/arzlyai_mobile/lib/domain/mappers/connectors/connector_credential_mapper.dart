@@ -1,31 +1,19 @@
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 
 class ConnectorCredentialMapper {
   const ConnectorCredentialMapper();
 
   static const linkedInIntegrationKey = 'linkedin.posts';
-  static const googleIntegrationKey = 'google';
 
   Map<String, String>? localFields(
     String connectorKey,
     Map<String, String> apiValues,
   ) {
-    final fieldNames = switch (connectorKey) {
-      ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-      ConnectorKeys.google => GoogleConnectorFields.all,
-      _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
-    };
-    final requiredFields = switch (connectorKey) {
-      ConnectorKeys.linkedin => LinkedInConnectorFields.all,
-      ConnectorKeys.google => GoogleConnectorFields.required,
-      _ => const <String>[],
-    };
-    final integrationKey = switch (connectorKey) {
-      ConnectorKeys.linkedin => linkedInIntegrationKey,
-      ConnectorKeys.google => googleIntegrationKey,
-      _ => connectorKey,
-    };
+    final fieldNames = _allFieldsFor(connectorKey);
+    final requiredFields = _requiredFieldsFor(connectorKey);
+    final integrationKey = integrationKeyForConnector(connectorKey);
     final fields = <String, String>{};
     for (final fieldName in fieldNames) {
       final envelopeKey = integrationFieldEnvelopeKey(
@@ -41,11 +29,24 @@ class ConnectorCredentialMapper {
     return fields;
   }
 
-  String integrationKey(String connectorKey) {
-    return switch (connectorKey) {
-      ConnectorKeys.linkedin => linkedInIntegrationKey,
-      ConnectorKeys.google => googleIntegrationKey,
-      _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
-    };
-  }
+  String integrationKey(String connectorKey) =>
+      integrationKeyForConnector(connectorKey);
+
+  List<String> _requiredFieldsFor(String connectorKey) => switch (connectorKey) {
+    ConnectorKeys.linkedin => LinkedInConnectorFields.all,
+    ConnectorKeys.googleSheets ||
+    ConnectorKeys.gmail ||
+    ConnectorKeys.googleTasks ||
+    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.required,
+    _ => const <String>[],
+  };
+
+  List<String> _allFieldsFor(String connectorKey) => switch (connectorKey) {
+    ConnectorKeys.linkedin => LinkedInConnectorFields.all,
+    ConnectorKeys.googleSheets ||
+    ConnectorKeys.gmail ||
+    ConnectorKeys.googleTasks ||
+    ConnectorKeys.googleCalendar => GoogleOAuthConnectorFields.all,
+    _ => throw ArgumentError('Unsupported connector key: $connectorKey'),
+  };
 }

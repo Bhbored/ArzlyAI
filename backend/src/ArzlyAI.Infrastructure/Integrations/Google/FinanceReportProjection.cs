@@ -41,11 +41,7 @@ internal static class FinanceReportProjection
         return rows;
     }
 
-    public static string ToHtml(string reportJson)
-    {
-        using var document = Parse(reportJson);
-        return new ArzlyReportHtmlRenderer().Render(document.RootElement);
-    }
+    public static string ToHtml(string reportJson) => ActionPlanProjection.ToHtml(reportJson);
 
     private static JsonDocument Parse(string reportJson)
     {

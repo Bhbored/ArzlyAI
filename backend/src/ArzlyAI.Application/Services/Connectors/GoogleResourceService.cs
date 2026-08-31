@@ -50,10 +50,11 @@ public sealed class GoogleResourceService(
         CancellationToken cancellationToken)
     {
         var credentials = await connectorBroker.GetCredentialsAsync(
-            "google",
+            "google-sheets",
             deviceId,
             cancellationToken);
         return credentials?.GetValueOrDefault("google.accessToken")
-            ?? throw new UnauthorizedAccessException("A connected Google account is required.");
+            ?? throw new UnauthorizedAccessException(
+                "A connected Google Sheets account is required.");
     }
 }

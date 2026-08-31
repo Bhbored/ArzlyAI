@@ -14,6 +14,14 @@ public sealed class NangoConnectorBroker(
     IOptions<NangoOptions> options,
     ILogger<NangoConnectorBroker> logger) : IConnectorBroker
 {
+    private static readonly HashSet<string> GoogleConnectorKeys = new(StringComparer.Ordinal)
+    {
+        "google-sheets",
+        "gmail",
+        "google-tasks",
+        "google-calendar"
+    };
+
     public async Task<ConnectorSessionResponse> CreateSessionAsync(
         string connectorKey,
         Guid deviceId,
@@ -60,7 +68,7 @@ public sealed class NangoConnectorBroker(
         var mapped = definition.Key switch
         {
             "linkedin" => await MapLinkedInAsync(credentials, cancellationToken),
-            "google" => MapGoogle(credentials),
+            var key when GoogleConnectorKeys.Contains(key) => MapGoogle(credentials),
             _ => throw new NotSupportedException(
                 $"Credential mapping is not implemented for '{definition.Key}'.")
         };
@@ -104,12 +112,15 @@ public sealed class NangoConnectorBroker(
         var integrationId = key switch
         {
             "linkedin" => options.Value.LinkedInIntegrationId,
-            "google" => options.Value.GoogleIntegrationId,
+            "google-sheets" => options.Value.GoogleSheetsIntegrationId,
+            "gmail" => options.Value.GmailIntegrationId,
+            "google-tasks" => options.Value.GoogleTasksIntegrationId,
+            "google-calendar" => options.Value.GoogleCalendarIntegrationId,
             _ => throw new KeyNotFoundException($"Connector '{connectorKey}' is not supported.")
         };
         if (string.IsNullOrWhiteSpace(integrationId))
             throw new InvalidOperationException(
-                $"Nango:{(key == "google" ? "Google" : "LinkedIn")}IntegrationId is not configured.");
+                $"Nango integration id is not configured for connector '{key}'.");
         return new ConnectorDefinition(key, integrationId);
     }
 

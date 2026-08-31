@@ -31,19 +31,19 @@ void main() {
     );
   });
 
-  test('localFields maps Google token and optional email', () {
+  test('localFields maps Google OAuth token and optional email', () {
     expect(
-      mapper.localFields(ConnectorKeys.google, {
+      mapper.localFields(ConnectorKeys.gmail, {
         'google.accessToken': 'google-token',
         'google.email': 'person@example.com',
       }),
       {
-        GoogleConnectorFields.accessToken: 'google-token',
-        GoogleConnectorFields.email: 'person@example.com',
+        GoogleOAuthConnectorFields.accessToken: 'google-token',
+        GoogleOAuthConnectorFields.email: 'person@example.com',
       },
     );
     expect(
-      mapper.localFields(ConnectorKeys.google, {
+      mapper.localFields(ConnectorKeys.googleTasks, {
         'google.email': 'person@example.com',
       }),
       isNull,

@@ -41,6 +41,13 @@ lib/ui/features/presets/
       review_screen.dart
       result_screen.dart
       execution_screen.dart               # test-only hub pattern
+    brain_dump_to_action/                 # Brain dump planner + Google sync
+      preset_key.dart
+      configure_run_screen.dart
+      execution_screen.dart
+      review_screen.dart
+      result_screen.dart
+      action_plan_report_view.dart
   configure/
     dynamic_preset_configure_screen.dart  # schema-driven configure (Smart Buy)
 
@@ -60,6 +67,7 @@ lib/data/repositories/
 
 test/presets/daily_linkedin_ai_post/      # tests + fixtures for LinkedIn
 test/presets/smart_purchase_decision/     # tests + fixtures for Smart Buy
+test/presets/brain_dump_to_action/        # tests + fixtures for Brain Dump
 test/fixtures/network/                    # shared DTO fixtures (not preset-specific)
 ```
 

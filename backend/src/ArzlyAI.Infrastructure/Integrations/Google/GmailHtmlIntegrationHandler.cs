@@ -19,7 +19,7 @@ public sealed class GmailHtmlIntegrationHandler(IGmailClient gmailClient) : IInt
             GoogleIntegrationValues.Required(inputs, "subject"),
             inputs.TryGetValue("reportJson", out var reportJson) &&
             !string.IsNullOrWhiteSpace(reportJson)
-                ? FinanceReportProjection.ToHtml(reportJson)
+                ? ActionPlanProjection.ToHtml(reportJson)
                 : GoogleIntegrationValues.Required(inputs, "html"),
             GoogleIntegrationValues.Required(credentials, "google.accessToken"),
             credentials.GetValueOrDefault("google.email"),

@@ -40,8 +40,13 @@ public sealed class NangoConnectorBrokerTests
         Assert.Equal("urn:li:person:member-123", result["linkedin.authorUrn"]);
     }
 
-    [Fact]
-    public async Task GetCredentialsAsync_WhenGoogleConnected_MapsGoogleEnvelopeKeys()
+    [Theory]
+    [InlineData("google-sheets")]
+    [InlineData("gmail")]
+    [InlineData("google-tasks")]
+    [InlineData("google-calendar")]
+    public async Task GetCredentialsAsync_WhenGoogleServiceConnected_MapsGoogleEnvelopeKeys(
+        string connectorKey)
     {
         var client = ConnectedClient();
         client.Credentials = new NangoOAuthCredentials(
@@ -51,7 +56,7 @@ public sealed class NangoConnectorBrokerTests
         var broker = CreateBroker(client);
 
         var result = await broker.GetCredentialsAsync(
-            "google",
+            connectorKey,
             Guid.NewGuid(),
             CancellationToken.None);
 
@@ -69,7 +74,7 @@ public sealed class NangoConnectorBrokerTests
         var broker = CreateBroker(client);
 
         var result = await broker.GetCredentialsAsync(
-            "google",
+            "gmail",
             Guid.NewGuid(),
             CancellationToken.None);
 
@@ -126,7 +131,10 @@ public sealed class NangoConnectorBrokerTests
         {
             ApiKey = "nango-test-key",
             LinkedInIntegrationId = "linkedin",
-            GoogleIntegrationId = "google"
+            GoogleSheetsIntegrationId = "google-sheets",
+            GmailIntegrationId = "gmail",
+            GoogleTasksIntegrationId = "google-tasks",
+            GoogleCalendarIntegrationId = "google-calendar"
         }),
         logger ?? new CapturingLogger<NangoConnectorBroker>());
 
