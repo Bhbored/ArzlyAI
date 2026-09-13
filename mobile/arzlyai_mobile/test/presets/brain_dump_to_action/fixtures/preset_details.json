@@ -144,13 +144,13 @@
       "key": "google.tasks.create",
       "name": "Google Tasks Create",
       "description": "Create tasks from an approved action plan.",
-      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\",\"google.email\"]}"
+      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\"]}"
     },
     {
       "key": "google.calendar.create-events",
       "name": "Google Calendar Events",
       "description": "Create calendar events from an approved action plan.",
-      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\",\"google.email\"]}"
+      "credentialSchemaJson": "{\"type\":\"oauth2AccessToken\",\"fields\":[\"google.accessToken\"]}"
     },
     {
       "key": "google.gmail.send-html",

@@ -7,7 +7,6 @@ using ArzlyAI.Application.Services.Workflows.Rendering;
 using ArzlyAI.Domain.Catalog;
 using ArzlyAI.Domain.Enums;
 using ArzlyAI.Domain.Presets;
-using ArzlyAI.Infrastructure.Persistence.Seeds;
 
 namespace ArzlyAI.Tests;
 
@@ -80,65 +79,6 @@ public sealed class ReceiptBackendTests
     }
 
     [Fact]
-    public void CreatePreset_UsesOnePublishedConfigurableGraph()
-    {
-        var provider = new ProviderDefinition
-        {
-            Id = Guid.NewGuid(),
-            Key = "openai",
-            DisplayName = "OpenAI"
-        };
-        var model = new ModelDefinition
-        {
-            Id = Guid.NewGuid(),
-            ProviderId = provider.Id,
-            Provider = provider,
-            Key = "gpt-5-mini",
-            DisplayName = "GPT-5 mini"
-        };
-        var integrations = new[] { "google.sheets.read", "google.sheets.report", "google.gmail.send-html" }
-            .Select((key, index) => new IntegrationDefinition
-            {
-                Id = Guid.Parse($"00000000-0000-0000-0000-{(index + 1).ToString().PadLeft(12, '0')}"),
-                Key = key,
-                DisplayName = key,
-                Description = key,
-                CredentialSchemaJson = "{}",
-                IsEnabled = true
-            }).ToDictionary(item => item.Key, StringComparer.Ordinal);
-
-        var preset = ReceiptPresetSeed.CreatePreset(model, integrations);
-
-        Assert.Equal(ReceiptPresetSeed.PresetKey, preset.Key);
-        Assert.Equal(7, ReceiptPresetSeed.LegacyPresetKeys.Length);
-        Assert.True(preset.IsPublished);
-        Assert.Equal(ReceiptPresetSeed.TargetVersion, preset.Version);
-        Assert.Equal(("arzly.report", 4), (preset.ResultContractKey, preset.ResultContractVersion));
-        Assert.Equal(6, preset.Workflow.Steps.Count);
-        Assert.Equal(5, preset.Workflow.Connections.Count);
-        Assert.Equal(3, preset.Integrations.Count);
-        var analysisStep = Assert.Single(preset.Workflow.Steps,
-            step => step.ReferenceKey == ReceiptAnalysisOperation.OperationKey);
-        Assert.Contains("$.inputs.analysisMode", analysisStep.InputMappingJson,
-            StringComparison.Ordinal);
-        Assert.Equal("receipt-report-result",
-            preset.Workflow.Steps.OrderBy(step => step.Position).Last().ReferenceKey);
-
-        using var schema = JsonDocument.Parse(preset.InputSchemaJson!);
-        Assert.Equal(2, schema.RootElement.GetProperty("version").GetInt32());
-        var modeField = schema.RootElement.GetProperty("fields").EnumerateArray()
-            .Single(field => field.GetProperty("key").GetString() == "analysisMode");
-        Assert.Equal("selectCards", modeField.GetProperty("type").GetString());
-        Assert.Equal(7, modeField.GetProperty("options").GetArrayLength());
-
-        var recreated = ReceiptPresetSeed.CreatePreset(model, integrations);
-        Assert.Equal(preset.Id, recreated.Id);
-        Assert.Equal(
-            preset.Workflow.Steps.OrderBy(step => step.Position).Select(step => step.Id),
-            recreated.Workflow.Steps.OrderBy(step => step.Position).Select(step => step.Id));
-    }
-
-    [Fact]
     public async Task IntegrationHandler_WhenDeliveryModePreview_SkipsBeforeCredentials()
     {
         var integration = new RecordingIntegration();
@@ -202,7 +142,7 @@ public sealed class ReceiptBackendTests
             Name = "Receipt",
             Description = "Receipt",
             Version = 1,
-            IsPublished = true
+            Status = PresetPublicationStatus.Published
         };
         var workflow = new WorkflowDefinition
         {

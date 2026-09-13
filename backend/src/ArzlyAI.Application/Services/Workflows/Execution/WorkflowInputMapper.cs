@@ -56,6 +56,18 @@ public sealed partial class WorkflowInputMapper : IWorkflowInputMapper
             return Required(run.Inputs, key, path);
         }
 
+        var nodeMatch = NodePath().Match(path);
+        if (nodeMatch.Success)
+        {
+            var nodeKey = nodeMatch.Groups[1].Value;
+            var sourceStep = plan.SingleOrDefault(candidate =>
+                string.Equals(candidate.Key, nodeKey, StringComparison.Ordinal));
+            if (sourceStep is null)
+                throw new ArgumentException($"Input mapping path '{path}' references a missing node.");
+            return ResolveNodeMember(path, nodeMatch.Groups[2].Value,
+                run.Nodes.Single(node => node.NodeId == sourceStep.Id), run);
+        }
+
         var match = StepPath().Match(path);
         if (!match.Success)
             throw new ArgumentException($"Input mapping path '{path}' is not supported.");
@@ -65,7 +77,15 @@ public sealed partial class WorkflowInputMapper : IWorkflowInputMapper
             throw new ArgumentException($"Input mapping path '{path}' references a missing step.");
 
         var source = run.Nodes.Single(node => node.NodeId == plan[index].Id);
-        var member = match.Groups[2].Value;
+        return ResolveNodeMember(path, match.Groups[2].Value, source, run);
+    }
+
+    private static string ResolveNodeMember(
+        string path,
+        string member,
+        WorkflowNodeRun source,
+        WorkflowRun run)
+    {
         if (member == "approvedOutput")
         {
             if (source.Type != WorkflowNodeType.HumanApproval)
@@ -91,4 +111,7 @@ public sealed partial class WorkflowInputMapper : IWorkflowInputMapper
 
     [GeneratedRegex(@"^\$\.steps\[(\d+)\]\.(output|approvedOutput)$", RegexOptions.CultureInvariant)]
     private static partial Regex StepPath();
+
+    [GeneratedRegex(@"^\$\.nodes\.([a-z0-9.-]+)\.(output|approvedOutput)$", RegexOptions.CultureInvariant)]
+    private static partial Regex NodePath();
 }

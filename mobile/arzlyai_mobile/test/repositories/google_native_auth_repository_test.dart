@@ -12,6 +12,7 @@ void main() {
     late GoogleNativeAuthRepository repository;
 
     setUp(() {
+      FakeGoogleNativeAuthAdapter.authorized.clear();
       adapter = FakeGoogleNativeAuthAdapter();
       repository = GoogleNativeAuthRepository(adapter);
     });
@@ -23,6 +24,18 @@ void main() {
 
       expect(repository.currentAccount?.email, 'person@example.com');
     });
+
+    test(
+      'restoreSilently_WhenInteractiveAccountExists_KeepsCurrentAccount',
+      () async {
+        final signedIn = await repository.ensureSignedIn();
+        adapter.account = null;
+
+        await repository.restoreSilently();
+
+        expect(repository.currentAccount, same(signedIn));
+      },
+    );
 
     test('authorizeConnector_WhenInteractiveRequested_GrantsScopes', () async {
       adapter.account = _account('person@example.com');
@@ -36,29 +49,76 @@ void main() {
       expect(await repository.isAuthorized(ConnectorKeys.googleSheets), isTrue);
     });
 
-    test('envelopeValuesForConnector_WhenGmailAuthorized_IncludesEmail', () async {
-      adapter.account = _account('sender@example.com');
-      adapter.grant(ConnectorKeys.gmail);
+    test(
+      'envelopeValuesForConnector_WhenGmailAuthorized_IncludesEmail',
+      () async {
+        adapter.account = _account('sender@example.com');
+        adapter.grant(ConnectorKeys.gmail);
 
-      final values = await repository.envelopeValuesForConnector(
-        ConnectorKeys.gmail,
-      );
+        final values = await repository.envelopeValuesForConnector(
+          ConnectorKeys.gmail,
+        );
 
-      expect(values['google.accessToken'], 'token-gmail.send');
-      expect(values['google.email'], 'sender@example.com');
-    });
+        expect(values['google.accessToken'], 'token-gmail.send');
+        expect(values['google.email'], 'sender@example.com');
+      },
+    );
 
-    test('envelopeValuesForConnector_WhenSilentAndMissingScopes_Throws', () async {
-      adapter.account = _account('person@example.com');
+    test(
+      'envelopeValuesForConnector_WhenSilentAndMissingScopes_Throws',
+      () async {
+        adapter.account = _account('person@example.com');
 
-      expect(
-        () => repository.envelopeValuesForConnector(
+        expect(
+          () => repository.envelopeValuesForConnector(
+            ConnectorKeys.googleTasks,
+            interactive: false,
+          ),
+          throwsA(isA<GoogleAuthorizationInteractionRequired>()),
+        );
+      },
+    );
+
+    test(
+      'envelopeValuesForConnectors_WhenMultipleNeeded_UsesScopeUnion',
+      () async {
+        adapter.account = _account('sender@example.com');
+
+        final values = await repository.envelopeValuesForConnectors([
           ConnectorKeys.googleTasks,
-          interactive: false,
-        ),
-        throwsA(isA<GoogleAuthorizationInteractionRequired>()),
-      );
-    });
+          ConnectorKeys.gmail,
+        ]);
+
+        expect(adapter.authorizationRequests, hasLength(1));
+        expect(
+          adapter.authorizationRequests.single,
+          containsAll([
+            ...GoogleAuthScopes.tasksScopes,
+            ...GoogleAuthScopes.gmailScopes,
+          ]),
+        );
+        expect(values['google.accessToken'], isNotEmpty);
+        expect(values['google.email'], 'sender@example.com');
+      },
+    );
+
+    test(
+      'envelopeValuesForConnectors_WhenTasksNeeded_DoesNotCheckSheets',
+      () async {
+        adapter.account = _account('person@example.com');
+        adapter.grant(ConnectorKeys.googleTasks);
+
+        await repository.envelopeValuesForConnectors([
+          ConnectorKeys.googleTasks,
+        ], interactive: false);
+
+        expect(adapter.authorizationChecks, hasLength(1));
+        expect(
+          adapter.authorizationChecks.single,
+          GoogleAuthScopes.tasksScopes,
+        );
+      },
+    );
 
     test('disconnect_WhenCalled_ClearsAccountAndScopes', () async {
       adapter.account = _account('person@example.com');
@@ -68,7 +128,10 @@ void main() {
 
       expect(adapter.disconnected, isTrue);
       expect(repository.currentAccount, isNull);
-      expect(await repository.isAuthorized(ConnectorKeys.googleSheets), isFalse);
+      expect(
+        await repository.isAuthorized(ConnectorKeys.googleSheets),
+        isFalse,
+      );
     });
   });
 }
@@ -129,6 +192,8 @@ final class FakeGoogleNativeAuthAdapter implements GoogleNativeAuthAdapter {
   GoogleSignInAccount? account;
   var disconnected = false;
   final authorizedScopes = <String>[];
+  final authorizationChecks = <List<String>>[];
+  final authorizationRequests = <List<String>>[];
 
   @override
   Future<void> initialize() async {}
@@ -150,6 +215,7 @@ final class FakeGoogleNativeAuthAdapter implements GoogleNativeAuthAdapter {
     GoogleSignInAccount account,
     List<String> scopes,
   ) {
+    authorizationChecks.add(List<String>.from(scopes));
     return account.authorizationClient
         .authorizationForScopes(scopes)
         .then((value) => value?.accessToken);
@@ -161,6 +227,7 @@ final class FakeGoogleNativeAuthAdapter implements GoogleNativeAuthAdapter {
     List<String> scopes,
   ) async {
     authorizedScopes.addAll(scopes);
+    authorizationRequests.add(List<String>.from(scopes));
     final authorization = await account.authorizationClient.authorizeScopes(
       scopes,
     );

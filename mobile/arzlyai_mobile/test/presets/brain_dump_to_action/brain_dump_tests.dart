@@ -31,14 +31,8 @@ PresetDetails brainDumpDetails() {
 
 void main() {
   test('configureRunScreenForPreset routes brain dump preset', () {
-    expect(
-      configureRunScreenForPreset(BrainDumpToActionPreset.key),
-      isNotNull,
-    );
-    expect(
-      executionScreenForPreset(BrainDumpToActionPreset.key),
-      isNotNull,
-    );
+    expect(configureRunScreenForPreset(BrainDumpToActionPreset.key), isNotNull);
+    expect(executionScreenForPreset(BrainDumpToActionPreset.key), isNotNull);
   });
 
   test('prepareBrainDumpRunConfig preview forces sync flags false', () {
@@ -84,7 +78,10 @@ void main() {
       },
     );
 
-    final inputs = buildScheduledBrainDumpInputs(config, details: brainDumpDetails());
+    final inputs = buildScheduledBrainDumpInputs(
+      config,
+      details: brainDumpDetails(),
+    );
 
     expect(inputs['syncTasks'], 'true');
     expect(inputs['syncCalendar'], 'false');
@@ -141,56 +138,74 @@ void main() {
     );
   });
 
-  test('approvalCredentialKeys accept with sync requests google credentials', () {
-    final details = brainDumpDetails();
-    final run = WorkflowRun(
-      runId: 'brain-dump-run',
-      presetKey: details.key,
-      status: WorkflowRunStatus.waitingForApproval,
-      nodes: [
-        const WorkflowNodeRun(
-          nodeId: '1',
-          nodeKey: 'plan-compiler',
-          displayName: 'Plan Compiler',
-          type: 'Agent',
-          status: WorkflowNodeStatus.completed,
-          isRunning: false,
-        ),
-        const WorkflowNodeRun(
-          nodeId: '2',
-          nodeKey: 'review-plan',
-          displayName: 'Review plan',
-          type: 'HumanApproval',
-          status: WorkflowNodeStatus.waitingForApproval,
-          isRunning: false,
-        ),
-        const WorkflowNodeRun(
-          nodeId: '3',
-          nodeKey: 'google.tasks.create',
-          displayName: 'Sync Google Tasks',
-          type: 'Integration',
-          status: WorkflowNodeStatus.idle,
-          isRunning: false,
-        ),
-      ],
-    );
+  test(
+    'approvalCredentialKeys accept with sync requests google credentials',
+    () {
+      final details = brainDumpDetails();
+      final run = WorkflowRun(
+        runId: 'brain-dump-run',
+        presetKey: details.key,
+        status: WorkflowRunStatus.waitingForApproval,
+        nodes: [
+          const WorkflowNodeRun(
+            nodeId: '1',
+            nodeKey: 'plan-compiler',
+            displayName: 'Plan Compiler',
+            type: 'Agent',
+            status: WorkflowNodeStatus.completed,
+            isRunning: false,
+          ),
+          const WorkflowNodeRun(
+            nodeId: '2',
+            nodeKey: 'review-plan',
+            displayName: 'Review plan',
+            type: 'HumanApproval',
+            status: WorkflowNodeStatus.waitingForApproval,
+            isRunning: false,
+          ),
+          const WorkflowNodeRun(
+            nodeId: '3',
+            nodeKey: 'google.tasks.create',
+            displayName: 'Sync Google Tasks',
+            type: 'Integration',
+            status: WorkflowNodeStatus.idle,
+            isRunning: false,
+          ),
+        ],
+      );
 
-    final keys = details.approvalCredentialKeys(
-      run: run,
-      decision: ApprovalDecision.accept,
-      workflowInputs: const {
-        'syncTasks': 'true',
-        'syncCalendar': 'false',
-        'sendEmail': 'false',
-      },
-    );
+      final keys = details.approvalCredentialKeys(
+        run: run,
+        decision: ApprovalDecision.accept,
+        workflowInputs: const {
+          'syncTasks': 'true',
+          'syncCalendar': 'false',
+          'sendEmail': 'false',
+        },
+      );
 
-    expect(
-      keys,
-      containsAll([
-        integrationFieldEnvelopeKey('google.tasks.create', 'google.accessToken'),
-        integrationFieldEnvelopeKey('google.tasks.create', 'google.email'),
-      ]),
-    );
-  });
+      expect(
+        keys,
+        contains(
+          integrationFieldEnvelopeKey(
+            'google.tasks.create',
+            'google.accessToken',
+          ),
+        ),
+      );
+      expect(keys, isNot(contains('google.email')));
+      expect(
+        details.approvalIntegrationKeys(
+          run: run,
+          decision: ApprovalDecision.accept,
+          workflowInputs: const {
+            'syncTasks': 'true',
+            'syncCalendar': 'false',
+            'sendEmail': 'false',
+          },
+        ),
+        ['google.tasks.create'],
+      );
+    },
+  );
 }

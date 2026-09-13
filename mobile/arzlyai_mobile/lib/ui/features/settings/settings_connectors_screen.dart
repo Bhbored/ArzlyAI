@@ -5,6 +5,8 @@ import 'package:arzlyai_mobile/core/constants/app_sizes.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/data/providers/connectors/connector_status_provider.dart';
+import 'package:arzlyai_mobile/data/providers/google/google_auth_provider.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_auth_cache.dart';
 import 'package:arzlyai_mobile/ui/features/settings/settings_google_account_screen.dart';
 import 'package:arzlyai_mobile/ui/features/settings/settings_linkedin_connector_screen.dart';
 import 'package:arzlyai_mobile/ui/features/settings/widgets/settings_grouped_list.dart';
@@ -17,9 +19,7 @@ class SettingsConnectorsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ShadTheme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Connectors', style: theme.textTheme.h4),
-      ),
+      appBar: AppBar(title: Text('Connectors', style: theme.textTheme.h4)),
       body: ListView(
         padding: EdgeInsets.all(context.paddingMedium),
         children: [
@@ -58,13 +58,9 @@ class _GoogleAccountRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sheets = ref.watch(connectorLocalStatusProvider(ConnectorKeys.googleSheets));
-    final gmail = ref.watch(connectorLocalStatusProvider(ConnectorKeys.gmail));
-    final tasks = ref.watch(connectorLocalStatusProvider(ConnectorKeys.googleTasks));
-    final calendar = ref.watch(
-      connectorLocalStatusProvider(ConnectorKeys.googleCalendar),
-    );
-    final subtitle = _googleSubtitle(sheets, gmail, tasks, calendar);
+    final auth = ref.watch(googleAuthProvider);
+    final cached = ref.watch(googleAuthCacheProvider);
+    final subtitle = _googleSubtitle(auth, cached);
     return SettingsListRow(
       leading: icon,
       title: 'Google account',
@@ -78,20 +74,27 @@ class _GoogleAccountRow extends ConsumerWidget {
   }
 
   static String _googleSubtitle(
-    AsyncValue<bool> sheets,
-    AsyncValue<bool> gmail,
-    AsyncValue<bool> tasks,
-    AsyncValue<bool> calendar,
+    GoogleAuthState auth,
+    AsyncValue<GoogleAuthCache?> cached,
   ) {
-    final values = [sheets, gmail, tasks, calendar];
-    if (values.any((value) => value.isLoading)) {
-      return 'Checking authorization…';
+    if (auth.requiresReconnect) return 'Reconnect required';
+    if (auth.isSignedIn) {
+      return _authorizedServicesSubtitle(auth.authorizedConnectors.length);
     }
-    final authorized = values.where((value) => value.value ?? false).length;
-    if (authorized == 0) return 'Not connected';
+    return cached.when(
+      data: (value) => value == null
+          ? 'Not connected'
+          : _authorizedServicesSubtitle(value.authorizedConnectors.length),
+      loading: () => 'Loading saved connection…',
+      error: (_, _) => 'Not connected',
+    );
+  }
+
+  static String _authorizedServicesSubtitle(int authorized) {
     if (authorized == ConnectorKeys.googleConnectors.length) {
       return 'All services authorized';
     }
+    if (authorized == 0) return 'Google account connected';
     return '$authorized of ${ConnectorKeys.googleConnectors.length} services authorized';
   }
 }
@@ -118,9 +121,9 @@ class _ConnectorRow extends ConsumerWidget {
         loading: () => 'Checking connection…',
         error: (_, _) => 'Not connected',
       ),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => screen),
-      ),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => screen)),
     );
   }
 }

@@ -7,4 +7,5 @@ public static class ApiRateLimitPolicies
     public const string WorkflowExecution = "workflow-execution";
     public const string SignalR = "signalr";
     public const string Connectors = "connectors";
+    public const string AdminAuthoring = "admin-authoring";
 }

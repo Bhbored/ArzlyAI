@@ -1,7 +1,8 @@
+import 'dart:convert';
+
 import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/credentials/credential_schema.dart';
 import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
-import 'package:arzlyai_mobile/core/workflow/brain_dump_preset_privacy.dart';
 import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/input_schema.dart';
 import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
@@ -160,6 +161,7 @@ extension PresetDetailsSupport on PresetDetails {
 
   List<String> workflowStartCredentialKeys({
     Iterable<String> overrideProviders = const [],
+    Map<String, String> workflowInputs = const {},
   }) {
     final keys = overrideProviders
         .where((provider) => provider.isNotEmpty)
@@ -168,19 +170,58 @@ extension PresetDetailsSupport on PresetDetails {
     if (keys.isEmpty) {
       keys.addAll(envelopeKeysForPhase(CredentialPhase.workflowStart));
     }
-    keys.addAll(_startupIntegrationCredentialKeys());
+    keys.addAll(
+      _integrationCredentialKeys(
+        workflowStartIntegrationKeys(workflowInputs: workflowInputs),
+      ),
+    );
     return keys.toList(growable: false);
   }
 
-  List<String> _startupIntegrationCredentialKeys() {
+  List<String> workflowStartIntegrationKeys({
+    Map<String, String> workflowInputs = const {},
+  }) {
     final ordered = [...workflow.nodes]
       ..sort((a, b) => a.position.compareTo(b.position));
-    final keys = <String>{};
+    final keys = <String>[];
     for (final node in ordered) {
       if (node.type == 'HumanApproval') break;
       if (node.type != 'Integration') continue;
+      if (_workflowNodeEnabled(node, workflowInputs)) {
+        keys.add(node.key);
+      }
+    }
+    return keys;
+  }
+
+  List<String> approvalIntegrationKeys({
+    required WorkflowRun run,
+    required ApprovalDecision decision,
+    Map<String, String> workflowInputs = const {},
+  }) {
+    if (decision != ApprovalDecision.accept) return [];
+    final approvalIndex = run.waitingApprovalIndex();
+    if (approvalIndex == null) return [];
+    final workflowNodesByKey = {
+      for (final node in workflow.nodes) node.key: node,
+    };
+    final keys = <String>[];
+    for (final runNode in run.nodes.skip(approvalIndex + 1)) {
+      if (runNode.type != 'Integration') continue;
+      final workflowNode = workflowNodesByKey[runNode.nodeKey];
+      if (workflowNode == null ||
+          _workflowNodeEnabled(workflowNode, workflowInputs)) {
+        keys.add(runNode.nodeKey);
+      }
+    }
+    return keys;
+  }
+
+  List<String> _integrationCredentialKeys(Iterable<String> integrationKeys) {
+    final keys = <String>{};
+    for (final integrationKey in integrationKeys) {
       final integration = integrations
-          .where((item) => item.key == node.key)
+          .where((item) => item.key == integrationKey)
           .firstOrNull;
       if (integration == null) continue;
       keys.addAll(
@@ -216,11 +257,14 @@ extension PresetDetailsSupport on PresetDetails {
         final approvalIndex = run.waitingApprovalIndex();
         if (approvalIndex == null) return [];
         if (!run.hasRemainingWorkAfterApproval(approvalIndex)) return [];
-        if (isBrainDumpWorkflowKey(key)) {
-          return _brainDumpAcceptCredentialKeys(workflowInputs);
-        }
         if (run.hasRemainingIntegrationAfterApproval(approvalIndex)) {
-          return envelopeKeysForPhase(CredentialPhase.approval);
+          return _integrationCredentialKeys(
+            approvalIntegrationKeys(
+              run: run,
+              decision: decision,
+              workflowInputs: workflowInputs,
+            ),
+          );
         }
         if (overrideProvidersByAgent.isNotEmpty) {
           return workflowStartCredentialKeys(
@@ -235,28 +279,6 @@ extension PresetDetailsSupport on PresetDetails {
           overrideProvidersByAgent,
         );
     }
-  }
-
-  List<String> _brainDumpAcceptCredentialKeys(Map<String, String> workflowInputs) {
-    if (!brainDumpSyncEnabled(workflowInputs)) return [];
-    final keys = <String>{};
-    for (final integration in integrations) {
-      final enabled = switch (integration.key) {
-        'google.tasks.create' => workflowInputs['syncTasks'] == 'true',
-        'google.calendar.create-events' =>
-          workflowInputs['syncCalendar'] == 'true',
-        'google.gmail.send-html' => workflowInputs['sendEmail'] == 'true',
-        _ => false,
-      };
-      if (!enabled) continue;
-      keys.addAll(
-        envelopeKeysForIntegration(
-          integration.key,
-          integration.credentialSchemaJson,
-        ),
-      );
-    }
-    return keys.toList(growable: false);
   }
 
   List<String> _modelCredentialKeysForAgents(
@@ -278,6 +300,26 @@ extension PresetDetailsSupport on PresetDetails {
     return keys.toList(growable: false);
   }
 
+  bool _workflowNodeEnabled(
+    WorkflowNode node,
+    Map<String, String> workflowInputs,
+  ) {
+    final configuration = node.configurationJson;
+    if (configuration == null || configuration.trim().isEmpty) return true;
+    try {
+      final decoded = jsonDecode(configuration);
+      if (decoded is! Map<String, dynamic>) return true;
+      final condition = decoded['when'];
+      if (condition is! Map<String, dynamic>) return true;
+      final input = condition['input'];
+      final equalsAny = condition['equalsAny'];
+      if (input is! String || equalsAny is! List<dynamic>) return true;
+      return equalsAny.whereType<String>().contains(workflowInputs[input]);
+    } on FormatException {
+      return true;
+    }
+  }
+
   String? resolveProviderForAgent({
     required String agentKey,
     required WorkflowRun run,
@@ -287,8 +329,11 @@ extension PresetDetailsSupport on PresetDetails {
     if (overrideProvider != null && overrideProvider.isNotEmpty) {
       return overrideProvider;
     }
-    final node = run.nodes.where((item) => item.nodeKey == agentKey).firstOrNull;
-    if (node?.effectiveProvider != null && node!.effectiveProvider!.isNotEmpty) {
+    final node = run.nodes
+        .where((item) => item.nodeKey == agentKey)
+        .firstOrNull;
+    if (node?.effectiveProvider != null &&
+        node!.effectiveProvider!.isNotEmpty) {
       return node.effectiveProvider;
     }
     final configurable = configurableWorkflowAgent();

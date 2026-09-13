@@ -8,10 +8,13 @@ using ArzlyAI.Application.Integrations;
 using ArzlyAI.Application.Mappers.Presets;
 using ArzlyAI.Application.Mappers.Workflows;
 using ArzlyAI.Application.Repositories;
+using ArzlyAI.Application.Repositories.Authoring;
 using ArzlyAI.Application.Repositories.Presets;
 using ArzlyAI.Application.Repositories.Workflows;
 using ArzlyAI.Application.Security;
 using ArzlyAI.Application.Services.Agents;
+using ArzlyAI.Application.Services.Admin;
+using ArzlyAI.Application.Services.Authoring;
 using ArzlyAI.Application.Services.Connectors;
 using ArzlyAI.Application.Services.Models;
 using ArzlyAI.Application.Services.Presets;
@@ -21,15 +24,22 @@ using ArzlyAI.Application.Services.Workflows.Execution;
 using ArzlyAI.Application.Services.Workflows.Operations;
 using ArzlyAI.Application.Services.Workflows.Rendering;
 using ArzlyAI.Infrastructure.Agents;
+using ArzlyAI.Infrastructure.Agents.Authoring;
 using ArzlyAI.Infrastructure.Health;
 using ArzlyAI.Infrastructure.Integrations.Google;
 using ArzlyAI.Infrastructure.Integrations.LinkedIn;
+using ArzlyAI.Infrastructure.Identity;
 using ArzlyAI.Infrastructure.Persistence;
 using ArzlyAI.Infrastructure.Persistence.Interceptors;
 using ArzlyAI.Infrastructure.Persistence.Repositories;
+using ArzlyAI.Infrastructure.Persistence.Repositories.Authoring;
 using ArzlyAI.Infrastructure.Persistence.Repositories.Presets;
 using ArzlyAI.Infrastructure.Persistence.Repositories.Workflows;
 using ArzlyAI.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using ArzlyAI.Infrastructure.Services.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.HttpLogging;
@@ -50,6 +60,8 @@ public static class DIContainer
         return services
             .RegisterApi()
             .RegisterApiVersioning()
+            .RegisterIdentity(configuration)
+            .RegisterJwtToken(configuration)
             .RegisterCors(configuration)
             .RegisterHttpLogging()
             .RegisterHealthAndRateLimiting(configuration)
@@ -68,6 +80,10 @@ public static class DIContainer
         await using var scope = app.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ArzlyDbContext>();
         await dbContext.InitializeAsync(cancellationToken);
+        await scope.ServiceProvider.GetRequiredService<CapabilityCatalogValidator>()
+            .ValidateAsync(cancellationToken);
+        await scope.ServiceProvider.GetRequiredService<AdminIdentitySeeder>()
+            .InitializeAsync(cancellationToken);
     }
 
     private static IServiceCollection RegisterApi(this IServiceCollection services)
@@ -149,6 +165,8 @@ public static class DIContainer
                 "SignalR", 600, 60);
             AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.Connectors,
                 "Connectors", 120, 60);
+            AddFixedWindowPolicy(options, configuration, ApiRateLimitPolicies.AdminAuthoring,
+                "AdminAuthoring", 60, 60);
         });
         return services;
     }
@@ -171,6 +189,7 @@ public static class DIContainer
                     })));
         services.AddSignalR(options => options.AddFilter<WorkflowHubRateLimitFilter>());
         services.AddSingleton<IWorkflowRealtimeNotifier, SignalRWorkflowRealtimeNotifier>();
+        services.AddSingleton<IAuthoringRealtimeNotifier, SignalRAuthoringRealtimeNotifier>();
         return services;
     }
 
@@ -192,7 +211,11 @@ public static class DIContainer
     private static IServiceCollection RegisterRepositories(this IServiceCollection services)
     {
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<CapabilityCatalogValidator>();
         services.AddScoped<IPresetRepository, PresetRepository>();
+        services.AddScoped<IPresetAuthoringRepository, PresetAuthoringRepository>();
+        services.AddScoped<ICapabilityCatalogRepository, CapabilityCatalogRepository>();
+        services.AddScoped<IPresetPublishingRepository, PresetPublishingRepository>();
         services.AddSingleton<IWorkflowRunRepository, InMemoryWorkflowRunRepository>();
         return services;
     }
@@ -205,6 +228,12 @@ public static class DIContainer
         services.AddSingleton<IWorkflowGraphPlanner, WorkflowGraphPlanner>();
         services.AddSingleton<IWorkflowInputMapper, WorkflowInputMapper>();
         services.AddScoped<IPresetService, PresetService>();
+        services.AddScoped<IPresetDraftValidator, PresetDraftValidator>();
+        services.AddScoped<IPresetAuthoringToolbox, PresetAuthoringToolbox>();
+        services.AddScoped<IAuthoringModelCatalogService, AuthoringModelCatalogService>();
+        services.AddScoped<IPresetPublisher, PresetPublisher>();
+        services.AddScoped<IPresetAuthoringService, PresetAuthoringService>();
+        services.AddScoped<IAdminPresetCatalogService, AdminPresetCatalogService>();
         services.AddScoped<IProviderCatalogService, ProviderCatalogService>();
         services.AddScoped<IProviderModelCatalogService, ProviderModelCatalogService>();
         services.AddScoped<IWorkflowNodeHandler, AgentWorkflowNodeHandler>();
@@ -212,6 +241,7 @@ public static class DIContainer
         services.AddScoped<IWorkflowNodeHandler, IntegrationWorkflowNodeHandler>();
         services.AddScoped<IWorkflowNodeHandler, OperationWorkflowNodeHandler>();
         services.AddSingleton<IWorkflowOperation, WeightedDecisionScoringOperation>();
+        services.AddSingleton<IWorkflowOperation, ReceiptAnalysisOperation>();
         services.AddSingleton<IWorkflowResultRenderer, ArzlyReportHtmlRenderer>();
         services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
         return services;
@@ -221,6 +251,15 @@ public static class DIContainer
     {
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICredentialEnvelopeProtector, EphemeralCredentialEnvelopeProtector>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IJwtService, JwtService>();
+        services.AddScoped<AdminIdentitySeeder>();
+        services.AddScoped<PresetAuthoringToolExecutor>();
+        services.AddScoped<IPresetAuthoringProviderAgent, OpenAiPresetAuthoringAgent>();
+        services.AddScoped<IPresetAuthoringProviderAgent, AnthropicPresetAuthoringAgent>();
+        services.AddScoped<IPresetAuthoringProviderAgent, GeminiPresetAuthoringAgent>();
+        services.AddScoped<IPresetAuthoringProviderAgent, DeepSeekPresetAuthoringAgent>();
+        services.AddScoped<IPresetAuthoringAgent, PresetAuthoringAgent>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
         services.AddSingleton<IAgentRuntimeResolver, AgentRuntimeResolver>();
         services.AddHttpClient<IProviderModelClient, OpenAiModelClient>(client =>
@@ -230,6 +269,12 @@ public static class DIContainer
         services.AddHttpClient<IProviderModelClient, GeminiModelClient>(client =>
             client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
         services.AddHttpClient<IProviderModelClient, DeepSeekModelClient>(client =>
+            client.BaseAddress = new Uri("https://api.deepseek.com/"));
+        services.AddHttpClient<AnthropicPresetAuthoringAgent>(client =>
+            client.BaseAddress = new Uri("https://api.anthropic.com/"));
+        services.AddHttpClient<GeminiPresetAuthoringAgent>(client =>
+            client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/"));
+        services.AddHttpClient<DeepSeekPresetAuthoringAgent>(client =>
             client.BaseAddress = new Uri("https://api.deepseek.com/"));
         services.AddHttpClient<IAgentRuntime, AnthropicAgentRuntime>(client =>
             client.BaseAddress = new Uri("https://api.anthropic.com/"));
@@ -244,6 +289,67 @@ public static class DIContainer
         services.AddScoped<IGoogleResourceService, GoogleResourceService>();
         return services;
     }
+
+    private static IServiceCollection RegisterIdentity(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddOptions<AdminSeedOptions>()
+            .Bind(configuration.GetSection(AdminSeedOptions.SectionName));
+        services.AddOptions<PresetAuthoringOptions>()
+            .Bind(configuration.GetSection(PresetAuthoringOptions.SectionName));
+        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                options.Password.RequiredLength = 12;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            })
+            .AddEntityFrameworkStores<ArzlyDbContext>()
+            .AddDefaultTokenProviders();
+        return services;
+    }
+
+    private static IServiceCollection RegisterJwtToken(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = RequiredConfiguration(configuration, "Jwt:Issuer"),
+                    ValidateAudience = true,
+                    ValidAudience = RequiredConfiguration(configuration, "Jwt:Audience"),
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(RequiredConfiguration(configuration, "Jwt:Key")))
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var token = context.Request.Query["access_token"];
+                        if (!string.IsNullOrWhiteSpace(token) &&
+                            context.HttpContext.Request.Path.StartsWithSegments("/api/v1/hubs/admin-authoring"))
+                            context.Token = token;
+                        return Task.CompletedTask;
+                    },
+                };
+            });
+        services.AddAuthorization();
+        return services;
+    }
+
+    private static string RequiredConfiguration(IConfiguration configuration, string key) =>
+        configuration[key] ?? throw new InvalidOperationException($"{key} must be configured.");
 
     private static IServiceCollection RegisterIntegrations(this IServiceCollection services)
     {

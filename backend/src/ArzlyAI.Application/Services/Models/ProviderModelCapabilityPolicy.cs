@@ -24,6 +24,16 @@ public sealed class ProviderModelCapabilityPolicy : IModelCapabilityPolicy
             _ => false
         };
 
+    public bool SupportsToolCalling(string provider, string model) =>
+        provider.ToLowerInvariant() switch
+        {
+            AiProviderKeys.OpenAi => OpenAiCapabilityRules.IsUsable(model),
+            AiProviderKeys.Anthropic => AnthropicCapabilityRules.IsUsable(model),
+            AiProviderKeys.Gemini => GeminiCapabilityRules.IsUsable(model),
+            AiProviderKeys.DeepSeek => DeepSeekCapabilityRules.IsUsable(model),
+            _ => false
+        };
+
     public bool SupportsWebSearch(string provider, string model) =>
         provider.ToLowerInvariant() switch
         {

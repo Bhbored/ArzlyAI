@@ -106,7 +106,7 @@ PresetDetails receiptTestDetails() {
         name: 'Google Sheets Read',
         description: 'Read a sheet.',
         credentialSchemaJson:
-            '{"type":"oauth2AccessToken","fields":["google.accessToken","google.email"]}',
+            '{"type":"oauth2AccessToken","fields":["google.accessToken"]}',
       ),
       IntegrationRequirement(
         key: 'google.gmail.send-html',
@@ -149,10 +149,7 @@ void main() {
     for (final item in fixture.cast<Map<String, dynamic>>()) {
       final option = schema.analysisModeOption(item['value'] as String);
       expect(option, isNotNull);
-      expect(
-        option!.requiresFields.contains('budget'),
-        item['requiresBudget'],
-      );
+      expect(option!.requiresFields.contains('budget'), item['requiresBudget']);
       expect(
         option.requiresFields.contains('taxRate'),
         item['requiresTaxRate'],
@@ -175,102 +172,110 @@ void main() {
     }
   });
 
-  test('ReceiptConfig_WhenEachAnalysisModePrepared_ValidatesRequiredFields', () {
-    final schema = _schema();
-    final modes = schema.analysisModeOptions;
-    expect(modes, hasLength(7));
+  test(
+    'ReceiptConfig_WhenEachAnalysisModePrepared_ValidatesRequiredFields',
+    () {
+      final schema = _schema();
+      final modes = schema.analysisModeOptions;
+      expect(modes, hasLength(7));
 
-    for (final option in modes) {
-      final inputs = <String, String>{
-        'analysisMode': option.value,
-        'range': 'A:D',
-        'asOfDate': '2026-08-30',
-        'currencyCode': 'USD',
-        'deliveryMode': 'preview',
-      };
-      if (option.requiresFields.contains('budget')) {
-        inputs['budget'] = '100';
-      }
-      if (option.requiresFields.contains('taxRate')) {
-        inputs['taxRate'] = '0.2';
-      }
-      if (option.requiresFields.contains('category')) {
-        inputs['category'] = 'Food';
-      }
+      for (final option in modes) {
+        final inputs = <String, String>{
+          'analysisMode': option.value,
+          'range': 'A:D',
+          'asOfDate': '2026-08-30',
+          'currencyCode': 'USD',
+          'deliveryMode': 'preview',
+        };
+        if (option.requiresFields.contains('budget')) {
+          inputs['budget'] = '100';
+        }
+        if (option.requiresFields.contains('taxRate')) {
+          inputs['taxRate'] = '0.2';
+        }
+        if (option.requiresFields.contains('category')) {
+          inputs['category'] = 'Food';
+        }
 
+        final result = prepareReceiptRunConfig(
+          config: RunConfigState(inputs: inputs),
+          selection: _selection(),
+          schema: schema,
+          details: receiptTestDetails(),
+        );
+
+        expect(result.error, isNull, reason: option.value);
+        expect(result.config!.inputs['analysisMode'], option.value);
+      }
+    },
+  );
+
+  test(
+    'ReceiptConfig_WhenWeeklyBudgetPrepared_IncludesAnalysisModeAndDelivery',
+    () {
+      final schema = _schema();
       final result = prepareReceiptRunConfig(
-        config: RunConfigState(inputs: inputs),
+        config: const RunConfigState(
+          inputs: {
+            'analysisMode': 'weekly-budget',
+            'range': 'A:D',
+            'asOfDate': '2026-08-30',
+            'currencyCode': 'usd',
+            'budget': '200',
+            'deliveryMode': 'both',
+            'reportTabTitle': 'Weekly Report',
+            'recipientEmail': 'user@example.com',
+          },
+        ),
         selection: _selection(),
         schema: schema,
         details: receiptTestDetails(),
       );
 
-      expect(result.error, isNull, reason: option.value);
-      expect(result.config!.inputs['analysisMode'], option.value);
-    }
-  });
+      expect(result.error, isNull);
+      expect(result.config!.inputs['analysisMode'], 'weekly-budget');
+      expect(result.config!.inputs['spreadsheetId'], 'sheet-1');
+      expect(result.config!.inputs['sourceRange'], "'August Receipts'!A:D");
+      expect(result.config!.inputs['deliveryMode'], 'both');
+      expect(result.config!.inputs['recipientEmail'], 'user@example.com');
+      expect(result.config!.inputs['currencyCode'], 'USD');
+      expect(result.config!.inputs.containsKey('taxRate'), isFalse);
+      expect(jsonDecode(result.config!.inputs['columnMappingJson']!), {
+        'date': 'Date',
+        'amount': 'Amount',
+        'category': 'Category',
+        'merchant': 'Vendor',
+      });
+    },
+  );
 
-  test('ReceiptConfig_WhenWeeklyBudgetPrepared_IncludesAnalysisModeAndDelivery',
-      () {
-    final schema = _schema();
-    final result = prepareReceiptRunConfig(
-      config: const RunConfigState(
-        inputs: {
-          'analysisMode': 'weekly-budget',
-          'range': 'A:D',
-          'asOfDate': '2026-08-30',
-          'currencyCode': 'usd',
-          'budget': '200',
-          'deliveryMode': 'both',
-          'reportTabTitle': 'Weekly Report',
-          'recipientEmail': 'user@example.com',
-        },
-      ),
-      selection: _selection(),
-      schema: schema,
-      details: receiptTestDetails(),
-    );
+  test(
+    'ReceiptConfig_WhenMonthlyModePrepared_StripsInactiveConditionalFields',
+    () {
+      final result = prepareReceiptRunConfig(
+        config: const RunConfigState(
+          inputs: {
+            'analysisMode': 'monthly-spending',
+            'range': 'A:D',
+            'asOfDate': '2026-08-30',
+            'currencyCode': 'USD',
+            'budget': '200',
+            'taxRate': '0.2',
+            'category': 'Food',
+            'deliveryMode': 'preview',
+          },
+        ),
+        selection: _selection(),
+        schema: _schema(),
+        details: receiptTestDetails(),
+      );
 
-    expect(result.error, isNull);
-    expect(result.config!.inputs['analysisMode'], 'weekly-budget');
-    expect(result.config!.inputs['spreadsheetId'], 'sheet-1');
-    expect(result.config!.inputs['sourceRange'], "'August Receipts'!A:D");
-    expect(result.config!.inputs['deliveryMode'], 'both');
-    expect(result.config!.inputs['recipientEmail'], 'user@example.com');
-    expect(result.config!.inputs['currencyCode'], 'USD');
-    expect(result.config!.inputs.containsKey('taxRate'), isFalse);
-    expect(jsonDecode(result.config!.inputs['columnMappingJson']!), {
-      'date': 'Date',
-      'amount': 'Amount',
-      'category': 'Category',
-      'merchant': 'Vendor',
-    });
-  });
-
-  test('ReceiptConfig_WhenMonthlyModePrepared_StripsInactiveConditionalFields', () {
-    final result = prepareReceiptRunConfig(
-      config: const RunConfigState(
-        inputs: {
-          'analysisMode': 'monthly-spending',
-          'range': 'A:D',
-          'asOfDate': '2026-08-30',
-          'currencyCode': 'USD',
-          'budget': '200',
-          'taxRate': '0.2',
-          'category': 'Food',
-          'deliveryMode': 'preview',
-        },
-      ),
-      selection: _selection(),
-      schema: _schema(),
-      details: receiptTestDetails(),
-    );
-
-    expect(result.error, isNull);
-    expect(result.config!.inputs.containsKey('budget'), isFalse);
-    expect(result.config!.inputs.containsKey('taxRate'), isFalse);
-    expect(result.config!.inputs.containsKey('category'), isFalse);
-  });
+      expect(result.error, isNull);
+      expect(result.config!.inputs.containsKey('budget'), isFalse);
+      expect(result.config!.inputs.containsKey('taxRate'), isFalse);
+      expect(result.config!.inputs.containsKey('category'), isFalse);
+    },
+  );
 
   test(
     'ReceiptConfig_WhenProviderOverrideSelected_PreservesProviderAndModel',
@@ -331,53 +336,56 @@ void main() {
     expect(resolved.inputs['analysisMode'], 'weekly-budget');
   });
 
-  test('ReceiptMigration_WhenLegacyInstanceExists_UpdatesPresetAndInputs',
-      () async {
-    final db = AppDatabase.forTesting(NativeDatabase.memory());
-    addTearDown(db.close);
-    final now = DateTime.utc(2026, 8, 31);
-    await db
-        .into(db.workflowInstances)
-        .insert(
-          WorkflowInstancesCompanion.insert(
-            id: 'legacy-instance',
-            presetKey: 'receipt-weekly-budget',
-            presetVersion: 1,
-            name: 'Weekly budget',
-            topic: 'Weekly budget',
-            createdAtUtc: now,
-            updatedAtUtc: now,
-          ),
-        );
-    await db
-        .into(db.schedules)
-        .insert(
-          SchedulesCompanion.insert(
-            localWorkflowId: 'legacy-instance',
-            localTime: '09:00',
-            timeZoneId: 'UTC',
-            enabled: const Value(true),
-            nextRunAtUtc: now,
-            recurrenceJson: const Value('{}'),
-            workflowInputsJson: const Value('{"spreadsheetId":"sheet-1"}'),
-            presetName: const Value('Weekly budget'),
-          ),
-        );
+  test(
+    'ReceiptMigration_WhenLegacyInstanceExists_UpdatesPresetAndInputs',
+    () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final now = DateTime.utc(2026, 8, 31);
+      await db
+          .into(db.workflowInstances)
+          .insert(
+            WorkflowInstancesCompanion.insert(
+              id: 'legacy-instance',
+              presetKey: 'receipt-weekly-budget',
+              presetVersion: 1,
+              name: 'Weekly budget',
+              topic: 'Weekly budget',
+              createdAtUtc: now,
+              updatedAtUtc: now,
+            ),
+          );
+      await db
+          .into(db.schedules)
+          .insert(
+            SchedulesCompanion.insert(
+              localWorkflowId: 'legacy-instance',
+              localTime: '09:00',
+              timeZoneId: 'UTC',
+              enabled: const Value(true),
+              nextRunAtUtc: now,
+              recurrenceJson: const Value('{}'),
+              workflowInputsJson: const Value('{"spreadsheetId":"sheet-1"}'),
+              presetName: const Value('Weekly budget'),
+            ),
+          );
 
-    await migrateLegacyReceiptWorkflows(db);
+      await migrateLegacyReceiptWorkflows(db);
 
-    final instance = await (db.select(
-      db.workflowInstances,
-    )..where((row) => row.id.equals('legacy-instance'))).getSingle();
-    expect(instance.presetKey, ReceiptIntelligencePreset.key);
+      final instance = await (db.select(
+        db.workflowInstances,
+      )..where((row) => row.id.equals('legacy-instance'))).getSingle();
+      expect(instance.presetKey, ReceiptIntelligencePreset.key);
 
-    final schedule = await (db.select(
-      db.schedules,
-    )..where((row) => row.localWorkflowId.equals('legacy-instance'))).getSingle();
-    final inputs =
-        jsonDecode(schedule.workflowInputsJson) as Map<String, dynamic>;
-    expect(inputs['analysisMode'], 'weekly-budget');
-  });
+      final schedule =
+          await (db.select(db.schedules)
+                ..where((row) => row.localWorkflowId.equals('legacy-instance')))
+              .getSingle();
+      final inputs =
+          jsonDecode(schedule.workflowInputsJson) as Map<String, dynamic>;
+      expect(inputs['analysisMode'], 'weekly-budget');
+    },
+  );
 
   test('ReceiptReport_WhenBackendHtmlPresent_UsesRenderedHtml', () {
     final html = File(

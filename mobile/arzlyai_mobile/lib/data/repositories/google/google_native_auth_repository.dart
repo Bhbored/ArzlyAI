@@ -1,7 +1,5 @@
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
-import 'package:arzlyai_mobile/core/credentials/credential_envelope_keys.dart';
 import 'package:arzlyai_mobile/core/google/google_auth_exceptions.dart';
 import 'package:arzlyai_mobile/core/google/google_auth_scopes.dart';
 import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_adapter.dart';
@@ -23,12 +21,14 @@ class GoogleNativeAuthRepository {
 
   Future<void> restoreSilently() async {
     await initialize();
+    if (_account != null) return;
     _account = await _adapter.attemptLightweightAuthentication();
   }
 
   Future<GoogleSignInAccount> ensureSignedIn({bool interactive = true}) async {
     await initialize();
-    final current = _account ?? await _adapter.attemptLightweightAuthentication();
+    final current =
+        _account ?? await _adapter.attemptLightweightAuthentication();
     if (current != null) {
       _account = current;
       return current;
@@ -41,7 +41,10 @@ class GoogleNativeAuthRepository {
     return account;
   }
 
-  Future<bool> isAuthorized(String connectorKey, {bool interactive = false}) async {
+  Future<bool> isAuthorized(
+    String connectorKey, {
+    bool interactive = false,
+  }) async {
     _validateGoogleConnector(connectorKey);
     await initialize();
     final account =
@@ -75,49 +78,38 @@ class GoogleNativeAuthRepository {
   Future<Map<String, String>> envelopeValuesForConnector(
     String connectorKey, {
     bool interactive = true,
+  }) {
+    return envelopeValuesForConnectors([
+      connectorKey,
+    ], interactive: interactive);
+  }
+
+  Future<Map<String, String>> envelopeValuesForConnectors(
+    Iterable<String> connectorKeys, {
+    bool interactive = true,
   }) async {
-    _validateGoogleConnector(connectorKey);
+    final connectors = connectorKeys.toSet();
+    for (final connectorKey in connectors) {
+      _validateGoogleConnector(connectorKey);
+    }
+    if (connectors.isEmpty) return {};
     final account = await ensureSignedIn(interactive: interactive);
-    final scopes = GoogleAuthScopes.scopesForConnector(connectorKey);
+    final scopes = connectors
+        .expand(GoogleAuthScopes.scopesForConnector)
+        .toSet()
+        .toList(growable: false);
     final accessToken = interactive
         ? await _resolveInteractiveToken(account, scopes)
         : await _resolveSilentToken(account, scopes);
-    final integrationKey = integrationKeyForConnector(connectorKey);
     final values = <String, String>{
-      integrationFieldEnvelopeKey(
-        integrationKey,
-        GoogleEnvelopeFields.accessToken,
-      ): accessToken,
+      'google.${GoogleEnvelopeFields.accessToken}': accessToken,
     };
-    if (GoogleAuthScopes.connectorRequiresEmail(connectorKey)) {
+    if (connectors.any(GoogleAuthScopes.connectorRequiresEmail)) {
       final email = _adapter.accountEmail(account)?.trim();
       if (email == null || email.isEmpty) {
         throw StateError('Google account email is required for Gmail.');
       }
-      values[integrationFieldEnvelopeKey(integrationKey, GoogleEnvelopeFields.email)] =
-          email;
-    }
-    return values;
-  }
-
-  Future<Map<String, String>> envelopeValuesForEnvelopeKeys(
-    List<String> envelopeKeys, {
-    bool interactive = true,
-  }) async {
-    final values = <String, String>{};
-    for (final connectorKey in ConnectorKeys.googleConnectors) {
-      final integrationKey = integrationKeyForConnector(connectorKey);
-      final requiredKeys = _envelopeKeysForConnector(integrationKey, connectorKey);
-      if (!requiredKeys.any(envelopeKeys.contains)) continue;
-      final connectorValues = await envelopeValuesForConnector(
-        connectorKey,
-        interactive: interactive,
-      );
-      for (final entry in connectorValues.entries) {
-        if (envelopeKeys.contains(entry.key)) {
-          values[entry.key] = entry.value;
-        }
-      }
+      values['google.${GoogleEnvelopeFields.email}'] = email;
     }
     return values;
   }
@@ -146,24 +138,6 @@ class GoogleNativeAuthRepository {
       throw const GoogleAuthorizationInteractionRequired();
     }
     return token;
-  }
-
-  List<String> _envelopeKeysForConnector(
-    String integrationKey,
-    String connectorKey,
-  ) {
-    final keys = <String>[
-      integrationFieldEnvelopeKey(
-        integrationKey,
-        GoogleEnvelopeFields.accessToken,
-      ),
-    ];
-    if (GoogleAuthScopes.connectorRequiresEmail(connectorKey)) {
-      keys.add(
-        integrationFieldEnvelopeKey(integrationKey, GoogleEnvelopeFields.email),
-      );
-    }
-    return keys;
   }
 
   void _validateGoogleConnector(String connectorKey) {

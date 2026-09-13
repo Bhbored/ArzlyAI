@@ -50,7 +50,7 @@ public sealed class PresetServiceTests
         var provider = new ProviderDefinition { Id = Guid.NewGuid(), Key = "openai", DisplayName = "OpenAI" };
         var model = new ModelDefinition { Id = Guid.NewGuid(), ProviderId = provider.Id, Key = modelKey, DisplayName = modelKey, Provider = provider };
         provider.Models.Add(model);
-        var preset = new PresetDefinition { Id = Guid.NewGuid(), Key = "preset", Name = "Preset", Description = "Description", Version = 1, IsPublished = true, UpdatedAtUtc = DateTimeOffset.UtcNow };
+        var preset = new PresetDefinition { Id = Guid.NewGuid(), Key = "preset", Name = "Preset", Description = "Description", Version = 1, Status = PresetPublicationStatus.Published, UpdatedAtUtc = DateTimeOffset.UtcNow };
         var agent = new AgentDefinition
         {
             Id = Guid.NewGuid(), PresetId = preset.Id, ModelId = model.Id, Key = "writer", Name = "Writer",

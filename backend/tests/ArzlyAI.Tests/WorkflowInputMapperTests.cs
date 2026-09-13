@@ -77,6 +77,20 @@ public sealed class WorkflowInputMapperTests
     }
 
     [Fact]
+    public void Map_WhenStableNodeKeyPathIsUsed_ResolvesOutput()
+    {
+        var source = Step(WorkflowNodeType.Agent, 0, key: "writer");
+        var target = Step(WorkflowNodeType.Integration, 1,
+            """{"content":"$.nodes.writer.output"}""", "publisher");
+        var run = Run(source, target);
+        run.Nodes[0].Output = "Stable mapped output";
+
+        var result = mapper.Map(target, [source, target], run);
+
+        Assert.Equal("Stable mapped output", result["content"]);
+    }
+
+    [Fact]
     public void Map_WhenPathUsesUnsupportedSyntax_ThrowsArgumentException()
     {
         var step = Step(WorkflowNodeType.Agent, 0, """{"value":"$.unknown.value"}""");
@@ -134,9 +148,11 @@ public sealed class WorkflowInputMapperTests
     private static WorkflowStepDefinition Step(
         WorkflowNodeType type,
         int position,
-        string inputMappingJson = "{}") => new()
+        string inputMappingJson = "{}",
+        string? key = null) => new()
         {
             Id = Guid.NewGuid(),
+            Key = key ?? $"node-{position}",
             Position = position,
             Type = type,
             ReferenceKey = $"node-{position}",

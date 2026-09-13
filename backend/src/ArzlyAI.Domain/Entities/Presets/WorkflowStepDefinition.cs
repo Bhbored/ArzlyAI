@@ -4,6 +4,7 @@ namespace ArzlyAI.Domain.Presets;
 public sealed class WorkflowStepDefinition : Base
 {
     public Guid WorkflowId { get; init; }
+    public string Key { get; init; } = string.Empty;
     public int Position { get; init; }
     public WorkflowNodeType Type { get; init; }
     public required string ReferenceKey { get; init; }

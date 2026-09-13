@@ -31,9 +31,13 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
 app.UseCors(DIContainer.CorsPolicyName);
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapHub<WorkflowHub>("/api/v1/hubs/workflows")
     .RequireRateLimiting(ApiRateLimitPolicies.SignalR);
+app.MapHub<AdminAuthoringHub>("/api/v1/hubs/admin-authoring")
+    .RequireRateLimiting(ApiRateLimitPolicies.AdminAuthoring);
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false

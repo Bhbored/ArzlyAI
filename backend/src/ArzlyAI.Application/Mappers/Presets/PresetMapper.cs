@@ -7,7 +7,8 @@ namespace ArzlyAI.Application.Mappers.Presets;
 public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetMapper
 {
     public PresetSummaryResponse ToSummaryResponse(PresetDefinition preset) =>
-        new(preset.Id, preset.Key, preset.Name, preset.Description, preset.Version);
+        new(preset.Id, preset.Key, preset.Name, preset.Description, preset.Version,
+            preset.Subtitle, ToBackgroundResponse(preset));
 
     public PresetDetailsResponse ToDetailsResponse(PresetDefinition preset) => new(
         preset.Id,
@@ -20,7 +21,7 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
             preset.Workflow.Key,
             preset.Workflow.Steps.OrderBy(step => step.Position).Select(step => new WorkflowNodeResponse(
                 step.Id,
-                step.ReferenceKey,
+                string.IsNullOrWhiteSpace(step.Key) ? step.ReferenceKey : step.Key,
                 step.DisplayName,
                 step.Type.ToString(),
                 step.Position,
@@ -37,11 +38,22 @@ public sealed class PresetMapper(IModelCapabilityPolicy capabilities) : IPresetM
             integration.Integration.Key,
             integration.Integration.DisplayName,
             integration.Integration.Description,
-            integration.Integration.CredentialSchemaJson)).ToList(),
+            integration.Integration.CredentialSchemaJson,
+            integration.Integration.Connector?.Key,
+            integration.Integration.RequiredOAuthScopesJson,
+            integration.Integration.RequiredApisJson,
+            integration.Integration.SupportsBackgroundExecution)).ToList(),
         preset.InputSchemaJson,
         preset.ResultContractKey is not null && preset.ResultContractVersion is not null
             ? new ResultContractResponse(preset.ResultContractKey, preset.ResultContractVersion.Value)
-            : null);
+            : null,
+        preset.Subtitle,
+        preset.DetailedDescription,
+        ToBackgroundResponse(preset));
+
+    private static BackgroundExecutionPolicyResponse ToBackgroundResponse(PresetDefinition preset) =>
+        new(preset.BackgroundExecutionMode.ToString(), preset.BackgroundExecutionRationale,
+            preset.AllowedTriggerTypesJson);
 
     private AgentResponse ToAgentResponse(AgentDefinition agent) => new(
         agent.Key,

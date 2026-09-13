@@ -4,8 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:arzlyai_mobile/core/enums/approval_decision.dart';
 import 'package:arzlyai_mobile/core/network/dto/request/workflow/submit_approval_request.dart';
-import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_session_response.dart';
-import 'package:arzlyai_mobile/core/network/dto/response/connectors/connector_status_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/models/provider_model_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_details_response.dart';
 import 'package:arzlyai_mobile/core/network/dto/response/preset/preset_summary_response.dart';
@@ -143,20 +141,6 @@ void main() {
     expect(descriptor.keyId, 'key-1');
     expect(descriptor.maximumLifetimeSeconds, 120);
     expect(descriptor.algorithm, contains('OAEP'));
-  });
-
-  test('connector session and status fixtures parse', () {
-    final session = ConnectorSessionResponse.fromJson(
-      _networkFixture('connector_session.json'),
-    );
-    expect(session.connectUrl, contains('accounts.google.com'));
-    expect(session.sessionToken, isNotEmpty);
-
-    final status = ConnectorStatusResponse.fromJson(
-      _networkFixture('connector_status.json'),
-    );
-    expect(status.connectorKey, 'linkedin');
-    expect(status.isConnected, isTrue);
   });
 
   test('openai model fixture parses supportsTemperature true and false', () {

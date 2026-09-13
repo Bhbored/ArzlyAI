@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:arzlyai_mobile/core/credentials/connector_integration_support.dart';
 import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
 import 'package:arzlyai_mobile/core/google/google_auth_exceptions.dart';
 import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_android.dart';
@@ -6,9 +7,6 @@ import 'package:arzlyai_mobile/data/providers/google/google_auth_provider.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/connector_credential_repository.dart';
 import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_repository.dart';
-import 'package:arzlyai_mobile/domain/entities/credentials/credential_requirement.dart';
-import 'package:arzlyai_mobile/domain/entities/preset/preset.dart';
-import 'package:arzlyai_mobile/domain/entities/preset/preset_support.dart';
 
 part 'credential_repository.g.dart';
 
@@ -29,11 +27,7 @@ CredentialRepository credentialRepository(Ref ref) {
 }
 
 class CredentialRepository {
-  CredentialRepository(
-    this._store,
-    this._connectors,
-    this._googleAuth,
-  );
+  CredentialRepository(this._store, this._connectors, this._googleAuth);
 
   final CredentialStore _store;
   final ConnectorCredentialRepository _connectors;
@@ -45,16 +39,24 @@ class CredentialRepository {
 
   Future<Map<String, String>> readForEnvelopeKeysWithConnectors(
     List<String> envelopeKeys, {
+    Iterable<String> integrationKeys = const [],
     bool interactive = true,
   }) async {
     final values = await readForEnvelopeKeys(envelopeKeys);
-    if (envelopeKeys.any((key) => key.startsWith('google.'))) {
+    final googleConnectors = connectorKeysForIntegrations(
+      integrationKeys,
+    ).where(ConnectorKeys.googleConnectors.contains);
+    if (googleConnectors.isNotEmpty) {
       try {
-        final googleValues = await _googleAuth.envelopeValuesForEnvelopeKeys(
-          envelopeKeys,
+        final googleValues = await _googleAuth.envelopeValuesForConnectors(
+          googleConnectors,
           interactive: interactive,
         );
-        values.addAll(googleValues);
+        for (final entry in googleValues.entries) {
+          if (envelopeKeys.contains(entry.key)) {
+            values[entry.key] = entry.value;
+          }
+        }
       } on GoogleAuthorizationInteractionRequired {
         if (!interactive) rethrow;
       }
@@ -68,18 +70,6 @@ class CredentialRepository {
       }
     }
     return values;
-  }
-
-  Future<Map<String, String>> readForPreset(
-    PresetDetails preset,
-    CredentialPhase phase, {
-    bool interactive = true,
-  }) async {
-    final envelopeKeys = preset.envelopeKeysForPhase(phase);
-    return readForEnvelopeKeysWithConnectors(
-      envelopeKeys,
-      interactive: interactive,
-    );
   }
 
   Future<void> saveDraftValues(Map<String, String> values) {

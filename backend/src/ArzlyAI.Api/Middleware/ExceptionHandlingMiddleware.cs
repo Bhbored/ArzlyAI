@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using ArzlyAI.Application.Services.Authoring;
 
 namespace ArzlyAI.Api.Middleware;
 
@@ -33,12 +34,18 @@ public sealed class ExceptionHandlingMiddleware(
 
             context.Response.Clear();
             context.Response.StatusCode = statusCode;
-            await context.Response.WriteAsJsonAsync(new
-            {
-                success = false,
-                message = environment.IsDevelopment() ? exception.Message : PublicMessage(statusCode),
-                correlationId = context.TraceIdentifier
-            }, context.RequestAborted);
+            var message = environment.IsDevelopment() ? exception.Message : PublicMessage(statusCode);
+            if (exception is PresetValidationException validationException)
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    success = false, message, validation = validationException.Validation,
+                    correlationId = context.TraceIdentifier
+                }, context.RequestAborted);
+            else
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    success = false, message, correlationId = context.TraceIdentifier
+                }, context.RequestAborted);
         }
     }
 
@@ -51,6 +58,7 @@ public sealed class ExceptionHandlingMiddleware(
         TimeoutException or OperationCanceledException => StatusCodes.Status408RequestTimeout,
         HttpRequestException => StatusCodes.Status502BadGateway,
         NotImplementedException => StatusCodes.Status501NotImplemented,
+        PresetValidationException => StatusCodes.Status422UnprocessableEntity,
         _ => StatusCodes.Status500InternalServerError
     };
 
@@ -61,6 +69,7 @@ public sealed class ExceptionHandlingMiddleware(
         StatusCodes.Status404NotFound => "The requested resource was not found.",
         StatusCodes.Status408RequestTimeout => "The request timed out.",
         StatusCodes.Status409Conflict => "The request conflicts with the current state.",
+        StatusCodes.Status422UnprocessableEntity => "The preset draft is not publishable.",
         StatusCodes.Status502BadGateway => "An upstream service failed.",
         _ => "An unexpected error occurred."
     };

@@ -5,4 +5,7 @@ public sealed record PresetDetailsResponse(
     WorkflowGraphResponse Workflow,
     IReadOnlyList<IntegrationRequirementResponse> Integrations,
     string? InputSchemaJson,
-    ResultContractResponse? ResultContract);
+    ResultContractResponse? ResultContract,
+    string? Subtitle = null,
+    string? DetailedDescription = null,
+    BackgroundExecutionPolicyResponse? BackgroundExecution = null);

@@ -30,6 +30,60 @@ public sealed class GoogleIntegrationTests
     }
 
     [Fact]
+    public async Task ListSpreadsheetsAsync_WhenDriveApiDisabled_ReturnsActionableError()
+    {
+        var handler = new RecordingHandler();
+        handler.Enqueue(HttpStatusCode.Forbidden,
+            """
+            {
+              "error": {
+                "code": 403,
+                "message": "Google Drive API is disabled for project 123.",
+                "details": [{ "reason": "SERVICE_DISABLED" }]
+              }
+            }
+            """);
+        var logger = new CapturingLogger<GoogleSheetsClient>();
+        var client = CreateSheetsClient(handler, logger);
+
+        var exception = await Assert.ThrowsAsync<GoogleApiException>(() =>
+            client.ListSpreadsheetsAsync(
+                "secret-google-token",
+                CancellationToken.None));
+
+        Assert.Equal("Google Drive API", exception.ApiName);
+        Assert.Equal("SERVICE_DISABLED", exception.Reason);
+        Assert.Contains("Enable the API", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("SERVICE_DISABLED", string.Join(' ', logger.Messages));
+        Assert.DoesNotContain("secret-google-token", string.Join(' ', logger.Messages));
+    }
+
+    [Fact]
+    public async Task ListSpreadsheetsAsync_WhenScopeMissing_RequestsReconnect()
+    {
+        var handler = new RecordingHandler();
+        handler.Enqueue(HttpStatusCode.Forbidden,
+            """
+            {
+              "error": {
+                "code": 403,
+                "message": "Request had insufficient authentication scopes.",
+                "errors": [{ "reason": "insufficientPermissions" }]
+              }
+            }
+            """);
+        var client = CreateSheetsClient(handler);
+
+        var exception = await Assert.ThrowsAsync<GoogleApiException>(() =>
+            client.ListSpreadsheetsAsync(
+                "secret-google-token",
+                CancellationToken.None));
+
+        Assert.Equal("insufficientPermissions", exception.Reason);
+        Assert.Contains("Reconnect", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ListHeadersAsync_WhenSheetContainsRows_ReturnsFirstRowOnly()
     {
         var handler = new RecordingHandler();
@@ -86,7 +140,7 @@ public sealed class GoogleIntegrationTests
             new[] { "private-report-body" }
         ];
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => client.WriteReportAsync(
+        await Assert.ThrowsAsync<GoogleApiException>(() => client.WriteReportAsync(
             "sheet-1",
             "Report",
             rows,

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:arzlyai_mobile/core/credentials/connector_keys.dart';
+import 'package:arzlyai_mobile/core/storage/secure_storage/secure_storage_android.dart';
+import 'package:arzlyai_mobile/data/repositories/credentials/credential_store.dart';
 import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_adapter.dart';
 import 'package:arzlyai_mobile/data/repositories/google/google_native_auth_repository.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_auth_cache.dart';
+import 'package:arzlyai_mobile/data/repositories/google/google_auth_state_store.dart';
 import 'package:arzlyai_mobile/data/repositories/google/google_sign_in_auth_adapter.dart';
 
 final googleNativeAuthAdapterProvider = Provider<GoogleNativeAuthAdapter>(
@@ -10,49 +12,73 @@ final googleNativeAuthAdapterProvider = Provider<GoogleNativeAuthAdapter>(
 );
 
 final googleNativeAuthRepositoryProvider = Provider<GoogleNativeAuthRepository>(
-  (ref) => GoogleNativeAuthRepository(ref.watch(googleNativeAuthAdapterProvider)),
+  (ref) =>
+      GoogleNativeAuthRepository(ref.watch(googleNativeAuthAdapterProvider)),
+);
+
+final googleAuthStateStoreProvider = Provider<GoogleAuthStateStore>(
+  (ref) => GoogleAuthStateStore(
+    CredentialStore(ref.watch(secureStorageAndroidProvider)),
+  ),
+);
+
+final googleAuthCacheProvider = FutureProvider<GoogleAuthCache?>(
+  (ref) => ref.watch(googleAuthStateStoreProvider).read(),
 );
 
 class GoogleAuthState {
   const GoogleAuthState({
-    this.account,
+    this.accountEmail,
+    this.accountDisplayName,
     this.authorizedConnectors = const {},
     this.isLoading = false,
     this.isBusy = false,
+    this.requiresReconnect = false,
     this.errorMessage,
   });
 
   const GoogleAuthState.loading()
-      : account = null,
-        authorizedConnectors = const {},
-        isLoading = true,
-        isBusy = false,
-        errorMessage = null;
+    : accountEmail = null,
+      accountDisplayName = null,
+      authorizedConnectors = const {},
+      isLoading = true,
+      isBusy = false,
+      requiresReconnect = false,
+      errorMessage = null;
 
-  final GoogleSignInAccount? account;
+  final String? accountEmail;
+  final String? accountDisplayName;
   final Set<String> authorizedConnectors;
   final bool isLoading;
   final bool isBusy;
+  final bool requiresReconnect;
   final String? errorMessage;
 
-  bool get isSignedIn => account != null;
+  bool get isSignedIn => accountEmail?.isNotEmpty ?? false;
+
+  String get accountLabel =>
+      accountEmail ?? accountDisplayName ?? 'Not signed in';
 
   bool isConnectorAuthorized(String connectorKey) =>
       authorizedConnectors.contains(connectorKey);
 
   GoogleAuthState copyWith({
-    GoogleSignInAccount? account,
+    String? accountEmail,
+    String? accountDisplayName,
     Set<String>? authorizedConnectors,
     bool? isLoading,
     bool? isBusy,
+    bool? requiresReconnect,
     String? errorMessage,
     bool clearError = false,
   }) {
     return GoogleAuthState(
-      account: account ?? this.account,
+      accountEmail: accountEmail ?? this.accountEmail,
+      accountDisplayName: accountDisplayName ?? this.accountDisplayName,
       authorizedConnectors: authorizedConnectors ?? this.authorizedConnectors,
       isLoading: isLoading ?? this.isLoading,
       isBusy: isBusy ?? this.isBusy,
+      requiresReconnect: requiresReconnect ?? this.requiresReconnect,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -60,74 +86,14 @@ class GoogleAuthState {
 
 class GoogleAuthNotifier extends Notifier<GoogleAuthState> {
   @override
-  GoogleAuthState build() {
-    Future<void>.microtask(refresh);
-    return const GoogleAuthState.loading();
-  }
+  GoogleAuthState build() => const GoogleAuthState();
 
-  GoogleNativeAuthRepository get _repository =>
-      ref.read(googleNativeAuthRepositoryProvider);
+  void update(GoogleAuthState next) => state = next;
 
-  Future<void> refresh() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      await _repository.restoreSilently();
-      final account = _repository.currentAccount;
-      final authorized = <String>{};
-      for (final connectorKey in ConnectorKeys.googleConnectors) {
-        if (await _repository.isAuthorized(connectorKey)) {
-          authorized.add(connectorKey);
-        }
-      }
-      state = GoogleAuthState(
-        account: account,
-        authorizedConnectors: authorized,
-      );
-    } catch (error) {
-      state = GoogleAuthState(errorMessage: _messageFor(error));
-    }
-  }
-
-  Future<void> signIn() async {
-    state = state.copyWith(isBusy: true, clearError: true);
-    try {
-      await _repository.ensureSignedIn();
-      await refresh();
-    } catch (error) {
-      state = state.copyWith(isBusy: false, errorMessage: _messageFor(error));
-    }
-  }
-
-  Future<void> authorizeService(String connectorKey) async {
-    state = state.copyWith(isBusy: true, clearError: true);
-    try {
-      await _repository.authorizeConnector(connectorKey);
-      await refresh();
-    } catch (error) {
-      state = state.copyWith(isBusy: false, errorMessage: _messageFor(error));
-    }
-  }
-
-  Future<void> disconnect() async {
-    state = state.copyWith(isBusy: true, clearError: true);
-    try {
-      await _repository.disconnect();
-      state = const GoogleAuthState();
-    } catch (error) {
-      state = state.copyWith(isBusy: false, errorMessage: _messageFor(error));
-    }
-  }
-
-  String _messageFor(Object error) {
-    if (error is GoogleSignInException) {
-      if (error.code == GoogleSignInExceptionCode.canceled) {
-        return 'Google authorization was cancelled.';
-      }
-      return error.description ?? 'Google authorization failed.';
-    }
-    return error.toString();
-  }
+  void clear() => state = const GoogleAuthState();
 }
 
 final googleAuthProvider =
-    NotifierProvider<GoogleAuthNotifier, GoogleAuthState>(GoogleAuthNotifier.new);
+    NotifierProvider<GoogleAuthNotifier, GoogleAuthState>(
+      GoogleAuthNotifier.new,
+    );

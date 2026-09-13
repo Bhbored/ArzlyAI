@@ -136,7 +136,7 @@ public sealed class WorkflowApprovalTransitionTests
             Name = "Test preset",
             Description = "Test",
             Version = 1,
-            IsPublished = true
+            Status = PresetPublicationStatus.Published
         };
         var provider = new ProviderDefinition
         {

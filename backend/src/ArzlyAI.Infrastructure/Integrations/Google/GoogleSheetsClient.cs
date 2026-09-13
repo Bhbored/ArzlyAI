@@ -207,15 +207,95 @@ public sealed class GoogleSheetsClient(
         request.Content = content;
         var response = await httpClient.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode) return response;
+
+        var apiName = GetApiName(path);
+        var (reason, providerMessage) = await ReadGoogleErrorAsync(
+            response,
+            cancellationToken);
         logger.LogError(
-            "Google Sheets request failed with status {StatusCode} for {Method}",
+            "{GoogleApi} request failed with status {StatusCode}, reason {Reason}, for {Method}. " +
+            "Google message: {GoogleMessage}",
+            apiName,
             response.StatusCode,
-            method);
+            reason ?? "unknown",
+            method,
+            providerMessage ?? "unavailable");
+        var exception = new GoogleApiException(
+            apiName,
+            response.StatusCode,
+            reason,
+            providerMessage);
         response.Dispose();
-        throw new HttpRequestException(
-            $"Google Sheets request failed with status {(int)response.StatusCode}.",
-            null,
-            response.StatusCode);
+        throw exception;
+    }
+
+    private static async Task<(string? Reason, string? Message)> ReadGoogleErrorAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var payload = JsonDocument.Parse(body);
+            if (!payload.RootElement.TryGetProperty("error", out var error))
+                return (null, null);
+
+            var message = OptionalString(error, "message");
+            var reason = ReadLegacyReason(error) ?? ReadDetailedReason(error);
+            return (Sanitize(reason), Sanitize(message));
+        }
+        catch (JsonException)
+        {
+            return (null, null);
+        }
+    }
+
+    private static string? ReadLegacyReason(JsonElement error)
+    {
+        if (!error.TryGetProperty("errors", out var errors) ||
+            errors.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var item in errors.EnumerateArray())
+        {
+            var reason = OptionalString(item, "reason");
+            if (!string.IsNullOrWhiteSpace(reason)) return reason;
+        }
+
+        return null;
+    }
+
+    private static string? ReadDetailedReason(JsonElement error)
+    {
+        if (!error.TryGetProperty("details", out var details) ||
+            details.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var item in details.EnumerateArray())
+        {
+            var reason = OptionalString(item, "reason");
+            if (!string.IsNullOrWhiteSpace(reason)) return reason;
+        }
+
+        return null;
+    }
+
+    private static string GetApiName(string path) =>
+        path.Contains("/drive/", StringComparison.OrdinalIgnoreCase)
+            ? "Google Drive API"
+            : "Google Sheets API";
+
+    private static string? OptionalString(JsonElement element, string property) =>
+        element.TryGetProperty(property, out var value) &&
+        value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static string? Sanitize(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var sanitized = value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return sanitized.Length <= 500 ? sanitized : sanitized[..500];
     }
 
     private static async Task<JsonDocument> ReadJsonAsync(

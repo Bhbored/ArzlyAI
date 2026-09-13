@@ -40,24 +40,21 @@ Name xUnit tests `Method_WhenCondition_ExpectedResult`. Test mappings, validatio
 
 ## Adding a Preset
 
-A preset contains agents, Harness policies, workflow nodes/connections, and integrations. Keep execution generic; never hard-code a preset key into the runtime.
+A preset contains agents, Harness policies, workflow nodes/connections, integrations, client background guidance, and admin-only operational notes. Presets are authored through the protected admin API and published as immutable database versions; they are no longer source-code seeds. Keep execution generic and never hard-code a preset key into the runtime.
 
-1. Add an idempotent seed under `backend/src/ArzlyAI.Infrastructure/Persistence/Seeds/` and invoke it from `ArzlyDbContext.InitializeAsync()`.
-2. Reuse Domain graph entities; add only concepts that apply to multiple presets.
-3. Put contracts in Application and adapters under `Infrastructure/Integrations/<Provider>`; register them in `DIContainer.cs`.
-4. Extend generic DTOs and mappers only when the client contract changes.
-5. Select integration handlers by `Key`; keep preset behavior out of `WorkflowExecutionService`.
-6. Add mapping, graph, settings, seed, transition, Flutter fixture, and contract tests.
-7. Add `docs/presets/<preset-key>.md` with diagrams, inputs, credentials, lifecycle, exact backend/mobile files, and limitations; update README.
+1. Add reusable connectors, integration handlers, or deterministic operations first. Register runtime handlers in `DIContainer.cs` and catalog metadata in `CapabilityCatalogSeed.cs`.
+2. Verify capability metadata includes schemas, credentials, scopes, required APIs, risk, documentation, and background support.
+3. Create an authoring session, refine its structured draft through chat, and validate it. Never let an AI tool publish directly.
+4. Publish explicitly through `POST /api/v1/admin/authoring/sessions/{id}/publish` with the expected revision.
+5. Reuse Domain graph entities; extend generic DTOs and mappers only for concepts shared by multiple presets.
+6. Select runtime handlers by capability `Key`; keep preset-specific behavior out of `WorkflowExecutionService`.
+7. Add catalog, schema, mapping, graph, transition, versioning, and contract tests plus `docs/presets/<preset-key>.md` when a preset becomes a maintained product example.
 
 ## Implemented Presets
 
 | Preset | Workflow | Description |
 | --- | --- | --- |
-| `daily-linkedin-ai-post` | `generate-and-publish` | Writer -> review/edit -> passthrough publisher -> `linkedin.posts`. Publishes only approved text. |
-| `smart-purchase-decision` | `confirm-and-recommend` | Brief -> confirmation -> web search -> recommendation -> review. |
-| `brain-dump-to-action` | `compile-and-sync` | Planner -> review -> optional Google Tasks/Calendar/Gmail sync. |
-| `receipt-intelligence` | `analyze-and-deliver` | Sheets read -> selectable receipt analysis -> report -> optional Sheets/Gmail delivery. |
+| None | Admin-authored | The legacy seeded presets were removed. Published rows now come only from validated admin authoring sessions. |
 
 ## Git and Security
 

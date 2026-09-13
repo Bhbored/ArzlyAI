@@ -249,7 +249,7 @@ public sealed class WorkflowExecutionService(
             return new WorkflowNodeRun
             {
                 NodeId = step.Id,
-                NodeKey = step.ReferenceKey,
+                NodeKey = string.IsNullOrWhiteSpace(step.Key) ? step.ReferenceKey : step.Key,
                 DisplayName = step.DisplayName,
                 Type = step.Type,
                 Status = WorkflowNodeStatus.Idle,

@@ -14,11 +14,21 @@ Create OAuth clients in the same Google Cloud project that enables Sheets, Drive
 | --- | --- |
 | Package name | `com.arzlyai.arzlyai_mobile` |
 | Client type | Android |
-| SHA-1 / SHA-256 | Register debug and release signing certificate fingerprints from your keystore |
+| Android client ID | `989009017147-dtthjs439btoa659cknopnrcpmjvdh1b.apps.googleusercontent.com` |
+| Debug SHA-1 | `96:7B:CF:EA:C4:50:AE:B6:D7:87:B7:21:43:BB:69:FD:51:A2:91:9C` |
+| Debug SHA-256 | `95:93:7F:3A:9F:98:75:B6:6A:ED:8F:FD:7B:B6:64:DB:A9:7A:4A:66:6F:36:03:30:EE:F4:02:27:2D:13:0C:A5` |
 
-Also create a **Web application** OAuth client. Flutter passes its client ID to `GoogleSignIn.initialize(serverClientId: ...)` on Android. No client secret belongs in the mobile app.
+The Android client stays in Google Cloud and is matched through the package name and signing certificate. Its client ID is not copied into Flutter.
 
-Build with:
+Flutter passes this public Web client ID to `GoogleSignIn.initialize(serverClientId: ...)` on Android:
+
+```text
+989009017147-1a88ljaaa8t8dpm19lj0ea13c74fn5j7.apps.googleusercontent.com
+```
+
+It is the default in `google_auth_config.dart`, so the normal development command needs no Google-specific argument. No client secret belongs in the mobile app or backend.
+
+Override the Web client ID for another environment with:
 
 ```text
 --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id>.apps.googleusercontent.com
@@ -48,6 +58,67 @@ One Google account serves every Google integration:
 | Gmail | `gmail.send` |
 | Google Tasks | `tasks` |
 | Google Calendar | `calendar.events` |
+
+## Google Auth Platform data access
+
+Under **Google Auth Platform -> Data Access**, add the following scopes for the
+current preset catalog. The three identity scopes support native Google Sign-In
+and account display. The remaining scopes are requested incrementally only when
+a preset needs the corresponding connector.
+
+| Select | Full OAuth scope | Used for |
+| --- | --- | --- |
+| Yes | `openid` | Identify the selected Google account. |
+| Yes | `https://www.googleapis.com/auth/userinfo.email` | Obtain the account email used by Gmail delivery. |
+| Yes | `https://www.googleapis.com/auth/userinfo.profile` | Display basic account identity. |
+| Yes | `https://www.googleapis.com/auth/spreadsheets` | Read receipt data and write receipt reports. |
+| Yes | `https://www.googleapis.com/auth/drive.metadata.readonly` | List spreadsheet IDs and names through Drive `files.list`; it does not read file content. |
+| Yes | `https://www.googleapis.com/auth/tasks` | Create task lists, tasks, and subtasks. |
+| Yes | `https://www.googleapis.com/auth/calendar.events` | Create and update calendar events without managing calendar settings. |
+| Yes | `https://www.googleapis.com/auth/gmail.send` | Send generated HTML reports and action-plan emails. |
+
+Do not add broader scopes such as `drive`, `drive.readonly`, `calendar`,
+`gmail.modify`, or `mail.google.com`; the current integrations do not need them.
+The `drive.metadata.readonly` scope is needed by the current in-app spreadsheet
+browser. A future Google Picker implementation should replace it with the
+narrower `drive.file` scope before production verification.
+
+Official scope references:
+
+- [Google Sheets scopes](https://developers.google.com/workspace/sheets/api/scopes)
+- [Google Drive scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth)
+- [Google Tasks scopes](https://developers.google.com/workspace/tasks/auth)
+- [Google Calendar event authorization](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert)
+- [Gmail scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)
+
+## Required enabled APIs
+
+Enable all five APIs in the same Google Cloud project as the Android and Web
+OAuth clients:
+
+| API | Current usage |
+| --- | --- |
+| Google Sheets API | Read receipt ranges and write report tabs. |
+| Google Drive API | Discover spreadsheets for the resource selector. |
+| Gmail API | Send HTML email. |
+| Google Tasks API | Create task lists, tasks, and subtasks. |
+| Google Calendar API | Insert action-plan events. |
+
+Adding a scope under Data Access does not enable its API and does not update an
+already-issued access token. After enabling an API or adding a scope, disconnect
+and reconnect the Google account during testing.
+
+## Capability scope matrix
+
+The backend capability catalog is the source of truth. Admin-authored presets inherit requirements from the integration keys they select.
+
+| Capability | Required Google scopes |
+| --- | --- |
+| `google.sheets.read` | `spreadsheets`, plus `drive.metadata.readonly` for spreadsheet discovery. |
+| `google.sheets.write`, `google.sheets.report` | `spreadsheets`. |
+| `google.tasks.create` | `tasks`. |
+| `google.calendar.create-events` | `calendar.events`. |
+| `google.gmail.send-html` | `gmail.send`. |
 
 Settings exposes a single **Google account** screen:
 
@@ -79,6 +150,8 @@ Envelope keys:
 
 Flutter does **not** persist Google access tokens, refresh tokens, or expiry timestamps. Background scheduled runs may restore authorization silently; if user interaction is required, the run is skipped and the existing tap-to-run notification asks the user to reopen the app.
 
+Each workflow supplies its active integration keys along with its envelope-field requirements. Flutter evaluates preset node conditions, combines only the scopes needed for those integrations, and requests one access token for that scope union.
+
 ## Backend endpoints retained
 
 Only stateless Google Sheets metadata queries remain under `/api/v1/connectors/google-sheets/resources/.../query`. Connector session, status, callback, credentials, refresh, and delete routes were removed.
@@ -95,5 +168,5 @@ Only stateless Google Sheets metadata queries remain under `/api/v1/connectors/g
 ## Backend files
 
 - `backend/src/ArzlyAI.Api/Controllers/v1/ConnectorsController.cs`
-- `backend/src/ArzlyAI.Infrastructure/Persistence/Seeds/GoogleIntegrationSchemaSeed.cs`
-- `backend/tests/ArzlyAI.Tests/GoogleIntegrationSchemaSeedTests.cs`
+- `backend/src/ArzlyAI.Infrastructure/Persistence/Seeds/CapabilityCatalogSeed.cs`
+- `backend/tests/ArzlyAI.Tests/CapabilityCatalogSeedTests.cs`

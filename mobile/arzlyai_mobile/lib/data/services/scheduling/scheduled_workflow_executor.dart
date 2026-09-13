@@ -89,23 +89,6 @@ class ScheduledWorkflowExecutor {
         _parseOverrides(instance.modelOverridesJson),
         details,
       );
-      final keys = details.workflowStartCredentialKeys(
-        overrideProviders: overrides.map((item) => item.provider ?? ''),
-      );
-      final credentials = await credentialRepository.readForEnvelopeKeysWithConnectors(
-        keys,
-        interactive: false,
-      );
-      final missing = credentialRepository.missingEnvelopeKeys(
-        keys,
-        credentials,
-      );
-      if (missing.isNotEmpty) {
-        throw StateError('Missing credentials: ${missing.join(', ')}');
-      }
-
-      final envelope = await envelopeService.encrypt(credentials);
-
       final configuration = await scheduleRepository.getConfiguration(
         localWorkflowId,
       );
@@ -124,6 +107,27 @@ class ScheduledWorkflowExecutor {
       }
       final startPresetKey = resolved?.presetKey ?? instance.presetKey;
       final inputs = resolved?.inputs ?? rawInputs;
+      final keys = details.workflowStartCredentialKeys(
+        overrideProviders: overrides.map((item) => item.provider ?? ''),
+        workflowInputs: inputs,
+      );
+      final credentials = await credentialRepository
+          .readForEnvelopeKeysWithConnectors(
+            keys,
+            integrationKeys: details.workflowStartIntegrationKeys(
+              workflowInputs: inputs,
+            ),
+            interactive: false,
+          );
+      final missing = credentialRepository.missingEnvelopeKeys(
+        keys,
+        credentials,
+      );
+      if (missing.isNotEmpty) {
+        throw StateError('Missing credentials: ${missing.join(', ')}');
+      }
+
+      final envelope = await envelopeService.encrypt(credentials);
 
       final dto = await workflowService.start(
         StartWorkflowRequest(
@@ -195,18 +199,20 @@ class ScheduledWorkflowExecutor {
     List<AgentOverrideRequest> overrides,
     PresetDetails details,
   ) {
-    return overrides.map((override) {
-      if (override.provider?.isNotEmpty ?? false) return override;
-      final configuredProvider = details.agents
-          .where((agent) => agent.key == override.agentKey)
-          .firstOrNull
-          ?.modelConfiguration
-          .provider;
-      final provider = override.model == null
-          ? configuredProvider
-          : inferAiProviderFromModel(override.model!) ?? configuredProvider;
-      return override.copyWith(provider: provider);
-    }).toList(growable: false);
+    return overrides
+        .map((override) {
+          if (override.provider?.isNotEmpty ?? false) return override;
+          final configuredProvider = details.agents
+              .where((agent) => agent.key == override.agentKey)
+              .firstOrNull
+              ?.modelConfiguration
+              .provider;
+          final provider = override.model == null
+              ? configuredProvider
+              : inferAiProviderFromModel(override.model!) ?? configuredProvider;
+          return override.copyWith(provider: provider);
+        })
+        .toList(growable: false);
   }
 
   String _sanitize(Object error) {

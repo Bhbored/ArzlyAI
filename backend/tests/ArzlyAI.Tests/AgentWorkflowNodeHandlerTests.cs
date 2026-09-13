@@ -210,7 +210,7 @@ public sealed class AgentWorkflowNodeHandlerTests
             Name = "Preset",
             Description = "Description",
             Version = 1,
-            IsPublished = true,
+            Status = PresetPublicationStatus.Published,
             UpdatedAtUtc = DateTimeOffset.UtcNow
         };
         var agent = new AgentDefinition

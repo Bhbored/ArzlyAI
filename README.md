@@ -28,31 +28,23 @@ The backend follows Clean Architecture: Domain is independent, Application depen
 
 ## Current Scope
 
-- Backend preset catalog in PostgreSQL with idempotent seeding.
-- `daily-linkedin-ai-post` preset with generation, human review/edit, and LinkedIn publishing.
-- `smart-purchase-decision` preset with plain-language confirmation, web search, and shopper-friendly recommendations.
-- `brain-dump-to-action` preset with brain-dump planning, human review, and optional Google Tasks/Calendar/Gmail sync.
-- `receipt-intelligence` preset with seven client-selectable receipt analysis modes and optional Sheets/Gmail delivery.
+- PostgreSQL capability catalog for registered connectors, integrations, deterministic operations, providers, and models.
+- Protected AI-assisted preset authoring with persistent chats, structured drafts, validation, admin notes, and SignalR progress.
+- Explicit publication of immutable preset versions. Publishing a new version archives the prior active version atomically.
+- One ASP.NET Core Identity administrator using JWT access tokens and rotating JSON refresh tokens.
 - Short-lived replay-protected credential envelopes; plaintext credentials are never persisted by the backend.
 - SignalR node-status events, rate limits, health probes, and structured logging.
 - Generic, deterministic sequential DAG execution driven by each preset's nodes, connections, and input mappings.
-- Empty Flutter Android/iOS shell ready for the first vertical slice.
-- Empty React TypeScript admin shell reserved for later preset administration.
+- Flutter Android/iOS client and a React TypeScript admin shell, built independently from the backend.
 
-Flutter SQLite will be the source of truth for user workflow instances, history, schedules, and generated content. Provider credentials belong in platform secure storage. Backend PostgreSQL stores only the public preset catalog.
+Flutter SQLite remains the source of truth for user workflow instances, history, schedules, and generated content. Provider credentials belong in platform secure storage. Backend PostgreSQL stores the public/capability catalog and admin authoring state, never end-user workflow data or provider credentials.
 
 ## Documentation
 
-- [LinkedIn preset](docs/presets/linkedin-preset.md)
-- [Smart Buy preset](docs/presets/smart-purchase-decision.md)
-- [Brain Dump to Action preset](docs/presets/brain-dump-to-action.md)
-- [Flutter Receipt Intelligence handoff](docs/presets/flutter-receipt-intelligence-handoff.md)
-- [Flutter Smart Buy Lab HTML report handoff](docs/presets/flutter-smart-purchase-html-report.md)
-- [Flutter workflow timeout and realtime handoff](docs/presets/flutter-workflow-execution-timeout.md)
-- [Flutter LinkedIn client plan](docs/presets/flutter-linkedin-client-plan.md)
-- [Flutter client scheduling and notifications](docs/presets/flutter-client-scheduling-notifications.md)
-- [Flutter online OpenAI model-catalog prompt](docs/presets/flutter-openai-model-catalog-prompt.md)
-- [Flutter LinkedIn edit-regeneration prompt](docs/presets/flutter-linkedin-edit-regeneration-prompt.md)
+- [Preset authoring backend](docs/admin/preset-authoring-backend.md)
+- [React admin API contract](docs/admin/react-admin-contract.md)
+- [Preset catalog migration](docs/architecture/preset-catalog-migration.md)
+- [Legacy preset designs](docs/presets/README.md)
 - [Native Google authorization (Flutter)](docs/connectors/google-oauth.md)
 - [Contributor instructions](AGENTS.md)
 
@@ -68,6 +60,15 @@ dotnet run --project backend/src/ArzlyAI.Api/ArzlyAI.Api.csproj
 ```
 
 Configure `ConnectionStrings:Catalog` using user secrets or environment variable `ConnectionStrings__Catalog`. The checked-in connection string is development-only.
+
+Configure each server-owned authoring provider key with user secrets. The single administrator is seeded from the `Jwt`, `RefreshToken`, and `AdminSeed` sections in `appsettings.json`.
+
+```powershell
+dotnet user-secrets set "AdminAuthoring:Providers:openai:ApiKey" "<server-openai-key>" --project backend/src/ArzlyAI.Api
+dotnet user-secrets set "AdminAuthoring:Providers:openai:Enabled" "true" --project backend/src/ArzlyAI.Api
+```
+
+Repeat the same two settings for `anthropic`, `gemini`, or `deepseek` when needed. Set `AdminSeed:Email` and `AdminSeed:Password` before first startup. Identity hashes that password and creates the fixed configured admin identity once; later startups never reset it. The authoring provider keys are server-owned and separate from users' workflow credentials.
 
 Operational endpoints:
 
@@ -85,6 +86,14 @@ Operational endpoints:
 | `POST` | `/api/v1/workflows/runs` | Start a preset run |
 | `GET` | `/api/v1/workflows/runs/{runId}` | Retrieve an ephemeral run |
 | `POST` | `/api/v1/workflows/runs/{runId}/approval` | Accept, edit, or reject output |
+| `POST` | `/api/v1/admin/auth/login` | Identity admin login; returns access and refresh tokens in JSON |
+| `POST` | `/api/v1/admin/auth/refresh` | Rotates access and refresh tokens from the current token pair |
+| `POST` | `/api/v1/admin/auth/logout` | Revokes the current refresh token |
+| `GET` | `/api/v1/admin/authoring/capabilities` | Registered building blocks available to the authoring agent |
+| `POST` | `/api/v1/admin/authoring/sessions` | Create a persistent authoring session |
+| `POST` | `/api/v1/admin/authoring/sessions/{id}/messages` | Refine the structured draft through the authoring agent |
+| `POST` | `/api/v1/admin/authoring/sessions/{id}/validate` | Validate the current revision |
+| `POST` | `/api/v1/admin/authoring/sessions/{id}/publish` | Explicitly publish a validated immutable version |
 
 ### EF Core Package Manager Console
 
@@ -95,7 +104,7 @@ Add-Migration YourMigrationName -Context ArzlyDbContext -OutputDir Persistence/M
 Update-Database -Context ArzlyDbContext
 ```
 
-The initial PostgreSQL migration already exists; a new database normally needs only `Update-Database`.
+The `AdminAuthoredPresetCatalog` migration removes the former seeded preset keys and introduces authoring, connector, and immutable-version tables. `ReplaceCustomAdminAuthWithIdentity` replaces its temporary custom admin tables with ASP.NET Core Identity tables. A new database normally needs only `Update-Database`.
 
 ### Docker
 
@@ -115,7 +124,7 @@ flutter test
 flutter run
 ```
 
-Implement the client against [the Flutter plan](docs/presets/flutter-linkedin-client-plan.md). Google account authorization is native via `google_sign_in`; configure Android/iOS OAuth clients as described in [Native Google authorization](docs/connectors/google-oauth.md). Pass the Web client ID at build time with `--dart-define=GOOGLE_SERVER_CLIENT_ID=...`. Keep secrets out of SQLite, logs, analytics, and URLs.
+Implement the client against [the Flutter plan](docs/presets/flutter-linkedin-client-plan.md). Google account authorization is native via `google_sign_in`; configure Android/iOS OAuth clients as described in [Native Google authorization](docs/connectors/google-oauth.md). The project includes its public Web client ID and supports overriding it with `--dart-define=GOOGLE_SERVER_CLIENT_ID=...`. Keep secrets out of SQLite, logs, analytics, and URLs.
 
 ## Admin Development
 
@@ -126,16 +135,16 @@ npm run dev
 npm run build
 ```
 
-The admin is intentionally a placeholder. Do not implement preset editing until the generic workflow contract and versioning rules are stable.
+The React project is currently a shell. Implement it against the protected contract in [React admin API contract](docs/admin/react-admin-contract.md); do not duplicate backend draft validation or allow chat turns to publish implicitly.
 
 ## Security Boundary
 
-There is no registration or backend user database. Credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Provider API keys use envelope fields `{provider}.apiKey` (`openai`, `anthropic`, `gemini`, `deepseek`). Flutter stores a default model in SQLite (`ai_settings`) and caches live catalogs per provider (`provider_model_cache`). After upgrading to Drift schema version 4, reinstall the app or clear app data. Never commit real keys or production connection strings, and never log credential payloads, access tokens, API keys, author URNs, or user content.
+There is no end-user registration or backend user database. Admin authentication protects only catalog authoring. Workflow credentials are encrypted client-side using the ephemeral public-key descriptor, decrypted briefly in server memory, and discarded after the provider call. Provider API keys use envelope fields `{provider}.apiKey` (`openai`, `anthropic`, `gemini`, `deepseek`). Never commit or log credentials, access tokens, author URNs, user content, JWT signing keys, bootstrap passwords, or the authoring API key.
 
 ## Stage 1 Limitations
 
 - Workflow graphs are validated and executed sequentially in topological order; parallel branches and conditional routing are not implemented yet.
 - Runs are memory-backed and expire after 30 minutes.
-- Device-owned scheduling and local notifications still need the Flutter implementation described above.
 - Mobile operating systems do not guarantee exact background network execution.
 - LinkedIn OAuth acquisition and refresh are not implemented.
+- No presets are published by default. An administrator must author, validate, and explicitly publish the first version.

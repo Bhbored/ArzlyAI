@@ -7,7 +7,6 @@ using ArzlyAI.Application.Services.Workflows.Rendering;
 using ArzlyAI.Domain.Catalog;
 using ArzlyAI.Domain.Enums;
 using ArzlyAI.Domain.Presets;
-using ArzlyAI.Infrastructure.Persistence.Seeds;
 using ArzlyAI.Infrastructure.Integrations.Google;
 
 namespace ArzlyAI.Tests;
@@ -17,21 +16,6 @@ public sealed class BrainDumpBackendTests
     private const string Report = """
     {"schema":"arzly.report","version":4,"kind":"actionPlan","title":"Monday plan","summary":"Three quick wins and two projects","generatedAtUtc":"2026-08-31T08:00:00Z","blocks":[{"type":"quickWins","title":"Do now","data":{"text":"Fast tasks","items":[{"label":"Call mom","value":"2 min","detail":"Quick check-in"}],"metrics":[]}},{"type":"projects","title":"Projects","data":{"text":"Bigger work","items":[{"label":"Website","value":"2 hours","detail":"Review site\nCreate mockups"}],"metrics":[]}},{"type":"schedule","title":"Schedule","data":{"text":"Today","items":[{"label":"Quick wins","value":"09:00","detail":"Morning block"}],"metrics":[]}}],"sources":[]}
     """;
-
-    [Fact]
-    public void CreatePreset_UsesPublishedGraphWithReviewAndConditionalIntegrations()
-    {
-        var preset = CreatePreset();
-
-        Assert.Equal(BrainDumpToActionPresetSeed.TargetVersion, preset.Version);
-        Assert.Equal(("arzly.report", 4), (preset.ResultContractKey, preset.ResultContractVersion));
-        Assert.Equal(6, preset.Workflow.Steps.Count);
-        Assert.Equal(3, preset.Integrations.Count);
-        Assert.Contains(preset.Workflow.Steps,
-            step => step.Type == WorkflowNodeType.HumanApproval && step.ReferenceKey == "review-plan");
-        Assert.Contains(preset.Workflow.Steps,
-            step => step.ReferenceKey == "google.tasks.create");
-    }
 
     [Fact]
     public async Task IntegrationHandler_WhenSyncDisabled_SkipsBeforeCredentials()
@@ -107,38 +91,37 @@ public sealed class BrainDumpBackendTests
 
     private static PresetDefinition CreatePreset()
     {
-        var provider = new ProviderDefinition
+        var preset = new PresetDefinition
         {
-            Id = Guid.NewGuid(),
-            Key = "openai",
-            DisplayName = "OpenAI"
+            Id = Guid.NewGuid(), Key = "brain-dump", Name = "Brain Dump",
+            Description = "Test", Version = 1, Status = PresetPublicationStatus.Published
         };
-        var model = new ModelDefinition
+        var workflow = new WorkflowDefinition
         {
-            Id = Guid.NewGuid(),
-            ProviderId = provider.Id,
-            Provider = provider,
-            Key = "gpt-5-mini",
-            DisplayName = "GPT-5 mini"
+            Id = Guid.NewGuid(), PresetId = preset.Id, Preset = preset, Key = "flow"
         };
-        var integrations = new[] { "google.tasks.create", "google.calendar.create-events", "google.gmail.send-html" }
-            .Select((key, index) => new IntegrationDefinition
+        preset.Workflow = workflow;
+        foreach (var (key, index) in new[]
+                 {
+                     "google.tasks.create", "google.calendar.create-events", "google.gmail.send-html"
+                 }.Select((key, index) => (key, index)))
+        {
+            workflow.Steps.Add(new WorkflowStepDefinition
             {
-                Id = Guid.Parse($"00000000-0000-0000-0000-{(index + 1).ToString().PadLeft(12, '0')}"),
-                Key = key,
-                DisplayName = key,
-                Description = key,
-                CredentialSchemaJson = "{}",
-                IsEnabled = true
-            }).ToDictionary(item => item.Key, StringComparer.Ordinal);
-        return BrainDumpToActionPresetSeed.CreatePreset(model, integrations);
+                Id = Guid.NewGuid(), WorkflowId = workflow.Id, Workflow = workflow, Key = key,
+                Position = index + 1, Type = WorkflowNodeType.Integration, ReferenceKey = key,
+                DisplayName = key, InputMappingJson = "{}",
+                ConfigurationJson = $"{{\"when\":{{\"input\":\"{(key == "google.tasks.create" ? "syncTasks" : key == "google.calendar.create-events" ? "syncCalendar" : "sendEmail")}\",\"equalsAny\":[\"true\"]}}}}"
+            });
+        }
+        return preset;
     }
 
     private static WorkflowNodeExecutionContext Context(string syncFlag, string key) =>
         new(
             CreatePreset(),
             CreatePreset().Workflow.Steps.Single(step => step.ReferenceKey == key),
-            new WorkflowRun { Id = Guid.NewGuid(), PresetKey = BrainDumpToActionPresetSeed.PresetKey },
+            new WorkflowRun { Id = Guid.NewGuid(), PresetKey = "brain-dump" },
             new Dictionary<string, string>
             {
                 ["syncTasks"] = syncFlag,

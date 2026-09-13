@@ -91,10 +91,15 @@ class ActiveRun extends _$ActiveRun {
       final credentialRepo = ref.read(credentialRepositoryProvider);
       final startKeys = details.workflowStartCredentialKeys(
         overrideProviders: overrides.map((item) => item.provider ?? ''),
+        workflowInputs: effectiveInputs,
       );
-      final startCredentials = await credentialRepo.readForEnvelopeKeysWithConnectors(
-        startKeys,
-      );
+      final startCredentials = await credentialRepo
+          .readForEnvelopeKeysWithConnectors(
+            startKeys,
+            integrationKeys: details.workflowStartIntegrationKeys(
+              workflowInputs: effectiveInputs,
+            ),
+          );
       final missingStart = credentialRepo.missingEnvelopeKeys(
         startKeys,
         startCredentials,
@@ -407,9 +412,9 @@ class ActiveRun extends _$ActiveRun {
     final template = configurable == null
         ? overrides.first
         : overrides
-              .where((item) => item.agentKey == configurable.key)
-              .firstOrNull ??
-            overrides.first;
+                  .where((item) => item.agentKey == configurable.key)
+                  .firstOrNull ??
+              overrides.first;
     final templateModel = template.model;
     if (templateModel == null || templateModel.isEmpty) return;
     final templateProvider = repo.resolveProviderForModel(
@@ -519,7 +524,15 @@ class ActiveRun extends _$ActiveRun {
         editedContent: editedContent,
       );
     }
-    final credentials = await credentialRepo.readForEnvelopeKeysWithConnectors(keys);
+    final integrationKeys = details.approvalIntegrationKeys(
+      run: current,
+      decision: decision,
+      workflowInputs: workflowInputs,
+    );
+    final credentials = await credentialRepo.readForEnvelopeKeysWithConnectors(
+      keys,
+      integrationKeys: integrationKeys,
+    );
     final missing = credentialRepo.missingEnvelopeKeys(keys, credentials);
     if (missing.isNotEmpty) {
       throw StateError('Missing credentials: ${missing.join(', ')}');
@@ -760,9 +773,9 @@ class ActiveRun extends _$ActiveRun {
       if (!ref.mounted || state.value?.runId != run.runId) return;
       var localWorkflowId = run.localWorkflowId?.trim();
       if (localWorkflowId == null || localWorkflowId.isEmpty) {
-        localWorkflowId = (await repo.getLocalRun(run.runId))
-            ?.localWorkflowId
-            ?.trim();
+        localWorkflowId = (await repo.getLocalRun(
+          run.runId,
+        ))?.localWorkflowId?.trim();
       }
       final refreshed = await repo.persistDto(
         dto,
