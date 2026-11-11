@@ -35,7 +35,8 @@ export default function AdminRoutes() {
               path="presets/:key/:version"
               element={<PresetDetailPage />}
             />
-            <Route path="capabilities" element={<CapabilitiesPage />} />
+            <Route path="integrations" element={<CapabilitiesPage />} />
+            <Route path="capabilities" element={<Navigate to="/integrations" replace />} />
             <Route path="account" element={<AccountPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

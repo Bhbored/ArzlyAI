@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Constants;
 using ArzlyAI.Application.Models.Authoring;
 using ArzlyAI.Application.Services.Models;
@@ -11,7 +12,8 @@ namespace ArzlyAI.Infrastructure.Agents.Authoring;
 
 public sealed class GeminiPresetAuthoringAgent(
     HttpClient httpClient,
-    PresetAuthoringToolExecutor tools) : IPresetAuthoringProviderAgent
+    PresetAuthoringToolExecutor tools,
+    IAuthoringRealtimeNotifier realtime) : IPresetAuthoringProviderAgent
 {
     private const int MaximumToolRounds = 8;
 
@@ -36,7 +38,7 @@ public sealed class GeminiPresetAuthoringAgent(
 
         for (var round = 0; round < MaximumToolRounds; round++)
         {
-            var response = await SendAsync(model.Model, apiKey, contents, linked.Token);
+            var response = await SendAsync(sessionId, model.Model, apiKey, contents, linked.Token);
             var functionCalls = FunctionCalls(response.Content);
             if (functionCalls.Count == 0)
                 return ResponseText(response.Content);
@@ -64,6 +66,7 @@ public sealed class GeminiPresetAuthoringAgent(
     }
 
     private async Task<GeminiResponse> SendAsync(
+        Guid sessionId,
         string model,
         string apiKey,
         IReadOnlyList<object> contents,
@@ -92,16 +95,42 @@ public sealed class GeminiPresetAuthoringAgent(
         };
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            $"v1beta/models/{normalizedModel}:generateContent?key={Uri.EscapeDataString(apiKey)}")
+            $"v1beta/models/{normalizedModel}:streamGenerateContent?alt=sse")
         {
             Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
         };
-        using var response = await httpClient.SendAsync(request, cancellationToken);
+        request.Headers.Add("x-goog-api-key", apiKey);
+        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            throw new UnauthorizedAccessException("Gemini rejected the configured admin-authoring API key.");
+            throw new HttpRequestException("Gemini rejected the configured admin-authoring API key.");
         response.EnsureSuccessStatusCode();
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-        return new GeminiResponse(document.RootElement.GetProperty("candidates")[0].GetProperty("content").Clone());
+        await using var body = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var text = new AuthoringTextStream(sessionId, realtime);
+        var parts = new List<JsonElement>();
+        var finished = false;
+        await foreach (var data in AuthoringSseReader.ReadAsync(body, cancellationToken))
+        {
+            using var chunk = JsonDocument.Parse(data);
+            if (chunk.RootElement.TryGetProperty("error", out _))
+                throw new HttpRequestException("Gemini streaming request failed.");
+            if (!chunk.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0) continue;
+            var candidate = candidates[0];
+            if (candidate.TryGetProperty("finishReason", out var finish))
+            {
+                if (finish.GetString() != "STOP") throw new HttpRequestException("Gemini response was interrupted or blocked.");
+                finished = true;
+            }
+            if (!candidate.TryGetProperty("content", out var content) || !content.TryGetProperty("parts", out var values)) continue;
+            foreach (var part in values.EnumerateArray())
+            {
+                parts.Add(part.Clone());
+                if (part.TryGetProperty("text", out var value) &&
+                    !(part.TryGetProperty("thought", out var thought) && thought.GetBoolean()))
+                    await text.AppendAsync(value.GetString(), cancellationToken);
+            }
+        }
+        if (!finished) throw new HttpRequestException("Gemini response stream ended before completion.");
+        return new GeminiResponse(JsonSerializer.SerializeToElement(new { role = "model", parts }));
     }
 
     private static IReadOnlyList<FunctionCall> FunctionCalls(JsonElement content)
@@ -127,8 +156,9 @@ public sealed class GeminiPresetAuthoringAgent(
     {
         if (!content.TryGetProperty("parts", out var parts))
             throw new InvalidOperationException("Gemini returned no preset-authoring response.");
-        var text = string.Join('\n', parts.EnumerateArray()
-            .Where(part => part.TryGetProperty("text", out _))
+        var text = string.Concat(parts.EnumerateArray()
+            .Where(part => part.TryGetProperty("text", out _) &&
+                !(part.TryGetProperty("thought", out var thought) && thought.GetBoolean()))
             .Select(part => part.GetProperty("text").GetString())
             .Where(value => !string.IsNullOrWhiteSpace(value))!);
         return string.IsNullOrWhiteSpace(text)

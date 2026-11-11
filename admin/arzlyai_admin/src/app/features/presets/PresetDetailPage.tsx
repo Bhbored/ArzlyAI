@@ -48,7 +48,7 @@ export default function PresetDetailPage() {
     mutationFn: () => clonePresetToDraft(key, version),
     onSuccess: async (session) => {
       await queryClient.invalidateQueries({ queryKey: sessionKeys.all })
-      toast.success("Draft session created")
+      toast.success("Draft chat created")
       navigate(`/sessions/${session.id}`)
     },
     onError: (error) =>

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "../../../shared/api/http";
 import { PageHeader } from "../../../shared/components/PageHeader";
-import { useAuth } from "../../../providers/AuthProvider";
+import { useAuth } from "../../../providers/authContext";
 import { changePassword } from "../account.service";
 
 export default function AccountPage() {

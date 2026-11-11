@@ -40,19 +40,24 @@ public sealed class AdminPresetCatalogService(
             ?? throw new KeyNotFoundException($"Preset '{key}' version {version} was not found.");
         var draft = ToDraft(preset);
         var validation = await validator.ValidateAsync(draft, cancellationToken);
-        var assistantModel = models.GetDefaultSelection();
+        var preferredModel = models.GetDefaultSelection();
+        var availableModels = await models.ListAsync(cancellationToken);
+        var assistantModel = availableModels.Any(item => item.Provider == preferredModel.Provider && item.Model == preferredModel.Model)
+            ? preferredModel
+            : availableModels.Count > 0
+                ? new AuthoringModelSelection(availableModels[0].Provider, availableModels[0].Model)
+                : throw new InvalidOperationException("No assistant model is available for a new draft chat.");
         var session = new PresetAuthoringSession
         {
             Id = Guid.NewGuid(), CreatedByAdminId = adminId, Title = preset.Name,
             AssistantProvider = assistantModel.Provider, AssistantModel = assistantModel.Model,
             Status = validation.IsValid ? AuthoringSessionStatus.ReadyToPublish : AuthoringSessionStatus.Active,
             DraftJson = PresetDraftSerializer.Serialize(draft),
-            ValidationJson = PresetDraftSerializer.Serialize(validation), Revision = 1
+            ValidationJson = PresetDraftSerializer.Serialize(validation), Revision = 1,
+            DraftRevision = 1, ValidatedDraftRevision = 1
         };
         await sessions.AddAsync(session, cancellationToken);
-        return new AuthoringSessionResponse(session.Id, session.Title, session.Status.ToString(), session.Revision,
-            new AuthoringModelSelectionResponse(assistantModel.Provider, assistantModel.Model),
-            draft, validation, null, [], session.CreatedAtUtc, session.UpdatedAtUtc);
+        return PresetAuthoringService.ToResponse(session);
     }
 
     public async Task ArchiveAsync(string key, int version, CancellationToken cancellationToken)

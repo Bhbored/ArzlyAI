@@ -28,6 +28,14 @@ public sealed class PresetAuthoringController(IPresetAuthoringService service) :
         return session is null ? NotFound() : Ok(session);
     }
 
+    [HttpGet("session-summaries")]
+    public async Task<ActionResult<IReadOnlyList<AuthoringSessionSummaryResponse>>> Summaries(CancellationToken cancellationToken) =>
+        Ok(await service.ListSummariesAsync(cancellationToken));
+
+    [HttpGet("runtime-models")]
+    public async Task<ActionResult<IReadOnlyList<AuthoringRuntimeModelResponse>>> RuntimeModels(CancellationToken cancellationToken) =>
+        Ok(await service.ListRuntimeModelsAsync(cancellationToken));
+
     [HttpPost("sessions")]
     public async Task<ActionResult<AuthoringSessionResponse>> Create(
         CreateAuthoringSessionRequest request, CancellationToken cancellationToken)
@@ -40,6 +48,11 @@ public sealed class PresetAuthoringController(IPresetAuthoringService service) :
     public async Task<ActionResult<IReadOnlyList<AuthoringModelResponse>>> ListAssistantModels(
         CancellationToken cancellationToken) =>
         Ok(await service.ListModelsAsync(cancellationToken));
+
+    [HttpGet("assistant-providers")]
+    public async Task<ActionResult<IReadOnlyList<AuthoringProviderResponse>>> ListAssistantProviders(
+        CancellationToken cancellationToken) =>
+        Ok(await service.ListProvidersAsync(cancellationToken));
 
     [HttpPut("sessions/{sessionId:guid}/assistant-model")]
     public async Task<ActionResult<AuthoringSessionResponse>> SetAssistantModel(
@@ -54,13 +67,31 @@ public sealed class PresetAuthoringController(IPresetAuthoringService service) :
     {
         using var operation = Operation.Time("PresetAuthoringController.AddMessage");
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-        return Ok(await service.AddMessageAsync(sessionId, request, timeout.Token));
+        var outcome = await service.AddMessageAsync(sessionId, request, timeout.Token);
+        return outcome.IsConflict
+            ? Conflict(new
+            {
+                success = false,
+                message = "The authoring session changed while it was being edited. Reload the session and retry.",
+                correlationId = HttpContext.TraceIdentifier
+            })
+            : Ok(outcome.Response);
     }
 
     [HttpPost("sessions/{sessionId:guid}/validate")]
     public async Task<ActionResult<AuthoringSessionResponse>> Validate(
         Guid sessionId, CancellationToken cancellationToken) =>
         Ok(await service.ValidateAsync(sessionId, cancellationToken));
+
+    [HttpPut("sessions/{sessionId:guid}/draft")]
+    public async Task<ActionResult<AuthoringSessionResponse>> SaveDraft(
+        Guid sessionId, SaveAuthoringDraftRequest request, CancellationToken cancellationToken) =>
+        Ok(await service.SaveDraftAsync(sessionId, request, cancellationToken));
+
+    [HttpPost("sessions/{sessionId:guid}/preview")]
+    public async Task<ActionResult<AuthoringPreviewResponse>> Preview(
+        Guid sessionId, PreviewAuthoringDraftRequest request, CancellationToken cancellationToken) =>
+        Ok(await service.PreviewAsync(sessionId, request, cancellationToken));
 
     [HttpPost("sessions/{sessionId:guid}/publish")]
     public async Task<IActionResult> Publish(
@@ -70,8 +101,31 @@ public sealed class PresetAuthoringController(IPresetAuthoringService service) :
         return Ok(new { presetId });
     }
 
+    [HttpPost("sessions/{sessionId:guid}/abandon")]
+    public async Task<ActionResult<AuthoringSessionResponse>> Abandon(
+        Guid sessionId,
+        CancellationToken cancellationToken) =>
+        Ok(await service.AbandonAsync(sessionId, cancellationToken));
+
+    [HttpPost("sessions/{sessionId:guid}/restore")]
+    public async Task<ActionResult<AuthoringSessionResponse>> Restore(
+        Guid sessionId,
+        CancellationToken cancellationToken) =>
+        Ok(await service.RestoreAsync(sessionId, cancellationToken));
+
+    [HttpDelete("sessions/{sessionId:guid}/permanent")]
+    public async Task<IActionResult> DeletePermanently(
+        Guid sessionId,
+        CancellationToken cancellationToken)
+    {
+        await service.DeleteAsync(sessionId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpDelete("sessions/{sessionId:guid}")]
-    public async Task<IActionResult> Abandon(Guid sessionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> AbandonLegacy(
+        Guid sessionId,
+        CancellationToken cancellationToken)
     {
         await service.AbandonAsync(sessionId, cancellationToken);
         return NoContent();

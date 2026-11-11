@@ -23,6 +23,7 @@ public sealed class PresetPublisher(
         using var operation = Operation.Time("PresetPublisher.Publish");
         var session = await sessions.GetAsync(sessionId, cancellationToken)
             ?? throw new KeyNotFoundException($"Authoring session '{sessionId}' was not found.");
+        AuthoringSessionState.RequireIdle(session);
         if (session.Status is AuthoringSessionStatus.Published or AuthoringSessionStatus.Abandoned)
             throw new InvalidOperationException("The authoring session cannot be published.");
         if (session.Revision != expectedRevision)
@@ -32,6 +33,7 @@ public sealed class PresetPublisher(
             : PresetDraftSerializer.Deserialize(session.DraftJson);
         var validation = await validator.ValidateAsync(draft, cancellationToken);
         session.ValidationJson = PresetDraftSerializer.Serialize(validation);
+        session.ValidatedDraftRevision = session.DraftRevision;
         if (!validation.IsValid)
         {
             await sessions.SaveAsync(cancellationToken);

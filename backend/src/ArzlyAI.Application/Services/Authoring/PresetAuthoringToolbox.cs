@@ -38,6 +38,8 @@ public sealed class PresetAuthoringToolbox(
         session.ValidationJson = PresetDraftSerializer.Serialize(validation);
         session.Title = draft.Title;
         session.Revision++;
+        session.DraftRevision++;
+        session.ValidatedDraftRevision = session.DraftRevision;
         session.Status = validation.IsValid
             ? AuthoringSessionStatus.ReadyToPublish
             : AuthoringSessionStatus.Active;
@@ -53,6 +55,8 @@ public sealed class PresetAuthoringToolbox(
         var validation = await validator.ValidateAsync(PresetDraftSerializer.Deserialize(session.DraftJson), cancellationToken);
         session.ValidationJson = PresetDraftSerializer.Serialize(validation);
         session.Status = validation.IsValid ? AuthoringSessionStatus.ReadyToPublish : AuthoringSessionStatus.Active;
+        session.ValidatedDraftRevision = session.DraftRevision;
+        session.Revision++;
         await sessions.SaveAsync(cancellationToken);
         return session.ValidationJson;
     }
@@ -61,14 +65,15 @@ public sealed class PresetAuthoringToolbox(
         Guid sessionId, string toolName, string resultJson, CancellationToken cancellationToken)
     {
         var session = await RequiredSessionAsync(sessionId, cancellationToken);
-        session.Messages.Add(new PresetAuthoringMessage
+        var message = new PresetAuthoringMessage
         {
             Id = Guid.NewGuid(), SessionId = session.Id, Session = session,
             Sequence = session.Messages.Count == 0 ? 1 : session.Messages.Max(x => x.Sequence) + 1,
             Role = AuthoringMessageRole.Tool, Content = $"{toolName} completed.",
+            TurnId = session.LastTurnId,
             ToolName = toolName, ToolPayloadJson = resultJson
-        });
-        await sessions.SaveAsync(cancellationToken);
+        };
+        await sessions.AddMessageAsync(session, message, cancellationToken);
     }
 
     private async Task<IReadOnlyList<CapabilityResponse>> BuildCapabilitiesAsync(CancellationToken cancellationToken)

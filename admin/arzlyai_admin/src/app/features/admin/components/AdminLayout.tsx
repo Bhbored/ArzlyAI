@@ -9,19 +9,19 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import AdminNavMenu from "./AdminNavMenu"
-import { useAuth } from "../../../providers/AuthProvider"
+import { useAuth } from "../../../providers/authContext"
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
-  "/sessions": "Authoring",
+  "/sessions": "Chats",
   "/presets": "Catalog",
-  "/capabilities": "Capabilities",
+  "/integrations": "Integrations",
   "/account": "Password",
 }
 
 function resolveTitle(pathname: string) {
   if (titles[pathname]) return titles[pathname]
-  if (pathname.startsWith("/sessions/")) return "Session"
+  if (pathname.startsWith("/sessions/")) return "Chat"
   if (pathname.startsWith("/presets/")) return "Preset Version"
   return "Admin"
 }
@@ -30,7 +30,8 @@ export default function AdminLayout() {
   const location = useLocation()
   const { logout } = useAuth()
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const title = resolveTitle(location.pathname)
+  const title = location.pathname.startsWith("/sessions/") && new URLSearchParams(location.search).get("tab") === "builder"
+    ? "Workflow builder" : resolveTitle(location.pathname)
 
   useEffect(() => {
     const previousTitle = document.title
@@ -80,7 +81,7 @@ export default function AdminLayout() {
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-h-dvh flex-1 flex-col md:ml-64">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:ml-64">
         <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-sidebar/95 px-4 py-4 backdrop-blur md:px-8 md:py-6">
           <div className="flex items-center gap-3">
             <Button
@@ -107,7 +108,7 @@ export default function AdminLayout() {
             Logout
           </Button>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="min-w-0 flex-1 p-4 md:p-6">
           <Outlet />
         </main>
       </div>

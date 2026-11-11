@@ -1,15 +1,17 @@
 using ArzlyAI.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace ArzlyAI.Application.Models.Authoring;
 
 public sealed record PresetDraftNode(
     string Key,
     string DisplayName,
-    WorkflowNodeType Type,
+    [property: JsonConverter(typeof(JsonStringEnumConverter))] WorkflowNodeType Type,
     string ReferenceKey,
     int Position,
     string InputMappingJson,
     bool RequiresHumanApproval,
     string? ConfigurationJson,
     string? ResultContractKey,
-    int? ResultContractVersion);
+    int? ResultContractVersion,
+    AuthoringCanvasPosition? EditorPosition = null);

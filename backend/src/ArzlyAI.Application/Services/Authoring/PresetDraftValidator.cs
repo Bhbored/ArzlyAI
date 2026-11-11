@@ -20,9 +20,17 @@ public sealed partial class PresetDraftValidator(
         CancellationToken cancellationToken)
     {
         using var operation = Operation.Time("PresetDraftValidator.Validate");
+        if (draft.Workflow?.Nodes is null || draft.Workflow.Connections is null || draft.Agents is null ||
+            draft.BackgroundExecution?.AllowedTriggerTypes is null || draft.AdminNotes is null ||
+            draft.Agents.Any(agent => agent is null || agent.Harness is null) ||
+            draft.Workflow.Nodes.Any(node => node is null))
+            throw new ArgumentException("The draft must include workflow nodes and connections, agents, background policy, and admin notes.");
         var errors = new List<PresetValidationIssue>();
+        foreach (var duplicate in draft.Agents.GroupBy(agent => agent.Key).Where(group => group.Count() > 1))
+            Add(errors, "agents", $"Agent key '{duplicate.Key}' is duplicated.");
         ValidateMetadata(draft, errors);
         ValidateJson(draft.InputSchemaJson, "inputSchemaJson", errors);
+        ValidateInputSchema(draft.InputSchemaJson, errors);
         ValidateGraph(draft, errors);
 
         var integrations = (await catalog.ListIntegrationsAsync(cancellationToken))
@@ -34,6 +42,8 @@ public sealed partial class PresetDraftValidator(
 
         foreach (var agent in draft.Agents)
         {
+            if (string.IsNullOrWhiteSpace(agent.Name)) Add(errors, $"agents.{agent.Key}.name", "An agent name is required.");
+            if (!Enum.IsDefined(agent.RuntimeType)) Add(errors, $"agents.{agent.Key}.runtimeType", "Choose a supported runtime.");
             if (!Slug().IsMatch(agent.Key)) Add(errors, $"agents.{agent.Key}.key", "Use a lowercase slug key.");
             if (!models.ContainsKey($"{agent.ProviderKey}:{agent.ModelKey}"))
                 Add(errors, $"agents.{agent.Key}.model", "The provider/model is not in the catalog.");
@@ -57,6 +67,7 @@ public sealed partial class PresetDraftValidator(
         var agentKeys = draft.Agents.Select(x => x.Key).ToHashSet(StringComparer.Ordinal);
         foreach (var node in draft.Workflow.Nodes)
         {
+            if (!Enum.IsDefined(node.Type)) Add(errors, $"workflow.nodes.{node.Key}.type", "Choose a supported node type.");
             if (!Slug().IsMatch(node.Key)) Add(errors, $"workflow.nodes.{node.Key}.key", "Use a lowercase slug key.");
             if (node.Type == WorkflowNodeType.Agent && !agentKeys.Contains(node.ReferenceKey))
                 Add(errors, $"workflow.nodes.{node.Key}.referenceKey", "The referenced agent does not exist.");
@@ -242,8 +253,57 @@ public sealed partial class PresetDraftValidator(
 
     private static void ValidateJson(string json, string path, ICollection<PresetValidationIssue> errors)
     {
+        if (string.IsNullOrWhiteSpace(json)) { Add(errors, path, "The value must be valid JSON."); return; }
         try { using var _ = JsonDocument.Parse(json); }
         catch (JsonException) { Add(errors, path, "The value must be valid JSON."); }
+    }
+
+    private static void ValidateInputSchema(string json, ICollection<PresetValidationIssue> errors)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return;
+        try
+        {
+            using var schema = JsonDocument.Parse(json);
+            if (schema.RootElement.ValueKind != JsonValueKind.Object ||
+                !schema.RootElement.TryGetProperty("type", out var type) ||
+                type.ValueKind != JsonValueKind.String || type.GetString() != "object")
+            {
+                Add(errors, "inputSchemaJson", "The input schema must describe an object.");
+                return;
+            }
+            if (!schema.RootElement.TryGetProperty("properties", out var properties))
+            {
+                if (schema.RootElement.TryGetProperty("required", out var requiredWithoutProperties) &&
+                    requiredWithoutProperties.ValueKind == JsonValueKind.Array &&
+                    requiredWithoutProperties.GetArrayLength() > 0)
+                    Add(errors, "inputSchemaJson.required", "Required inputs need matching properties.");
+                return;
+            }
+            if (properties.ValueKind != JsonValueKind.Object)
+            {
+                Add(errors, "inputSchemaJson.properties", "List the available input fields.");
+                return;
+            }
+            foreach (var property in properties.EnumerateObject())
+            {
+                if (!Slug().IsMatch(property.Name))
+                    Add(errors, $"inputSchemaJson.properties.{property.Name}", "Use a lowercase slug key.");
+                if (property.Value.ValueKind != JsonValueKind.Object ||
+                    !property.Value.TryGetProperty("type", out var fieldType) ||
+                    fieldType.ValueKind != JsonValueKind.String ||
+                    fieldType.GetString() is not ("string" or "number" or "integer" or "boolean" or "array" or "object"))
+                    Add(errors, $"inputSchemaJson.properties.{property.Name}", "Choose a supported input type.");
+            }
+            if (schema.RootElement.TryGetProperty("required", out var required))
+            {
+                if (required.ValueKind != JsonValueKind.Array)
+                    Add(errors, "inputSchemaJson.required", "Required inputs must be a list.");
+                else foreach (var field in required.EnumerateArray())
+                    if (field.ValueKind != JsonValueKind.String || !properties.TryGetProperty(field.GetString()!, out _))
+                        Add(errors, "inputSchemaJson.required", "Every required input must exist in properties.");
+            }
+        }
+        catch (JsonException) { /* Syntax is reported by ValidateJson. */ }
     }
 
     private static void ValidateRequiredMappings(

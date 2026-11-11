@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -28,33 +27,34 @@ export default function CapabilitiesPage() {
   const [selected, setSelected] = useState<Capability | null>(null)
 
   const capabilities = useMemo(
-    () => capabilitiesQuery.data ?? [],
+    () => (capabilitiesQuery.data ?? []).filter(item => item.kind === "Integration"),
     [capabilitiesQuery.data],
   )
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Capabilities"
-        description="Read-only catalog of registered integrations and operations the authoring agent may use."
+        title="Integrations"
+        description="Services your workflows can connect to. Review their inputs, permissions, and external actions."
       />
 
-      <DataTableShell title="Registered capabilities">
+      <DataTableShell title="Available integrations">
         {capabilitiesQuery.isPending ? (
           <div className="space-y-2 p-4">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : capabilitiesQuery.isError ? (
+          <div className="p-6 text-sm text-destructive">Could not load integrations. <Button type="button" variant="outline" size="sm" onClick={() => void capabilitiesQuery.refetch()}>Retry</Button></div>
         ) : capabilities.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground">
-            No capabilities are registered.
+            No integrations are registered.
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Key</TableHead>
-                <TableHead>Kind</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Risk</TableHead>
                 <TableHead>Background</TableHead>
@@ -66,9 +66,6 @@ export default function CapabilitiesPage() {
                 <TableRow key={capability.key}>
                   <TableCell className="font-medium text-primary">
                     {capability.key}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{capability.kind}</Badge>
                   </TableCell>
                   <TableCell>{capability.displayName}</TableCell>
                   <TableCell>{capability.riskLevel}</TableCell>

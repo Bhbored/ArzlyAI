@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useAuth } from "../../../providers/AuthProvider"
+import { useAuth } from "../../../providers/authContext"
 import { sessionQueries } from "../../sessions/sessions.service"
 import { presetQueries } from "../../presets/presets.service"
 import { capabilityQueries } from "../../capabilities/capabilities.service"
@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   const sessions = sessionsQuery.data ?? []
   const presets = presetsQuery.data ?? []
-  const capabilities = capabilitiesQuery.data ?? []
+  const capabilities = (capabilitiesQuery.data ?? []).filter(item => item.kind === "Integration")
 
   const activeSessions = sessions.filter((s) => s.status === "Active" || s.status === "ReadyToPublish")
   const published = presets.filter((p) => p.status === "Published")
@@ -59,7 +59,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        description="Author presets, inspect the catalog, and browse registered capabilities."
+        description="Create workflows, review published versions, and browse integrations."
       />
 
       <Card className="relative overflow-hidden border-border/80 bg-card">
@@ -70,13 +70,13 @@ export default function DashboardPage() {
           </Badge>
           <CardTitle className="text-3xl">Hey, {firstName}</CardTitle>
           <CardDescription>
-            Manage authoring sessions and published preset versions.
+            Manage authoring chats and published preset versions.
           </CardDescription>
         </CardHeader>
         <CardContent className="relative flex flex-wrap gap-2">
           <Button asChild className="bg-gradient-primary text-primary-foreground">
-            <Link to="/sessions">
-              New session
+            <Link to="/sessions?new=1">
+              New chat
               <ArrowUpRight className="size-4" />
             </Link>
           </Button>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Active sessions"
+          label="Active chats"
           value={activeSessions.length}
           loading={sessionsQuery.isPending}
           icon={MessageSquarePlus}
@@ -109,24 +109,26 @@ export default function DashboardPage() {
           to="/presets"
         />
         <StatCard
-          label="Capabilities"
+          label="Integrations"
           value={capabilities.length}
           loading={capabilitiesQuery.isPending}
           icon={Puzzle}
-          to="/capabilities"
+          to="/integrations"
         />
       </div>
 
-      <DataTableShell title="Recent sessions">
+      <DataTableShell title="Recent chats">
         {sessionsQuery.isPending ? (
           <div className="space-y-2 p-4">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : sessionsQuery.isError ? (
+          <div className="p-6 text-sm text-destructive">Could not load chats. <Button type="button" variant="outline" size="sm" onClick={() => void sessionsQuery.refetch()}>Retry</Button></div>
         ) : recentSessions.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground">
-            No authoring sessions yet. Create one to start drafting a preset.
+            No authoring chats yet. Create one to start drafting a preset.
           </p>
         ) : (
           <Table>
@@ -146,7 +148,7 @@ export default function DashboardPage() {
                       to={`/sessions/${session.id}`}
                       className="font-medium text-primary hover:underline"
                     >
-                      {session.title?.trim() || "Untitled session"}
+                      {session.title?.trim() || "Untitled chat"}
                     </Link>
                   </TableCell>
                   <TableCell>

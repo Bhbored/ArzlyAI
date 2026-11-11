@@ -1,6 +1,7 @@
 using System.Text.Json;
 using ArzlyAI.Application.Constants;
 using ArzlyAI.Application.Models.Authoring;
+using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Domain.Authoring;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -11,7 +12,9 @@ using SerilogTimings;
 #pragma warning disable MAAI001
 namespace ArzlyAI.Infrastructure.Agents.Authoring;
 
-public sealed class OpenAiPresetAuthoringAgent(PresetAuthoringToolExecutor toolExecutor) : IPresetAuthoringProviderAgent
+public sealed class OpenAiPresetAuthoringAgent(
+    PresetAuthoringToolExecutor toolExecutor,
+    IAuthoringRealtimeNotifier realtime) : IPresetAuthoringProviderAgent
 {
     public string ProviderKey => AiProviderKeys.OpenAi;
 
@@ -51,10 +54,12 @@ public sealed class OpenAiPresetAuthoringAgent(PresetAuthoringToolExecutor toolE
             "Designs executable ArzlyAI preset graphs.", tools);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Max(30, timeoutSeconds)));
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
-        var response = await agent.RunAsync(PresetAuthoringPrompt.Build(history, message), cancellationToken: linked.Token);
-        var text = string.IsNullOrWhiteSpace(response.Text)
+        var stream = new AuthoringTextStream(sessionId, realtime);
+        await foreach (var update in agent.RunStreamingAsync(PresetAuthoringPrompt.Build(history, message), cancellationToken: linked.Token))
+            await stream.AppendAsync(update.Text, linked.Token);
+        var text = string.IsNullOrWhiteSpace(stream.ToString())
             ? throw new InvalidOperationException("The preset authoring agent returned no response.")
-            : response.Text.Trim();
+            : stream.ToString().Trim();
         return text;
     }
 

@@ -1,10 +1,12 @@
 using ArzlyAI.Application.Repositories.Authoring;
+using ArzlyAI.Application.Services.Authoring;
 using ArzlyAI.Domain.Authoring;
 using ArzlyAI.Domain.Enums;
 using ArzlyAI.Domain.Presets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SerilogTimings;
+using Npgsql;
 
 namespace ArzlyAI.Infrastructure.Persistence.Repositories.Authoring;
 
@@ -25,7 +27,8 @@ public sealed class PresetPublishingRepository(
             .Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<PresetDefinition>> ListVersionsAsync(CancellationToken cancellationToken) =>
-        await dbContext.Presets.AsNoTracking().OrderBy(x => x.Key).ThenByDescending(x => x.Version)
+        await dbContext.Presets.AsNoTracking().Where(x => x.PublishedByAdminId != null)
+            .OrderBy(x => x.Key).ThenByDescending(x => x.Version)
             .ToListAsync(cancellationToken);
 
     public Task<PresetDefinition?> GetVersionAsync(string key, int version, CancellationToken cancellationToken) =>
@@ -55,11 +58,22 @@ public sealed class PresetPublishingRepository(
             current.Status = PresetPublicationStatus.Archived;
             current.ArchivedAtUtc = now;
         }
-        await dbContext.Presets.AddAsync(preset, cancellationToken);
         session.Status = AuthoringSessionStatus.Published;
         session.PublishedPresetId = preset.Id;
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        session.Revision++;
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.Presets.AddAsync(preset, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (exception is DbUpdateConcurrencyException ||
+            exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw new AuthoringSessionConflictException("Another publish or edit finished first. Reload the draft and review the current catalog version.", exception);
+        }
         logger.LogInformation("Published preset {PresetKey} version {PresetVersion}", preset.Key, preset.Version);
     }
 

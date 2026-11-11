@@ -28,6 +28,9 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ClientRequestId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -51,10 +54,16 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                     b.Property<string>("ToolPayloadJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<Guid?>("TurnId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SessionId", "ClientRequestId")
+                        .IsUnique();
 
                     b.HasIndex("SessionId", "Sequence")
                         .IsUnique();
@@ -85,6 +94,18 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                     b.Property<string>("DraftJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<int>("DraftRevision")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastTurnError")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("LastTurnId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastTurnStatus")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("PublishedPresetId")
                         .HasColumnType("uuid");
 
@@ -99,8 +120,14 @@ namespace ArzlyAI.Infrastructure.Persistence.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("TurnStartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ValidatedDraftRevision")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ValidationJson")
                         .IsRequired()

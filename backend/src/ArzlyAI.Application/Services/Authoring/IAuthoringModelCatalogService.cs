@@ -5,6 +5,7 @@ namespace ArzlyAI.Application.Services.Authoring;
 
 public interface IAuthoringModelCatalogService
 {
+    Task<IReadOnlyList<AuthoringProviderResponse>> ListProvidersAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<AuthoringModelResponse>> ListAsync(CancellationToken cancellationToken);
     Task<AuthoringModelSelection> ResolveAsync(string provider, string model, CancellationToken cancellationToken);
     AuthoringModelSelection GetDefaultSelection();

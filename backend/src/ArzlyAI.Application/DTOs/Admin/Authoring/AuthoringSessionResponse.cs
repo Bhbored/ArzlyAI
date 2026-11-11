@@ -13,4 +13,8 @@ public sealed record AuthoringSessionResponse(
     Guid? PublishedPresetId,
     IReadOnlyList<AuthoringMessageResponse> Messages,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    int DraftRevision = 0,
+    int? ValidatedDraftRevision = null,
+    AuthoringTurnStateResponse? Turn = null,
+    PublishReadinessResponse? PublishReadiness = null);

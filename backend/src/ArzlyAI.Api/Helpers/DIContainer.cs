@@ -256,9 +256,12 @@ public static class DIContainer
         services.AddScoped<AdminIdentitySeeder>();
         services.AddScoped<PresetAuthoringToolExecutor>();
         services.AddScoped<IPresetAuthoringProviderAgent, OpenAiPresetAuthoringAgent>();
-        services.AddScoped<IPresetAuthoringProviderAgent, AnthropicPresetAuthoringAgent>();
-        services.AddScoped<IPresetAuthoringProviderAgent, GeminiPresetAuthoringAgent>();
-        services.AddScoped<IPresetAuthoringProviderAgent, DeepSeekPresetAuthoringAgent>();
+        services.AddScoped<IPresetAuthoringProviderAgent>(serviceProvider =>
+            serviceProvider.GetRequiredService<AnthropicPresetAuthoringAgent>());
+        services.AddScoped<IPresetAuthoringProviderAgent>(serviceProvider =>
+            serviceProvider.GetRequiredService<GeminiPresetAuthoringAgent>());
+        services.AddScoped<IPresetAuthoringProviderAgent>(serviceProvider =>
+            serviceProvider.GetRequiredService<DeepSeekPresetAuthoringAgent>());
         services.AddScoped<IPresetAuthoringAgent, PresetAuthoringAgent>();
         services.AddSingleton<IAgentRuntime, OpenAiAgentRuntime>();
         services.AddSingleton<IAgentRuntimeResolver, AgentRuntimeResolver>();
@@ -318,8 +321,14 @@ public static class DIContainer
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+        services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -342,6 +351,32 @@ public static class DIContainer
                             context.Token = token;
                         return Task.CompletedTask;
                     },
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("ArzlyAI.Authentication");
+                        logger.LogWarning(
+                            context.Exception,
+                            "JWT authentication failed for {Method} {Path}",
+                            context.Request.Method,
+                            context.Request.Path);
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILoggerFactory>()
+                            .CreateLogger("ArzlyAI.Authentication");
+                        logger.LogWarning(
+                            "JWT challenge for {Method} {Path}; authorization header present: {HasAuthorizationHeader}; failure: {FailureType}; error: {Error}",
+                            context.Request.Method,
+                            context.Request.Path,
+                            context.Request.Headers.ContainsKey("Authorization"),
+                            context.AuthenticateFailure?.GetType().Name ?? "none",
+                            context.Error ?? "none");
+                        return Task.CompletedTask;
+                    }
                 };
             });
         services.AddAuthorization();

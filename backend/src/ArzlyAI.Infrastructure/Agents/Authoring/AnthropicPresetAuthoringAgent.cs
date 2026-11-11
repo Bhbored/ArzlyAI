@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using ArzlyAI.Application.Services.Realtime;
 using ArzlyAI.Application.Constants;
 using ArzlyAI.Application.Models.Authoring;
 using ArzlyAI.Domain.Authoring;
@@ -10,7 +12,8 @@ namespace ArzlyAI.Infrastructure.Agents.Authoring;
 
 public sealed class AnthropicPresetAuthoringAgent(
     HttpClient httpClient,
-    PresetAuthoringToolExecutor tools) : IPresetAuthoringProviderAgent
+    PresetAuthoringToolExecutor tools,
+    IAuthoringRealtimeNotifier realtime) : IPresetAuthoringProviderAgent
 {
     private const int MaximumToolRounds = 8;
 
@@ -35,7 +38,7 @@ public sealed class AnthropicPresetAuthoringAgent(
 
         for (var round = 0; round < MaximumToolRounds; round++)
         {
-            var response = await SendAsync(model.Model, apiKey, messages, linked.Token);
+            var response = await SendAsync(sessionId, model.Model, apiKey, messages, linked.Token);
             var toolUses = ToolUses(response.Content);
             if (toolUses.Count == 0)
                 return ResponseText(response.Content);
@@ -54,6 +57,7 @@ public sealed class AnthropicPresetAuthoringAgent(
     }
 
     private async Task<AnthropicResponse> SendAsync(
+        Guid sessionId,
         string model,
         string apiKey,
         IReadOnlyList<object> messages,
@@ -62,6 +66,7 @@ public sealed class AnthropicPresetAuthoringAgent(
         var payload = new
         {
             model,
+            stream = true,
             max_tokens = 8192,
             system = PresetAuthoringPrompt.Instructions,
             messages,
@@ -78,12 +83,63 @@ public sealed class AnthropicPresetAuthoringAgent(
         };
         request.Headers.Add("x-api-key", apiKey);
         request.Headers.Add("anthropic-version", "2023-06-01");
-        using var response = await httpClient.SendAsync(request, cancellationToken);
+        using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            throw new UnauthorizedAccessException("Anthropic rejected the configured admin-authoring API key.");
+            throw new HttpRequestException("Anthropic rejected the configured admin-authoring API key.");
         response.EnsureSuccessStatusCode();
-        var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-        return new AnthropicResponse(document.RootElement.GetProperty("content").Clone());
+        await using var body = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var text = new AuthoringTextStream(sessionId, realtime);
+        var blocks = new SortedDictionary<int, JsonObject>();
+        var inputs = new Dictionary<int, StringBuilder>();
+        var finished = false;
+        await foreach (var data in AuthoringSseReader.ReadAsync(body, cancellationToken))
+        {
+            var chunk = JsonNode.Parse(data)!.AsObject();
+            switch (chunk["type"]?.GetValue<string>())
+            {
+                case "error":
+                    throw new HttpRequestException("Anthropic streaming request failed.");
+                case "content_block_start":
+                    var index = chunk["index"]!.GetValue<int>();
+                    blocks[index] = chunk["content_block"]!.DeepClone().AsObject();
+                    if (blocks[index]["type"]?.GetValue<string>() == "text")
+                        await text.AppendAsync(blocks[index]["text"]?.GetValue<string>(), cancellationToken);
+                    break;
+                case "content_block_delta":
+                    var blockIndex = chunk["index"]!.GetValue<int>();
+                    var delta = chunk["delta"]!.AsObject();
+                    var block = blocks[blockIndex];
+                    switch (delta["type"]?.GetValue<string>())
+                    {
+                        case "text_delta":
+                            var value = delta["text"]!.GetValue<string>();
+                            block["text"] = (block["text"]?.GetValue<string>() ?? "") + value;
+                            await text.AppendAsync(value, cancellationToken);
+                            break;
+                        case "input_json_delta":
+                            if (!inputs.TryGetValue(blockIndex, out var input)) inputs[blockIndex] = input = new StringBuilder();
+                            input.Append(delta["partial_json"]!.GetValue<string>());
+                            break;
+                        case "thinking_delta":
+                            block["thinking"] = (block["thinking"]?.GetValue<string>() ?? "") + delta["thinking"]!.GetValue<string>();
+                            break;
+                        case "signature_delta":
+                            block["signature"] = delta["signature"]!.GetValue<string>();
+                            break;
+                    }
+                    break;
+                case "message_delta":
+                    if (chunk["delta"]?["stop_reason"]?.GetValue<string>() is "max_tokens" or "refusal")
+                        throw new HttpRequestException("Anthropic response was interrupted or exceeded its output limit.");
+                    break;
+                case "message_stop":
+                    finished = true;
+                    break;
+            }
+        }
+        if (!finished) throw new HttpRequestException("Anthropic response stream ended before completion.");
+        foreach (var (index, input) in inputs) blocks[index]["input"] = JsonNode.Parse(input.ToString());
+        return new AnthropicResponse(JsonSerializer.SerializeToElement(blocks.Values));
     }
 
     private static IReadOnlyList<ToolUse> ToolUses(JsonElement content) =>

@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +41,7 @@ import { MoreHorizontal } from "lucide-react"
 import { ApiError } from "../../shared/api/http"
 import { PageHeader } from "../../shared/components/PageHeader"
 import { DataTableShell } from "../../shared/components/DataTableShell"
-import { sessionKeys } from "../sessions/sessions.service"
+import { createSession, sessionKeys } from "../sessions/sessions.service"
 import {
   archivePresetVersion,
   clonePresetToDraft,
@@ -53,6 +54,7 @@ export default function PresetsPage() {
   const queryClient = useQueryClient()
   const presetsQuery = useQuery(presetQueries.list())
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [search, setSearch] = useState("")
   const [archiveTarget, setArchiveTarget] = useState<{
     key: string
     version: number
@@ -60,22 +62,31 @@ export default function PresetsPage() {
 
   const presets = useMemo(() => {
     const list = presetsQuery.data ?? []
-    if (statusFilter === "all") return list
-    return list.filter((p) => p.status === statusFilter)
-  }, [presetsQuery.data, statusFilter])
+    return list.filter((preset) => (statusFilter === "all" || preset.status === statusFilter) &&
+      `${preset.key} ${preset.name}`.toLowerCase().includes(search.toLowerCase().trim()))
+  }, [presetsQuery.data, statusFilter, search])
 
   const clone = useMutation({
     mutationFn: ({ key, version }: { key: string; version: number }) =>
       clonePresetToDraft(key, version),
     onSuccess: async (session) => {
       await queryClient.invalidateQueries({ queryKey: sessionKeys.all })
-      toast.success("Draft session created from version")
+      toast.success("Draft chat created from version")
       navigate(`/sessions/${session.id}`)
     },
     onError: (error) =>
       toast.error("Could not clone version", {
         description: error instanceof Error ? error.message : undefined,
       }),
+  })
+
+  const createWorkflow = useMutation({
+    mutationFn: () => createSession("Untitled workflow", null, null, true),
+    onSuccess: session => {
+      void queryClient.invalidateQueries({ queryKey: sessionKeys.all })
+      navigate(`/sessions/${session.id}?tab=builder`)
+    },
+    onError: error => toast.error("Could not create workflow", { description: error instanceof Error ? error.message : undefined }),
   })
 
   const archive = useMutation({
@@ -96,13 +107,16 @@ export default function PresetsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Preset catalog"
-        description="Published and archived immutable versions. Clone a version to revise it."
+        title="Workflow catalog"
+        description="Workflows created and published by the admin. Clone a version to revise it."
+        actions={<Button disabled={createWorkflow.isPending} onClick={() => createWorkflow.mutate()}>{createWorkflow.isPending ? "Creating…" : "Create workflow"}</Button>}
       />
 
       <DataTableShell
         title="Versions"
         toolbar={
+          <div className="flex flex-wrap gap-2"><Input aria-label="Search preset versions" placeholder="Search versions" value={search}
+            onChange={event => setSearch(event.target.value)} className="w-48" />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Status" />
@@ -113,6 +127,7 @@ export default function PresetsPage() {
               <SelectItem value="Archived">Archived</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         }
       >
         {presetsQuery.isPending ? (
@@ -120,9 +135,11 @@ export default function PresetsPage() {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : presetsQuery.isError ? (
+          <div className="p-6 text-sm text-destructive">Could not load versions. <Button type="button" variant="outline" size="sm" onClick={() => void presetsQuery.refetch()}>Retry</Button></div>
         ) : presets.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground">
-            The catalog is empty. That is valid until the first publish.
+            {search || statusFilter !== "all" ? "No versions match these filters." : "The catalog is empty. Publish a draft to create the first version."}
           </p>
         ) : (
           <Table>

@@ -11,6 +11,7 @@ public sealed class PresetAuthoringMessageConfiguration : IEntityTypeConfigurati
         builder.ToTable("PresetAuthoringMessages");
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => new { x.SessionId, x.Sequence }).IsUnique();
+        builder.HasIndex(x => new { x.SessionId, x.ClientRequestId }).IsUnique();
         builder.Property(x => x.Role).HasConversion<string>();
         builder.Property(x => x.ToolPayloadJson).HasColumnType("jsonb");
         builder.HasOne(x => x.Session).WithMany(x => x.Messages)

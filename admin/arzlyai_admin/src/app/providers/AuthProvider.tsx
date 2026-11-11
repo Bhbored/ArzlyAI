@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -9,6 +7,8 @@ import {
   type ReactNode,
 } from "react"
 import { apiFetch, configureHttp } from "../shared/api/http"
+import { useQueryClient } from "@tanstack/react-query"
+import { AuthContext } from "./authContext"
 import type {
   AdminAuthenticationResponse,
   AdminUser,
@@ -21,16 +21,6 @@ interface StoredAuth {
   user: AdminUser
   tokens: AuthTokens
 }
-
-interface AuthState {
-  user: AdminUser | null
-  loading: boolean
-  getAccessToken: () => string | null
-  login: (email: string, password: string) => Promise<{ error?: string }>
-  logout: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthState | null>(null)
 
 function readStored(): StoredAuth | null {
   try {
@@ -51,15 +41,19 @@ function writeStored(value: StoredAuth | null) {
 }
 
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<AdminUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => readStored() !== null)
   const tokensRef = useRef<AuthTokens | null>(null)
+  const bootstrappedRef = useRef(false)
 
   const clearSession = useCallback(() => {
     tokensRef.current = null
     writeStored(null)
     setUser(null)
-  }, [])
+    void queryClient.cancelQueries()
+    queryClient.clear()
+  }, [queryClient])
 
   const applyAuth = useCallback((data: AdminAuthenticationResponse) => {
     const nextUser: AdminUser = {
@@ -85,6 +79,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       getAccessTokenExpiresAtUtc: () =>
         tokensRef.current?.accessTokenExpiresAtUtc ?? null,
       setTokens: (tokens) => {
+        if (!tokensRef.current) return
         tokensRef.current = tokens
         const stored = readStored()
         if (stored) {
@@ -102,11 +97,11 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, [clearSession])
 
   useEffect(() => {
+    if (bootstrappedRef.current) return
+    bootstrappedRef.current = true
+
     const stored = readStored()
-    if (!stored) {
-      setLoading(false)
-      return
-    }
+    if (!stored) return
 
     tokensRef.current = stored.tokens
 
@@ -173,10 +168,4 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider")
-  return ctx
 }

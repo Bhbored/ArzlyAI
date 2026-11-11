@@ -13,7 +13,8 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfig
 builder.Services.RegisterDependencies(builder.Configuration);
 
 var app = builder.Build();
-await app.InitializeDatabaseAsync();
+if (!app.Environment.IsEnvironment("Test"))
+    await app.InitializeDatabaseAsync();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();

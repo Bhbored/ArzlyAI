@@ -13,6 +13,12 @@ public sealed class PresetAuthoringSession : Base
     public string? DraftJson { get; set; }
     public string ValidationJson { get; set; } = "{\"isValid\":false,\"errors\":[]}";
     public int Revision { get; set; }
+    public int DraftRevision { get; set; }
+    public int? ValidatedDraftRevision { get; set; }
+    public Guid? LastTurnId { get; set; }
+    public string? LastTurnStatus { get; set; }
+    public string? LastTurnError { get; set; }
+    public DateTimeOffset? TurnStartedAtUtc { get; set; }
     public Guid? PublishedPresetId { get; set; }
     public ICollection<PresetAuthoringMessage> Messages { get; init; } = [];
 }

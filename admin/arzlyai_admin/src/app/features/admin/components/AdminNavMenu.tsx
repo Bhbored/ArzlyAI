@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useAuth } from "../../../providers/AuthProvider"
+import { useAuth } from "../../../providers/authContext"
 
 const navItems: {
   to: string
@@ -19,9 +19,9 @@ const navItems: {
   end?: boolean
 }[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/sessions", label: "Authoring", icon: MessageSquarePlus },
+  { to: "/sessions", label: "Chats", icon: MessageSquarePlus },
   { to: "/presets", label: "Catalog", icon: Package },
-  { to: "/capabilities", label: "Capabilities", icon: Puzzle },
+  { to: "/integrations", label: "Integrations", icon: Puzzle },
   { to: "/account", label: "Password", icon: KeyRound },
 ]
 

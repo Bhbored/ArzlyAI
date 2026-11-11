@@ -30,6 +30,7 @@ export interface PresetDraftAgent {
 }
 
 export interface PresetDraftNode {
+  editorPosition?: { x: number; y: number } | null
   key: string
   displayName: string
   type: number | string

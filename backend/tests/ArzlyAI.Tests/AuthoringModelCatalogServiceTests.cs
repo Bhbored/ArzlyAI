@@ -34,7 +34,51 @@ public sealed class AuthoringModelCatalogServiceTests
             service.ResolveAsync("openai", "whisper-1", CancellationToken.None));
     }
 
+    [Fact]
+    public async Task ListProvidersAsync_WhenProviderIsConfigured_ReturnsAvailabilityAndCapabilities()
+    {
+        var service = CreateService(
+            new ProviderModel("gpt-5-mini", "openai", DateTimeOffset.UtcNow));
+
+        var providers = await service.ListProvidersAsync(CancellationToken.None);
+
+        Assert.Equal(AiProviderKeys.All.Count, providers.Count);
+        var openAi = Assert.Single(providers, provider => provider.Provider == AiProviderKeys.OpenAi);
+        Assert.True(openAi.HasApiKey);
+        Assert.True(openAi.IsEnabled);
+        Assert.True(openAi.IsAvailable);
+        Assert.Null(openAi.UnavailableReason);
+        Assert.Equal("openai", openAi.IconKey);
+        var model = Assert.Single(openAi.Models);
+        Assert.True(model.SupportsToolCalling);
+        Assert.True(model.IsAvailable);
+    }
+
+    [Fact]
+    public async Task ListProvidersAsync_WhenApiKeyIsMissing_ReturnsUnavailableProvider()
+    {
+        var service = CreateServiceWithProvider(
+            enabled: true,
+            apiKey: string.Empty,
+            models: [new ProviderModel("gpt-5-mini", "openai", DateTimeOffset.UtcNow)]);
+
+        var providers = await service.ListProvidersAsync(CancellationToken.None);
+
+        var openAi = Assert.Single(providers, provider => provider.Provider == AiProviderKeys.OpenAi);
+        Assert.False(openAi.HasApiKey);
+        Assert.True(openAi.IsEnabled);
+        Assert.False(openAi.IsAvailable);
+        Assert.Equal("missing_api_key", openAi.UnavailableReason);
+        Assert.Empty(openAi.Models);
+    }
+
     private static AuthoringModelCatalogService CreateService(params ProviderModel[] models) =>
+        CreateServiceWithProvider(enabled: true, apiKey: "test-key", models: models);
+
+    private static AuthoringModelCatalogService CreateServiceWithProvider(
+        bool enabled,
+        string apiKey,
+        params ProviderModel[] models) =>
         new(
             [new ModelClient(models)],
             new ProviderModelCapabilityPolicy(),
@@ -46,8 +90,8 @@ public sealed class AuthoringModelCatalogServiceTests
                 {
                     [AiProviderKeys.OpenAi] = new PresetAuthoringProviderOptions
                     {
-                        Enabled = true,
-                        ApiKey = "test-key"
+                        Enabled = enabled,
+                        ApiKey = apiKey
                     }
                 }
             }),

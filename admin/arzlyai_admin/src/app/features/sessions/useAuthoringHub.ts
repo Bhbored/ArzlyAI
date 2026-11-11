@@ -18,8 +18,9 @@ export type ConnectionState =
   | "reconnecting"
 
 interface AuthoringHubHandlers {
+  onAssistantTextUpdated?: (text: string) => void
+  onReconnected?: () => void
   onTurnStarted?: () => void
-  onContentDelta?: (content: string) => void
   onToolStarted?: (name: string) => void
   onToolCompleted?: (name: string) => void
   onDraftUpdated?: () => void
@@ -35,16 +36,40 @@ export function useAuthoringHub(
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("disconnected")
   const handlersRef = useRef(handlers)
-  handlersRef.current = handlers
+
+  useEffect(() => {
+    handlersRef.current = handlers
+  }, [handlers])
 
   useEffect(() => {
     if (!sessionId) return
 
     let cancelled = false
     let connection: HubConnection | null = null
+    let receiving = false
+    let streamId = ""
+    let sequence = 0
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
+
+    const scheduleRetry = () => {
+      if (cancelled || retryTimer) return
+      setConnectionState("disconnected")
+      retryTimer = setTimeout(() => { retryTimer = null; void connect() }, 3000)
+    }
+
+    const connect = async () => {
+      if (!connection || cancelled || connection.state !== HubConnectionState.Disconnected) return
+      setConnectionState("connecting")
+      try {
+        await connection.start()
+        if (cancelled) { await connection.stop(); return }
+        await connection.invoke("JoinSession", sessionId)
+        setConnectionState("connected")
+        handlersRef.current.onReconnected?.()
+      } catch { scheduleRetry() }
+    }
 
     const start = async () => {
-      setConnectionState("connecting")
       connection = new HubConnectionBuilder()
         .withUrl(apiUrl("/api/v1/hubs/admin-authoring"), {
           accessTokenFactory: async () =>
@@ -54,11 +79,18 @@ export function useAuthoringHub(
         .configureLogging(LogLevel.Warning)
         .build()
 
-      connection.on("TurnStarted", () => handlersRef.current.onTurnStarted?.())
-      connection.on("ContentDelta", (payload: { content?: string }) => {
-        if (payload?.content != null) {
-          handlersRef.current.onContentDelta?.(payload.content)
-        }
+      connection.on("TurnStarted", () => {
+        receiving = true
+        streamId = ""
+        sequence = 0
+        handlersRef.current.onTurnStarted?.()
+      })
+      connection.on("AssistantTextUpdated", (payload: { sessionId: string; streamId: string; sequence: number; text: string }) => {
+        if (cancelled || !receiving || payload.sessionId !== sessionId) return
+        if (payload.streamId === streamId && payload.sequence <= sequence) return
+        streamId = payload.streamId
+        sequence = payload.sequence
+        handlersRef.current.onAssistantTextUpdated?.(payload.text)
       })
       connection.on("ToolStarted", (payload: { name?: string }) => {
         if (payload?.name) handlersRef.current.onToolStarted?.(payload.name)
@@ -71,9 +103,11 @@ export function useAuthoringHub(
         handlersRef.current.onValidationChanged?.(result)
       })
       connection.on("TurnCompleted", (result: AuthoringTurnResponse) => {
+        receiving = false
         handlersRef.current.onTurnCompleted?.(result)
       })
       connection.on("TurnFailed", (payload: { message?: string }) => {
+        receiving = false
         handlersRef.current.onTurnFailed?.(
           payload?.message ?? "Authoring turn failed",
         )
@@ -84,30 +118,23 @@ export function useAuthoringHub(
       })
       connection.onreconnected(async () => {
         if (cancelled || !connection) return
-        setConnectionState("connected")
-        await connection.invoke("JoinSession", sessionId)
+        try {
+          await connection.invoke("JoinSession", sessionId)
+          setConnectionState("connected")
+          handlersRef.current.onReconnected?.()
+        } catch { await connection.stop() }
       })
       connection.onclose(() => {
-        if (!cancelled) setConnectionState("disconnected")
+        scheduleRetry()
       })
-
-      try {
-        await connection.start()
-        if (cancelled) {
-          await connection.stop()
-          return
-        }
-        await connection.invoke("JoinSession", sessionId)
-        setConnectionState("connected")
-      } catch {
-        if (!cancelled) setConnectionState("disconnected")
-      }
+      await connect()
     }
 
     void start()
 
     return () => {
       cancelled = true
+      if (retryTimer) clearTimeout(retryTimer)
       if (connection && connection.state !== HubConnectionState.Disconnected) {
         void connection.invoke("LeaveSession", sessionId).catch(() => undefined)
         void connection.stop()

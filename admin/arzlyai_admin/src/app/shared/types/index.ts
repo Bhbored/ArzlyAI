@@ -14,12 +14,16 @@ export type {
 export type {
   AuthoringMessage,
   AuthoringSession,
+  AuthoringSessionSummary,
+  AuthoringPreview,
+  RuntimeModel,
   AuthoringTurnResponse,
   PublishPresetResponse,
 } from "./session"
 export type {
   AssistantModelSelection,
   AuthoringModelOption,
+  AuthoringProvider,
 } from "./assistantModel"
 export type { Capability } from "./capability"
 export type {

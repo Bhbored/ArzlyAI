@@ -23,7 +23,21 @@ export interface AuthoringSession {
   messages: AuthoringMessage[]
   createdAtUtc: string
   updatedAtUtc: string
+  draftRevision: number
+  validatedDraftRevision: number | null
+  turn: { id: string; status: "Running" | "Completed" | "Failed"; startedAtUtc: string | null; error: string | null } | null
+  publishReadiness: { canPublish: boolean; blockers: string[] }
 }
+
+export type AuthoringSessionSummary = Pick<AuthoringSession, "id" | "title" | "status" | "revision" | "assistantModel" | "updatedAtUtc">
+
+export interface AuthoringPreview {
+  draftRevision: number
+  validation: ValidationResult
+  nodes: { key: string; name: string; type: string; inputs: { input: string; source: string; status: string; value: unknown }[] }[]
+}
+
+export interface RuntimeModel { provider: string; model: string; displayName: string }
 
 export interface AuthoringTurnResponse {
   session: AuthoringSession
